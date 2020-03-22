@@ -1,0 +1,22 @@
+//Layout
+$header-height: 50px;
+$sidebar-desktop-width: 250px;
+$sidebar-mobile-width: 80px;
+$title-font-size: calc(12px + 0.5vw);
+
+//Colors
+$theme-color: #7f2775;
+
+//Breakpoints
+$breakpoints: (
+  'mobile':  360px,
+  'tablet':  740px,
+  'desktop': 980px,
+  'wide':    1300px
+);
+
+//Animation speed
+$fast-animation: 0.35s;
+$medium-animation: 0.5s;
+$slow-animation: 1s;
+
