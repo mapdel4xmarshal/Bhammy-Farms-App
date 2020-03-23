@@ -1,11 +1,14 @@
 const ROUTES = {
-  ACTIVITIES: 'activities',
-  BATCH: 'batch',
-  DASHBOARD: 'dashboard',
-  EXPENSES: 'expenses',
-  INCOME: 'income',
-  REPORTS: 'reports',
-  SETTINGS: 'settings',
+  ACTIVITIES: 'Activities',
+  BATCH: 'Batch',
+  DASHBOARD: 'Dashboard',
+  EXPENSES: 'Expenses',
+  INCOME: 'Income',
+  REPORTS: 'Reports',
+  SETTINGS: 'Settings',
+  STORE: 'Store',
+  PRODUCTION: 'Production',
+  SCHEDULES: 'Schedules'
 };
 
 export default ROUTES;

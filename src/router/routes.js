@@ -1,51 +1,58 @@
+import ROUTES from './routeNames';
+
 const routes = [{
   path: '/',
-  name: 'Dashboard',
+  name: ROUTES.DASHBOARD,
   component: () => import(/* webpackChunkName: "dashboard" */ '../views/Dashboard.vue')
 },
 {
   path: '/activities',
-  name: 'Activities',
+  name: ROUTES.ACTIVITIES,
   component: () => import(/* webpackChunkName: "activities" */ '../views/Activities.vue')
 },
 {
   path: '/batches',
-  name: 'Batches',
+  name: ROUTES.BATCH,
   component: () => import(/* webpackChunkName: "batches" */ '../views/Batches.vue'),
 },
 {
   path: '/expenses',
-  name: 'Expenses',
+  name: ROUTES.EXPENSES,
   component: () => import(/* webpackChunkName: "expenses" */ '../views/Batches.vue'),
 },
 {
   path: '/income',
-  name: 'Income',
+  name: ROUTES.INCOME,
   component: () => import(/* webpackChunkName: "income" */ '../views/Income.vue'),
 },
 {
   path: '/production',
-  name: 'Production',
+  name: ROUTES.PRODUCTION,
   component: () => import(/* webpackChunkName: "production" */ '../views/Production.vue'),
 },
 {
-  path: '/reminders',
-  name: 'Reminders',
+  path: '/schedules',
+  name: ROUTES.SCHEDULES,
   component: () => import(/* webpackChunkName: "report" */ '../views/Reminders.vue'),
 },
 {
   path: '/report',
-  name: 'Report',
+  name: ROUTES.REPORTS,
   component: () => import(/* webpackChunkName: "report" */ '../views/Report.vue'),
 },
 {
   path: '/reports',
-  name: 'Reports',
+  name: ROUTES.REPORTS,
   component: () => import(/* webpackChunkName: "reports" */ '../views/Reports.vue'),
 },
 {
   path: '/store',
-  name: 'Store',
+  name: ROUTES.STORE,
+  component: () => import(/* webpackChunkName: "store" */ '../views/Store.vue'),
+},
+{
+  path: '/settings',
+  name: ROUTES.SETTINGS,
   component: () => import(/* webpackChunkName: "store" */ '../views/Store.vue'),
 }
 ];

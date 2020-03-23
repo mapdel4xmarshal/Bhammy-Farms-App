@@ -1,12 +1,56 @@
 <template>
+  <v-card>
+    <h1>Production</h1>
+    <v-card-title>
+      <v-select
+        :items="items"
+        label="Standard"
+        dense
+      ></v-select>
+
+      <v-menu
+        v-model="menu2"
+        :close-on-content-click="false"
+        :nudge-right="40"
+        transition="scale-transition"
+        offset-y
+        min-width="290px"
+      >
+        <template v-slot:activator="{ on }">
+          <v-text-field
+            v-model="date"
+            label="Picker without buttons"
+            prepend-icon="mdi-event"
+            readonly
+            v-on="on"
+          ></v-text-field>
+        </template>
+        <v-date-picker v-model="date" @input="menu2 = false"></v-date-picker>
+      </v-menu>
+
+      <v-spacer></v-spacer>
+      <v-select
+        :items="items"
+        label="Standard"
+        dense
+      ></v-select>
+      <v-spacer></v-spacer>
+      <v-text-field
+        v-model="search"
+        append-icon="mdi-magnify"
+        label="Search"
+      ></v-text-field>
+    </v-card-title>
   <v-data-table
     :headers="headers"
     :items="desserts"
     :sort-by="['calories', 'fat']"
     :sort-desc="[false, true]"
     multi-sort
+    :search="search"
     class="elevation-1"
   ></v-data-table>
+  </v-card>
 </template>
 
 <script>
@@ -14,6 +58,7 @@ export default {
   name: 'Production',
   data() {
     return {
+      search: '',
       headers: [
         {
           text: 'Date',
@@ -25,7 +70,7 @@ export default {
         { text: 'Pen', value: 'fat' },
         { text: 'Flock type', value: 'carbs' },
         { text: 'Breed', value: 'protein' },
-        { text: 'Iron (%)', value: 'iron' },
+        { text: 'Action', value: 'iron' },
       ],
       desserts: [
         {
