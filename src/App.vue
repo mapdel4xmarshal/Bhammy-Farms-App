@@ -24,7 +24,7 @@
             <v-img src="https://randomuser.me/api/portraits/men/85.jpg"></v-img>
           </v-list-item-avatar>
 
-          <v-list-item-title>Bamidele Mapayi {{ $mq.phone }}</v-list-item-title>
+          <v-list-item-title>Bamidele Mapayi</v-list-item-title>
 
           <v-btn
             icon
@@ -42,6 +42,7 @@
             :key="item.title"
             link
             :to="{name: item.to}"
+            exact
             active-class="primary--text"
           >
             <v-list-item-icon>
