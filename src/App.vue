@@ -56,14 +56,11 @@
         </v-list>
       </v-navigation-drawer>
 
-    <!-- Sizes your content based upon application components -->
-    <v-content>
-
-      <!-- Provides the application the proper gutter -->
-      <v-container fluid>
-        <transition name="slide-fade" appear mode="out-in">
-          <router-view class="main__content"/>
-      </transition>
+      <v-content>
+        <v-container fluid>
+          <transition name="slide-fade" appear mode="out-in">
+            <router-view class="main__content"/>
+        </transition>
       </v-container>
     </v-content>
 
@@ -109,6 +106,8 @@ export default {
 
   .main__content {
     width: 100%;
+    height: 100vh;
+    overflow-y: auto;
     padding: 20px 30px;
   }
 
