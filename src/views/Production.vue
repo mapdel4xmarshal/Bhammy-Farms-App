@@ -1,15 +1,38 @@
 <template>
-  <v-card>
-    <h1>Production</h1>
-    <v-card-title>
+    <v-card
+      class="mx-auto"
+    >
+      <v-toolbar flat>
+        <v-toolbar-title class="grey--text">Production</v-toolbar-title>
+
+        <v-spacer></v-spacer>
+
+        <v-btn icon>
+          <v-icon>mdi-magnify</v-icon>
+        </v-btn>
+
+        <v-btn icon>
+          <v-icon>mdi-apps</v-icon>
+        </v-btn>
+
+        <v-btn rounded color="primary" @click="createNew">
+          Add new
+        </v-btn>
+      </v-toolbar>
+
+      <v-divider></v-divider>
+
+      <v-card-text>
+
+        <v-card-title>
       <v-select
-        :items="items"
-        label="Standard"
+        :items="productionTypes"
+        label="Production type"
         dense
       ></v-select>
 
       <v-menu
-        v-model="menu2"
+        v-model="dateMenu"
         :close-on-content-click="false"
         :nudge-right="40"
         transition="scale-transition"
@@ -19,142 +42,126 @@
         <template v-slot:activator="{ on }">
           <v-text-field
             v-model="date"
-            label="Picker without buttons"
+            label="Date"
             prepend-icon="mdi-event"
             readonly
             v-on="on"
           ></v-text-field>
         </template>
-        <v-date-picker v-model="date" @input="menu2 = false"></v-date-picker>
+        <v-date-picker v-model="date" @input="dateMenu = false"></v-date-picker>
       </v-menu>
 
       <v-spacer></v-spacer>
-      <v-select
-        :items="items"
-        label="Standard"
-        dense
-      ></v-select>
       <v-spacer></v-spacer>
       <v-text-field
         v-model="search"
         append-icon="mdi-magnify"
         label="Search"
+        width='100'
       ></v-text-field>
     </v-card-title>
   <v-data-table
     :headers="headers"
-    :items="desserts"
+    :items="items"
     :sort-by="['calories', 'fat']"
     :sort-desc="[false, true]"
     multi-sort
     :search="search"
     class="elevation-1"
   ></v-data-table>
-  </v-card>
+      </v-card-text>
+    </v-card>
 </template>
 
 <script>
+import ROUTES from '../router/routeNames';
+
 export default {
   name: 'Production',
   data() {
     return {
+      dateMenu: false,
+      date: null,
       search: '',
+      productionTypes: [
+        'Fish',
+        'Layers',
+        'Chicks',
+        'Hatchery'
+      ],
       headers: [
         {
           text: 'Date',
           align: 'start',
           sortable: true,
-          value: 'name',
+          value: 'date',
         },
-        { text: 'Batch', value: 'calories' },
-        { text: 'Pen', value: 'fat' },
-        { text: 'Flock type', value: 'carbs' },
-        { text: 'Breed', value: 'protein' },
-        { text: 'Action', value: 'iron' },
+        { text: 'Batch', value: 'batch' },
+        { text: 'Type', value: 'type' },
+        { text: 'Total', value: 'total' },
+        { text: 'Feed (kg)', value: 'feed' },
+        { text: 'Mortality', value: 'mortalities' },
+        { text: 'Age (days)', value: 'age' },
+        { text: 'Mortality ratio', value: 'mortalityRatio' },
+        { text: 'Feed per animal (g)', value: 'feedPerAnimal' },
+        { text: 'State', value: 'state' },
       ],
-      desserts: [
+      items: [
         {
-          name: 'Frozen Yogurt',
-          calories: 200,
-          fat: 6.0,
-          carbs: 24,
-          protein: 4.0,
-          iron: '1%',
+          date: '2020-02-02',
+          batch: 'AJG-P001-B01',
+          type: 'Chicks',
+          total: 5780,
+          feed: 240,
+          mortalities: 4,
+          age: 168,
+          mortalityRatio: '0.2%',
+          feedPerAnimal: 24,
+          state: 'Active'
         },
         {
-          name: 'Ice cream sandwich',
-          calories: 200,
-          fat: 9.0,
-          carbs: 37,
-          protein: 4.3,
-          iron: '1%',
+          date: '2020-02-02',
+          batch: 'AJG-P001-B01',
+          total: 5780,
+          type: 'Fish',
+          feed: 240,
+          mortalities: 4,
+          age: 168,
+          mortalityRatio: '0.2%',
+          feedPerAnimal: 24,
+          state: 'Active'
         },
         {
-          name: 'Eclair',
-          calories: 300,
-          fat: 16.0,
-          carbs: 23,
-          protein: 6.0,
-          iron: '7%',
+          date: '2020-02-02',
+          batch: 'AJG-P001-B01',
+          total: 5780,
+          feed: 240,
+          type: 'Layers',
+          mortalities: 4,
+          age: 168,
+          mortalityRatio: '0.2%',
+          feedPerAnimal: 24,
+          state: 'Active'
         },
         {
-          name: 'Cupcake',
-          calories: 300,
-          fat: 3.7,
-          carbs: 67,
-          protein: 4.3,
-          iron: '8%',
+          date: '2020-02-02',
+          batch: 'AJG-P001-B01',
+          total: 5780,
+          type: 'Layers',
+          feed: 240,
+          mortalities: 4,
+          age: 168,
+          mortalityRatio: '0.2%',
+          feedPerAnimal: 24,
+          state: 'Completed'
         },
-        {
-          name: 'Gingerbread',
-          calories: 400,
-          fat: 16.0,
-          carbs: 49,
-          protein: 3.9,
-          iron: '16%',
-        },
-        {
-          name: 'Jelly bean',
-          calories: 400,
-          fat: 0.0,
-          carbs: 94,
-          protein: 0.0,
-          iron: '0%',
-        },
-        {
-          name: 'Lollipop',
-          calories: 400,
-          fat: 0.2,
-          carbs: 98,
-          protein: 0,
-          iron: '2%',
-        },
-        {
-          name: 'Honeycomb',
-          calories: 400,
-          fat: 3.2,
-          carbs: 87,
-          protein: 6.5,
-          iron: '45%',
-        },
-        {
-          name: 'Donut',
-          calories: 500,
-          fat: 25.0,
-          carbs: 51,
-          protein: 4.9,
-          iron: '22%',
-        },
-        {
-          name: 'KitKat',
-          calories: 500,
-          fat: 26.0,
-          carbs: 65,
-          protein: 7,
-          iron: '6%',
-        },
-      ],
+      ]
     };
   },
+  methods: {
+    createNew() {
+      this.$router.push({ name: ROUTES.NEW_PRODUCTION });
+    }
+  }
 };
 </script>

@@ -31,9 +31,14 @@ const routes = [{
   component: () => import(/* webpackChunkName: "production" */ '../views/Production.vue'),
 },
 {
+  path: '/production/new',
+  name: ROUTES.NEW_PRODUCTION,
+  component: () => import(/* webpackChunkName: "production" */ '../views/ProductionDetail.vue'),
+},
+{
   path: '/schedules',
   name: ROUTES.SCHEDULES,
-  component: () => import(/* webpackChunkName: "report" */ '../views/Reminders.vue'),
+  component: () => import(/* webpackChunkName: "reminders" */ '../views/Reminders.vue'),
 },
 {
   path: '/report',

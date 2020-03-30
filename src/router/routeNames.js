@@ -4,10 +4,11 @@ const ROUTES = {
   DASHBOARD: 'Dashboard',
   EXPENSES: 'Expenses',
   INCOME: 'Income',
+  NEW_PRODUCTION: 'NewProduction',
+  PRODUCTION: 'Production',
   REPORTS: 'Reports',
   SETTINGS: 'Settings',
   STORE: 'Store',
-  PRODUCTION: 'Production',
   SCHEDULES: 'Schedules'
 };
 

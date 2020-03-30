@@ -10641,6 +10641,11 @@ vue-loader@^15.8.3:
     vue-hot-reload-api "^2.3.0"
     vue-style-loader "^4.1.0"
 
+vue-match-media@^1.0.3:
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/vue-match-media/-/vue-match-media-1.0.3.tgz#d1c5111e33acc09684ff898429ca4fad8b4351c4"
+  integrity sha512-LVALG6n+uMJnSdackzykTKxiqL+YgmD+c8HeyC7NsYijOIbOfx5cKhP3F0+r6Gu18q4uv2pr4KAoXKeQQQQQ5w==
+
 vue-router@^3.1.5:
   version "3.1.6"
   resolved "https://registry.yarnpkg.com/vue-router/-/vue-router-3.1.6.tgz#45f5a3a3843e31702c061dd829393554e4328f89"

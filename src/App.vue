@@ -1,22 +1,30 @@
 <template>
   <v-app>
-    <TopNavigation/>
-    <section class="main">
-      <v-card
-        elevation="1"
-      >
-        <v-navigation-drawer
-        v-model="drawer"
-        :mini-variant.sync="mini"
-        bottom
-        :mini-variant-width="70"
+    <v-app-bar app clipped-left :elevation="1">
+      <v-app-bar-nav-icon
+        v-if="$mq.phone"
+        @click="drawer = !drawer"/>
+        <v-toolbar-title>Title</v-toolbar-title>
+        <v-spacer></v-spacer>
+        <v-btn icon>
+          <v-icon>mdi-bell</v-icon>
+        </v-btn>
+    </v-app-bar>
+
+    <v-navigation-drawer
+      v-model="drawer"
+      clipped
+      app
+      :mini-variant.sync="mini"
+      :permanent="!$mq.phone"
+      :mini-variant-width="70"
       >
         <v-list-item class="px-2">
           <v-list-item-avatar>
             <v-img src="https://randomuser.me/api/portraits/men/85.jpg"></v-img>
           </v-list-item-avatar>
 
-          <v-list-item-title>Bamidele Mapayi</v-list-item-title>
+          <v-list-item-title>Bamidele Mapayi {{ $mq.phone }}</v-list-item-title>
 
           <v-btn
             icon
@@ -46,24 +54,28 @@
           </v-list-item>
         </v-list>
       </v-navigation-drawer>
-      </v-card>
+
+    <!-- Sizes your content based upon application components -->
+    <v-content>
+
+      <!-- Provides the application the proper gutter -->
+      <v-container fluid>
         <transition name="slide-fade" appear mode="out-in">
           <router-view class="main__content"/>
-        </transition>
-      </section>
+      </transition>
+      </v-container>
+    </v-content>
+
   </v-app>
 </template>
 
 <script>
-import TopNavigation from '@/components/TopNavigation.vue';
 import ROUTES from './router/routeNames';
 
 export default {
   name: 'App',
-  components: {
-    TopNavigation
-  },
   data: () => ({
+    smallScreen: false,
     drawer: true,
     items: [
       { title: ROUTES.DASHBOARD, icon: 'mdi-monitor', to: ROUTES.DASHBOARD },
@@ -78,20 +90,24 @@ export default {
       { title: ROUTES.SETTINGS, icon: 'mdi-cogs', to: ROUTES.SETTINGS }
     ],
     mini: true,
-  }),
+  })
 };
 </script>
 
 <style>
+  body {
+    height: 100vh;
+    overflow: hidden;
+  }
 
-  .main {
+  .app-container {
     height: 100%;
     display: flex;
     width: 100%;
   }
 
   .main__content {
-     width: 100%;
+    width: 100%;
     padding: 20px 30px;
   }
 
