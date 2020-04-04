@@ -1,6 +1,10 @@
 <template>
-  <v-app>
-    <v-app-bar app clipped-left :elevation="1">
+  <v-app class="overflow-hidden">
+    <v-app-bar app clipped-left
+      hide-on-scroll
+      scroll-off-screen
+      :elevation="1"
+    >
       <v-app-bar-nav-icon
         v-if="$mq.phone"
         @click="drawer = !drawer"/>
@@ -57,9 +61,9 @@
       </v-navigation-drawer>
 
       <v-content>
-        <v-container fluid>
+        <v-container fluid class="overflow-y-auto main__content">
           <transition name="slide-fade" appear mode="out-in">
-            <router-view class="main__content"/>
+            <router-view/>
         </transition>
       </v-container>
     </v-content>
@@ -106,8 +110,7 @@ export default {
 
   .main__content {
     width: 100%;
-    height: 100vh;
-    overflow-y: auto;
+    height: calc(100vh - 60px);
     padding: 20px 30px;
   }
 
