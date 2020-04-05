@@ -1,6 +1,6 @@
 <template>
   <section>
-      <v-expansion-panels multiple focusable popout>
+      <v-expansion-panels multiple>
       <v-expansion-panel>
         <v-expansion-panel-header>
           Egg collection
@@ -8,76 +8,48 @@
             <v-icon color="primary">$expand</v-icon>
           </template>
         </v-expansion-panel-header>
+        <v-divider></v-divider>
         <v-expansion-panel-content>
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
-          incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis
-          nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-        </v-expansion-panel-content>
-      </v-expansion-panel>
-
-      <v-expansion-panel>
-        <v-expansion-panel-header v-slot="{ open }">
-          <v-row no-gutters>
-            <v-col cols="4">Location</v-col>
-            <v-col
-              cols="8"
-              class="text--secondary"
-            >
-              <v-fade-transition leave-absolute>
-                <span
-                  v-if="open"
-                  key="0"
-                >
-                  Select trip destination
-                </span>
-                <span
-                  v-else
-                  key="1"
-                >
-                  {{ trip.location }}
-                </span>
-              </v-fade-transition>
-            </v-col>
-          </v-row>
-        </v-expansion-panel-header>
-        <v-expansion-panel-content>
-          <v-row no-gutters>
-            <v-spacer></v-spacer>
-            <v-col cols="5">
-              <v-select
-                v-model="trip.location"
-                :items="locations"
-                chips
-                flat
-                solo
-              ></v-select>
-            </v-col>
-
-            <v-divider
-              vertical
-              class="mx-4"
-            ></v-divider>
-
-            <v-col cols="3">
-              Select your destination of choice
-              <br>
-              <a href="javascript:void(0)">Learn more</a>
-            </v-col>
-          </v-row>
-
+          <v-simple-table>
+            <template v-slot:default>
+              <thead>
+                <tr>
+                  <th class="text-left">Size</th>
+                  <th class="text-left">Quantity</th>
+                  <th class="text-left">Damaged</th>
+                  <th class="text-left">Damaged %</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(egg, index) in eggcollection" :key="index">
+                  <td>
+                    {{ egg.size }}
+                  </td>
+                  <td>
+                    <v-edit-dialog
+                    > {{ egg.quantity }}
+                      <template v-slot:input>
+                        <v-text-field
+                          label="Edit"
+                          single-line
+                          counter
+                        ></v-text-field>
+                      </template>
+                    </v-edit-dialog>
+                    </td>
+                  <td>{{ egg.damaged }}</td>
+                  <td>{{ (egg.damaged * 100) / egg.quantity}}</td>
+                </tr>
+              </tbody>
+            </template>
+          </v-simple-table>
           <v-card-actions>
             <v-spacer></v-spacer>
             <v-btn
               text
-              color="secondary"
-            >
-              Cancel
-            </v-btn>
-            <v-btn
-              text
               color="primary"
             >
-              Save
+              Add
             </v-btn>
           </v-card-actions>
         </v-expansion-panel-content>
@@ -105,9 +77,10 @@
           </template>
         </v-expansion-panel-header>
         <v-expansion-panel-content>
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt
-          ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation
-          ullamco laboris nisi ut aliquip ex ea commodo consequat.
+          <v-row>
+            <v-col>Small</v-col>
+            <v-col>Medium</v-col>
+          </v-row>
         </v-expansion-panel-content>
       </v-expansion-panel>
 
@@ -162,6 +135,11 @@ export default {
   name: 'ProductionDetail',
   data() {
     return {
+      eggcollection: [
+        { size: 'small', quantity: 290, damaged: 20 },
+        { size: 'medium', quantity: 780, damaged: 10 },
+        { size: 'large', quantity: 10, damaged: 0 },
+      ],
       date: null,
       trip: {
         name: '',

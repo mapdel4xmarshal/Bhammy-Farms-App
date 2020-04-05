@@ -1,5 +1,5 @@
 <template>
-  <v-app class="overflow-hidden">
+  <v-app class="overflow-hidden app-container">
     <v-app-bar app clipped-left
       hide-on-scroll
       scroll-off-screen
@@ -103,9 +103,7 @@ export default {
   }
 
   .app-container {
-    height: 100%;
-    display: flex;
-    width: 100%;
+    background-color: #F5F5F5 !important;
   }
 
   .main__content {

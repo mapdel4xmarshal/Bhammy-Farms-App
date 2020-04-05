@@ -1,5 +1,5 @@
 <template>
-    <v-card
+    <v-sheet
       class="mx-auto"
     >
       <v-toolbar flat>
@@ -21,8 +21,6 @@
       </v-toolbar>
 
       <v-divider></v-divider>
-
-      <v-card-text>
 
         <v-card-title>
       <v-select
@@ -69,8 +67,7 @@
     :search="search"
     class="elevation-1"
   ></v-data-table>
-      </v-card-text>
-    </v-card>
+    </v-sheet>
 </template>
 
 <script>
@@ -84,8 +81,8 @@ export default {
       date: null,
       search: '',
       productionTypes: [
+        'Eggs',
         'Fish',
-        'Layers',
         'Chicks',
         'Hatchery'
       ],
