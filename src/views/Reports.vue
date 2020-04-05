@@ -1,61 +1,136 @@
 <template>
-  <div class="home">
-     <v-toolbar color="primary" dark :max-height="60">
-      <v-app-bar-nav-icon
-      v-if="$mq.phone"
-      @click="drawer = !drawer"/>
-      <v-toolbar-title>Title</v-toolbar-title>
-      <v-spacer></v-spacer>
-      <v-btn icon>
-        <v-icon>mdi-bell</v-icon>
-      </v-btn>
-    </v-toolbar>
-      <v-navigation-drawer
-      v-model="drawer"
-      app
-      :mini-variant.sync="mini"
-      :permanent="!$mq.phone"
-      :mini-variant-width="70"
+  <v-row>
+    <v-col>
+      <v-card
+        max-width="344"
+        hover
+        class="mx-auto"
       >
-        <v-list-item class="px-2">
-          <v-list-item-avatar>
-            <v-img src="https://randomuser.me/api/portraits/men/85.jpg"></v-img>
-          </v-list-item-avatar>
+        <v-list-item>
+          <v-list-item-avatar color="grey"></v-list-item-avatar>
+          <v-list-item-content>
+            <v-list-item-title class="headline">Sales</v-list-item-title>
+            <v-list-item-subtitle>by Kurt Wagner</v-list-item-subtitle>
+          </v-list-item-content>
+        </v-list-item>
+        <v-card-text>
+          Visit ten places on our planet that are undergoing the biggest changes today.
+        </v-card-text>
 
-          <v-list-item-title>Bamidele Mapayi {{ $mq.phone }}</v-list-item-title>
-
+        <v-card-actions>
           <v-btn
-            icon
-            @click.stop="mini = !mini"
+            text
+            color="deep-purple accent-4"
           >
-            <v-icon>mdi-chevron-left</v-icon>
+            Read
           </v-btn>
+          <v-btn
+            text
+            color="deep-purple accent-4"
+          >
+            Bookmark
+          </v-btn>
+          <v-spacer></v-spacer>
+          <v-btn icon>
+            <v-icon>mdi-heart</v-icon>
+          </v-btn>
+          <v-btn icon>
+            <v-icon>mdi-share-variant</v-icon>
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-col>
+    <v-col>
+      <v-card
+        max-width="344"
+        class="mx-auto"
+      >
+        <v-list-item>
+          <v-list-item-avatar color="grey"></v-list-item-avatar>
+          <v-list-item-content>
+            <v-list-item-title class="headline">Our Changing Planet</v-list-item-title>
+            <v-list-item-subtitle>by Kurt Wagner</v-list-item-subtitle>
+          </v-list-item-content>
         </v-list-item>
 
-        <v-divider></v-divider>
+        <v-img
+          src="https://cdn.vuetifyjs.com/images/cards/mountain.jpg"
+          height="194"
+        ></v-img>
 
-        <v-list dense nav light>
-          <v-list-item
-            v-for="item in items"
-            :key="item.title"
-            link
-            :to="{name: item.to}"
-            active-class="primary--text"
+        <v-card-text>
+          Visit ten places on our planet that are undergoing the biggest changes today.
+        </v-card-text>
+
+        <v-card-actions>
+          <v-btn
+            text
+            color="deep-purple accent-4"
           >
-            <v-list-item-icon>
-              <v-icon>{{ item.icon }}</v-icon>
-            </v-list-item-icon>
+            Read
+          </v-btn>
+          <v-btn
+            text
+            color="deep-purple accent-4"
+          >
+            Bookmark
+          </v-btn>
+          <v-spacer></v-spacer>
+          <v-btn icon>
+            <v-icon>mdi-heart</v-icon>
+          </v-btn>
+          <v-btn icon>
+            <v-icon>mdi-share-variant</v-icon>
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-col>
+    <v-col>
+      <v-card
+        max-width="344"
+        class="mx-auto"
+      >
+        <v-list-item>
+          <v-list-item-avatar color="grey"></v-list-item-avatar>
+          <v-list-item-content>
+            <v-list-item-title class="headline">Our Changing Planet</v-list-item-title>
+            <v-list-item-subtitle>by Kurt Wagner</v-list-item-subtitle>
+          </v-list-item-content>
+        </v-list-item>
 
-            <v-list-item-content>
-              <v-list-item-title>{{ item.title }}</v-list-item-title>
-            </v-list-item-content>
-          </v-list-item>
-        </v-list>
-      </v-navigation-drawer>
-      <transition name="slide-fade" appear mode="out-in">
-        <router-view class="main__content"/>
-      </transition>
-  </div>
+        <v-img
+          src="https://cdn.vuetifyjs.com/images/cards/mountain.jpg"
+          height="194"
+        ></v-img>
+
+        <v-card-text>
+          Visit ten places on our planet that are undergoing the biggest changes today.
+        </v-card-text>
+
+        <v-card-actions>
+          <v-btn
+            text
+            color="deep-purple accent-4"
+          >
+            Read
+          </v-btn>
+          <v-btn
+            text
+            color="deep-purple accent-4"
+          >
+            Bookmark
+          </v-btn>
+          <v-spacer></v-spacer>
+          <v-btn icon>
+            <v-icon>mdi-heart</v-icon>
+          </v-btn>
+          <v-btn icon>
+            <v-icon>mdi-share-variant</v-icon>
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-col>
+  </v-row>
 </template>
 
 <script>

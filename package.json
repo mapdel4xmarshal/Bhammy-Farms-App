@@ -55,7 +55,8 @@
       "parser": "babel-eslint"
     },
     "rules": {
-      "comma-dangle": "off"
+      "comma-dangle": "off",
+      "max-len": [2, {"code": 120, "ignoreUrls": true}]
     },
     "overrides": [
       {

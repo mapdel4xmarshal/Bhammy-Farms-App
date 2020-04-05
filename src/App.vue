@@ -4,11 +4,13 @@
       hide-on-scroll
       scroll-off-screen
       :elevation="1"
+      color="#fff"
+      dense
     >
       <v-app-bar-nav-icon
         v-if="$mq.phone"
         @click="drawer = !drawer"/>
-        <v-toolbar-title>Title</v-toolbar-title>
+        <v-toolbar-title>Bhammy Farms</v-toolbar-title>
         <v-spacer></v-spacer>
         <v-btn icon>
           <v-icon>mdi-bell</v-icon>

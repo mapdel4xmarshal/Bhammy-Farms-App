@@ -6,6 +6,7 @@ const ROUTES = {
   INCOME: 'Income',
   NEW_PRODUCTION: 'NewProduction',
   PRODUCTION: 'Production',
+  REPORT: 'Report',
   REPORTS: 'Reports',
   SETTINGS: 'Settings',
   STORE: 'Store',
