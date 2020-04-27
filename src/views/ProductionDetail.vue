@@ -1,11 +1,21 @@
 <template>
   <section>
+    <v-toolbar flat>
+      <v-toolbar-title class="grey--text">New Production</v-toolbar-title>
+      <v-spacer></v-spacer>
+      <v-btn color="primary" @click="createNew">
+        Save
+      </v-btn>
+    </v-toolbar>
+
+    <v-divider></v-divider>
     <v-card-actions>
-      <span class="headline">Egg collection</span>
+      <span class="headline">Egg collected</span>
       <v-spacer></v-spacer>
       <v-btn
         text
         color="primary"
+        @click="addItem('EggCollection')"
       >
         Add item
       </v-btn>
@@ -17,11 +27,7 @@
       :items="eggCollection"
       class="elevation-1"
     >
-      <!--<template v-slot:item.damagedPercent="{ item }">
-
-      </template>-->
     </v-data-table>
-
 
     <v-card-actions>
       <span class="headline">Feed consumed</span>
@@ -29,6 +35,7 @@
       <v-btn
         text
         color="primary"
+        @click="addItem('FeedConsumed')"
       >
         Add item
       </v-btn>
@@ -47,6 +54,7 @@
       <v-btn
         text
         color="primary"
+        @click="addItem('Mortality')"
       >
         Add item
       </v-btn>
@@ -83,15 +91,35 @@
       rows="2"
       value="Attendant notes"
     ></v-textarea>
+    <v-dialog v-model="dialog" persistent max-width="600px">
+      <v-card>
+        <v-card-title>{{ activeSection }}</v-card-title>
+        <v-divider></v-divider>
+        <v-card-text>
+          <component :is="activeSection"/>
+        </v-card-text>
+        <v-divider></v-divider>
+      <v-card-actions>
+        <v-spacer></v-spacer>
+        <v-btn color="blue darken-1" text @click="dialog = false">Close</v-btn>
+        <v-btn color="blue darken-1" text @click="dialog = false">Save</v-btn>
+      </v-card-actions>
+      </v-card>
+    </v-dialog>
   </section>
 </template>
 
 <script>
+import EggCollection from '../components/EggCollection.vue';
+import FeedConsumed from '../components/FeedConsumed.vue';
+import Mortality from '../components/Mortality.vue';
 
 export default {
   name: 'ProductionDetail',
   data() {
     return {
+      activeSection: '',
+      dialog: false,
       panel: [0, 1, 2, 3],
       eggCollection: [
         {
@@ -163,6 +191,17 @@ export default {
       },
       locations: ['Australia', 'Barbados', 'Chile', 'Denmark', 'Equador', 'France'],
     };
+  },
+  components: {
+    EggCollection,
+    FeedConsumed,
+    Mortality
+  },
+  methods: {
+    addItem(section) {
+      this.activeSection = section;
+      this.dialog = true;
+    }
   }
 };
 </script>

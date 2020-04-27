@@ -10,11 +10,6 @@
         <v-btn icon>
           <v-icon>mdi-magnify</v-icon>
         </v-btn>
-
-        <v-btn icon>
-          <v-icon>mdi-apps</v-icon>
-        </v-btn>
-
         <v-btn rounded color="primary" @click="createNew">
           Add new
         </v-btn>
