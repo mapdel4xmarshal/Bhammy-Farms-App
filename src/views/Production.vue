@@ -18,31 +18,36 @@
       <v-divider></v-divider>
 
         <v-card-title>
-      <v-select
-        :items="productionTypes"
-        label="Production type"
-        dense
-      ></v-select>
-
-      <v-menu
-        v-model="dateMenu"
-        :close-on-content-click="false"
-        :nudge-right="40"
-        transition="scale-transition"
-        offset-y
-        min-width="290px"
-      >
-        <template v-slot:activator="{ on }">
-          <v-text-field
-            v-model="date"
-            label="Date"
-            prepend-icon="mdi-event"
-            readonly
-            v-on="on"
-          ></v-text-field>
-        </template>
-        <v-date-picker v-model="date" @input="dateMenu = false"></v-date-picker>
-      </v-menu>
+          <v-row>
+            <v-col cols="4">
+              <v-select
+                :items="productionTypes"
+                label="Production type"
+                dense
+              ></v-select>
+            </v-col>
+            <v-col cols="4">
+              <v-menu
+                v-model="dateMenu"
+                :close-on-content-click="false"
+                :nudge-right="40"
+                transition="scale-transition"
+                offset-y
+                min-width="290px"
+              >
+                <template v-slot:activator="{ on }">
+                  <v-text-field
+                    v-model="date"
+                    label="Date"
+                    prepend-icon="mdi-event"
+                    readonly
+                    v-on="on"
+                  ></v-text-field>
+                </template>
+                <v-date-picker v-model="date" @input="dateMenu = false"></v-date-picker>
+              </v-menu>
+            </v-col>
+          </v-row>
 
       <v-spacer></v-spacer>
       <v-spacer></v-spacer>
@@ -113,9 +118,9 @@ export default {
         },
         {
           date: '2020-02-02',
-          batch: 'AJG-P001-B01',
+          batch: 'OLO-P001-B01',
           total: 5780,
-          type: 'Fish',
+          type: 'Broiler',
           feed: 240,
           mortalities: 4,
           age: 168,
