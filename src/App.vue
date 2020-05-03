@@ -85,11 +85,13 @@ export default {
       { title: ROUTES.DASHBOARD, icon: 'mdi-monitor', to: ROUTES.DASHBOARD },
       { title: ROUTES.PRODUCTION, icon: 'mdi-chart-timeline', to: ROUTES.PRODUCTION },
       { title: ROUTES.ACTIVITIES, icon: 'mdi-chart-line-variant', to: ROUTES.ACTIVITIES },
-      { title: ROUTES.BATCH, icon: 'mdi-factory', to: ROUTES.BATCH },
+      { title: ROUTES.BATCHES, icon: 'mdi-factory', to: ROUTES.BATCHES },
       { title: ROUTES.EXPENSES, icon: 'mdi-account', to: ROUTES.EXPENSES },
       { title: ROUTES.INCOME, icon: 'mdi-cash-usd', to: ROUTES.INCOME },
       { title: ROUTES.REPORTS, icon: 'mdi-finance', to: ROUTES.REPORTS },
       { title: ROUTES.STORE, icon: 'mdi-silo', to: ROUTES.STORE },
+      { title: ROUTES.CUSTOMERS, icon: 'mdi-account', to: ROUTES.CUSTOMERS },
+      { title: 'Employees', icon: 'mdi-account', to: ROUTES.CUSTOMERS },
       { title: ROUTES.SCHEDULES, icon: 'mdi-calendar-check-outline', to: ROUTES.SCHEDULES },
       { title: ROUTES.SETTINGS, icon: 'mdi-cogs', to: ROUTES.SETTINGS }
     ],
@@ -111,7 +113,6 @@ export default {
   .main__content {
     width: 100%;
     height: calc(100vh - 60px);
-    padding: 20px 30px;
   }
 
   .slide-fade-enter-active {
@@ -125,5 +126,9 @@ export default {
   .slide-fade-enter, .slide-fade-leave-to {
     transform: translateX(10px);
     opacity: 0;
+  }
+
+  section .v-toolbar__content {
+    padding: 0 !important;
   }
 </style>

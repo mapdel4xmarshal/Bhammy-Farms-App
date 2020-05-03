@@ -1,30 +1,32 @@
 <template>
   <section>
-    <header>
-      <v-toolbar flat>
-        <v-toolbar-title class="grey--text">Expenses</v-toolbar-title>
-
-        <v-spacer></v-spacer>
-
-        <v-btn icon>
-          <v-icon>mdi-magnify</v-icon>
-        </v-btn>
-
-        <v-btn rounded color="primary" @click="createNew">
-          Add Expenses
-        </v-btn>
-      </v-toolbar>
-      <v-divider></v-divider>
-    </header>
+    <v-toolbar flat dense color="transparent">
+      <v-toolbar-title class="grey--text">Expenses</v-toolbar-title>
+      <v-spacer></v-spacer>
+      <v-btn tile color="primary" @click="createNew">
+        New Expenses
+      </v-btn>
+    </v-toolbar>
+    <v-divider></v-divider>
+    <v-row>
+      <v-spacer></v-spacer>
+      <v-col cols="12" md="2">
+        <v-text-field
+          append-icon="mdi-magnify"
+          label="Search"
+          v-model="search"
+          width='100'
+        ></v-text-field>
+      </v-col>
+    </v-row>
     <v-data-table
       :headers="headers"
       :items="items"
-      :sort-by="['calories', 'fat']"
-      :sort-desc="[false, true]"
       multi-sort
       :search="search"
       class="elevation-1"
     ></v-data-table>
+
   </section>
 </template>
 
@@ -85,6 +87,13 @@ export default {
           category: 'Construction/Repairs',
           amount: 1000,
           type: 'Recurring'
+        },
+        {
+          date: '2020-02-02',
+          batch: 'AJG-P001-B01',
+          category: 'Fuel',
+          amount: 1000,
+          type: 'One time'
         },
         {
           date: '2020-02-02',

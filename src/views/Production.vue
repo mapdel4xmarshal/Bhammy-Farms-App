@@ -1,64 +1,36 @@
 <template>
-    <v-sheet
-      class="mx-auto"
-    >
-      <v-toolbar flat>
-        <v-toolbar-title class="grey--text">Production</v-toolbar-title>
+    <section>
+      <v-toolbar flat dense color="transparent">
+        <v-toolbar-title>Production</v-toolbar-title>
 
         <v-spacer></v-spacer>
-
-        <v-btn icon>
-          <v-icon>mdi-magnify</v-icon>
-        </v-btn>
-        <v-btn rounded color="primary" @click="createNew">
+        <v-btn tile color="primary" @click="createNew">
           Add new
         </v-btn>
       </v-toolbar>
 
       <v-divider></v-divider>
 
-        <v-card-title>
-          <v-row>
-            <v-col cols="4">
-              <v-select
-                :items="productionTypes"
-                label="Production type"
-                dense
-              ></v-select>
-            </v-col>
-            <v-col cols="4">
-              <v-menu
-                v-model="dateMenu"
-                :close-on-content-click="false"
-                :nudge-right="40"
-                transition="scale-transition"
-                offset-y
-                min-width="290px"
-              >
-                <template v-slot:activator="{ on }">
-                  <v-text-field
-                    v-model="date"
-                    label="Date"
-                    prepend-icon="mdi-event"
-                    readonly
-                    v-on="on"
-                  ></v-text-field>
-                </template>
-                <v-date-picker v-model="date" @input="dateMenu = false"></v-date-picker>
-              </v-menu>
-            </v-col>
-          </v-row>
-
-      <v-spacer></v-spacer>
-      <v-spacer></v-spacer>
-      <v-text-field
-        v-model="search"
-        append-icon="mdi-magnify"
-        label="Search"
-        width='100'
-      ></v-text-field>
-    </v-card-title>
-  <v-data-table
+      <v-row>
+        <v-col cols="12" md="2">
+          <v-select
+            :items="productionTypes"
+            label="Production type"
+            dense
+          ></v-select>
+        </v-col>
+        <v-spacer></v-spacer>
+        <v-col cols="12" md="2">
+          <v-text-field
+            append-icon="mdi-magnify"
+            label="Search"
+            dense
+            v-model="search"
+            width='100'
+          ></v-text-field>
+        </v-col>
+      </v-row>
+    <v-data-table
     :headers="headers"
     :items="items"
     :sort-by="['calories', 'fat']"
@@ -67,7 +39,7 @@
     :search="search"
     class="elevation-1"
   ></v-data-table>
-    </v-sheet>
+    </section>
 </template>
 
 <script>

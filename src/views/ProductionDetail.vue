@@ -1,16 +1,16 @@
 <template>
   <section>
-    <v-toolbar flat>
-      <v-toolbar-title class="grey--text">New Production</v-toolbar-title>
+    <v-toolbar flat dense color="transparent">
+      <v-toolbar-title>New Production</v-toolbar-title>
       <v-spacer></v-spacer>
-      <v-btn color="primary" @click="createNew">
+      <v-btn color="primary" tile @click="createNew">
         Save
       </v-btn>
     </v-toolbar>
 
     <v-divider></v-divider>
     <v-card-actions>
-      <span class="headline">Egg collected</span>
+      <span class="headline">Eggs collected</span>
       <v-spacer></v-spacer>
       <v-btn
         text
@@ -73,6 +73,7 @@
       <v-btn
         text
         color="primary"
+          @click="addItem('WaterConsumed')"
       >
         Add item
       </v-btn>
@@ -113,6 +114,7 @@
 import EggCollection from '../components/EggCollection.vue';
 import FeedConsumed from '../components/FeedConsumed.vue';
 import Mortality from '../components/Mortality.vue';
+import WaterConsumed from '../components/WaterConsumed.vue';
 
 export default {
   name: 'ProductionDetail',
@@ -195,7 +197,8 @@ export default {
   components: {
     EggCollection,
     FeedConsumed,
-    Mortality
+    Mortality,
+    WaterConsumed
   },
   methods: {
     addItem(section) {
