@@ -1,176 +1,171 @@
 <template>
   <section>
-    <template>
-      <v-card>
-        <v-toolbar flat color="primary" dark>
-          <v-toolbar-title>Inventory</v-toolbar-title>
-        </v-toolbar>
-        <v-tabs vertical>
-          <v-tab>
-            <v-icon left>mdi-account</v-icon>
-            Feeds
-          </v-tab>
-          <v-tab>
-            <v-icon left>mdi-lock</v-icon>
-            Medication
-          </v-tab>
-          <v-tab>
-            <v-icon left>mdi-access-point</v-icon>
-            Assets
-          </v-tab>
+  <v-toolbar flat dense color="transparent">
+    <v-toolbar-title>Inventory</v-toolbar-title>
 
-          <v-tab-item>
-            <v-card flat>
-              <v-card-text>
-                <p>
-                  Sed aliquam ultrices mauris. Donec posuere vulputate arcu. Morbi ac felis. Etiam feugiat lorem
-                  non metus. Sed a libero.
-                </p>
+    <v-spacer></v-spacer>
+    <v-btn tile color="primary" @click="createNew">
+       New item
+    </v-btn>
+  </v-toolbar>
 
-                <p>
-                  Nam ipsum risus, rutrum vitae, vestibulum eu, molestie vel, lacus. Aenean tellus metus, bibendum
-                  sed, posuere ac, mattis non, nunc. Aliquam lobortis. Aliquam lobortis. Suspendisse non nisl sit
-                  amet velit hendrerit rutrum.
-                </p>
+  <v-divider></v-divider>
 
-                <p class="mb-0">
-                  Phasellus dolor. Fusce neque. Fusce fermentum odio nec arcu. Pellentesque libero tortor, tincidunt
-                  et, tincidunt eget, semper nec, quam. Phasellus blandit leo ut odio.
-                </p>
-              </v-card-text>
+  <v-container fluid>
+    <v-data-iterator
+      :items="items"
+      :items-per-page.sync="itemsPerPage"
+      hide-default-header
+    >
+      <template v-slot:default="props">
+        <v-row>
+          <v-col
+            v-for="item in props.items"
+            :key="item.name"
+            cols="12"
+            sm="6"
+            md="4"
+            lg="3"
+          >
+            <v-card>
+              <v-card-title class="subheading font-weight-bold">{{ item.name }}</v-card-title>
+
+              <v-divider></v-divider>
+
+              <v-list dense>
+                <v-list-item>
+                  <v-list-item-content>Calories:</v-list-item-content>
+                  <v-list-item-content class="align-end">{{ item.calories }}</v-list-item-content>
+                </v-list-item>
+
+                <v-list-item>
+                  <v-list-item-content>Fat:</v-list-item-content>
+                  <v-list-item-content class="align-end">{{ item.fat }}</v-list-item-content>
+                </v-list-item>
+
+                <v-list-item>
+                  <v-list-item-content>Carbs:</v-list-item-content>
+                  <v-list-item-content class="align-end">{{ item.carbs }}</v-list-item-content>
+                </v-list-item>
+
+                <v-list-item>
+                  <v-list-item-content>Protein:</v-list-item-content>
+                  <v-list-item-content class="align-end">{{ item.protein }}</v-list-item-content>
+                </v-list-item>
+
+                <v-list-item>
+                  <v-list-item-content>Sodium:</v-list-item-content>
+                  <v-list-item-content class="align-end">{{ item.sodium }}</v-list-item-content>
+                </v-list-item>
+
+                <v-list-item>
+                  <v-list-item-content>Calcium:</v-list-item-content>
+                  <v-list-item-content class="align-end">{{ item.calcium }}</v-list-item-content>
+                </v-list-item>
+
+                <v-list-item>
+                  <v-list-item-content>Iron:</v-list-item-content>
+                  <v-list-item-content class="align-end">{{ item.iron }}</v-list-item-content>
+                </v-list-item>
+              </v-list>
             </v-card>
-          </v-tab-item>
-          <v-tab-item>
-            <v-card flat>
-              <v-card-text>
-                <p>
-                  Morbi nec metus. Suspendisse faucibus, nunc et pellentesque egestas, lacus ante convallis tellus,
-                  vitae iaculis lacus elit id tortor. Sed mollis, eros et ultrices tempus, mauris ipsum aliquam
-                  libero, non adipiscing dolor urna a orci. Curabitur ligula sapien, tincidunt non, euismod vitae,
-                  posuere imperdiet, leo. Nunc sed turpis.
-                </p>
-
-                <p>
-                  Suspendisse feugiat. Suspendisse faucibus, nunc et pellentesque egestas, lacus ante convallis tellus,
-                  vitae iaculis lacus elit id tortor. Proin viverra, ligula sit amet ultrices semper, ligula arcu
-                  tristique sapien, a accumsan nisi mauris ac eros. In hac habitasse platea dictumst. Fusce ac
-                  felis sit amet ligula pharetra condimentum.
-                </p>
-
-                <p>
-                  Sed consequat, leo eget bibendum sodales, augue velit cursus nunc, quis gravida magna mi a libero
-                  Nam commodo suscipit quam. In consectetuer turpis ut velit. Sed cursus turpis vitae tortor.
-                  Aliquam eu nunc.
-                </p>
-
-                <p>
-                  Etiam ut purus mattis mauris sodales aliquam. Ut varius tincidunt libero. Aenean viverra rhoncus
-                  pede. Duis leo. Fusce fermentum odio nec arcu.
-                </p>
-
-                <p class="mb-0">
-                  Donec venenatis vulputate lorem. Aenean viverra rhoncus pede. In dui magna, posuere eget,
-                  vestibulum et, tempor auctor, justo. Fusce commodo aliquam arcu. Suspendisse enim turpis,
-                  dictum sed, iaculis a, condimentum nec, nisi.
-                </p>
-              </v-card-text>
-            </v-card>
-          </v-tab-item>
-          <v-tab-item>
-            <v-card flat>
-              <v-card-text>
-                <p>
-                  Fusce a quam. Phasellus nec sem in justo pellentesque facilisis. Nam eget dui. Proin viverra,
-                  ligula sit amet ultrices semper, ligula arcu tristique sapien, a accumsan nisi mauris ac eros.
-                  In dui magna, posuere eget, vestibulum et, tempor auctor, justo.
-                </p>
-
-                <p class="mb-0">
-                  Cras sagittis. Phasellus nec sem in justo pellentesque facilisis. Proin sapien ipsum, porta a,
-                  auctor quis, euismod ut, mi. Donec quam felis, ultricies nec, pellentesque eu, pretium quis,
-                  sem. Nam at tortor in tellus interdum sagittis.
-                </p>
-              </v-card-text>
-            </v-card>
-          </v-tab-item>
-        </v-tabs>
-      </v-card>
-    </template>
+          </v-col>
+        </v-row>
+      </template>
+    </v-data-iterator>
+  </v-container>
   </section>
 </template>
 
 <script>
-import ROUTES from '../router/routeNames';
-
 export default {
-  name: 'Store',
-  data() {
-    return {
-      dateMenu: false,
-      date: null,
-      search: '',
-      headers: [
-        {
-          text: 'Date',
-          align: 'start',
-          sortable: true,
-          value: 'date',
-        },
-        { text: 'Farm/Batch', value: 'batch' },
-        { text: 'Category', value: 'category' },
-        { text: 'Type', value: 'type' },
-        { text: 'Amount (₦)', value: 'amount' },
-      ],
-      items: [
-        {
-          date: '2020-02-02',
-          batch: 'AJG-P001-B01',
-          category: 'Transport',
-          amount: 5780,
-          type: 'One time'
-        },
-        {
-          date: '2020-02-02',
-          batch: 'AJG-P001-B01',
-          category: 'Medication',
-          amount: 5780,
-          type: 'Recurring'
-        },
-        {
-          date: '2020-02-02',
-          batch: 'AJG-P001-B01',
-          category: 'Salaries',
-          amount: 5677,
-          type: 'Recurring'
-        },
-        {
-          date: '2020-02-02',
-          batch: 'AJG-P001-B01',
-          category: 'Feed',
-          amount: 234,
-          type: 'Recurring'
-        },
-        {
-          date: '2020-02-02',
-          batch: 'AJG-P001-B01',
-          category: 'Construction/Repairs',
-          amount: 1000,
-          type: 'Recurring'
-        },
-        {
-          date: '2020-02-02',
-          batch: 'AJG-P001-B01',
-          category: 'Other',
-          amount: 600,
-          type: 'One time'
-        }
-      ]
-    };
-  },
+  data: () => ({
+    itemsPerPage: 20,
+    items: [
+      {
+        name: 'Finished feed',
+        calories: 159,
+        fat: 6.0,
+        carbs: 24,
+        protein: 4.0,
+        sodium: 87,
+        calcium: '14%',
+        iron: '1%',
+      },
+      {
+        name: 'Lasota',
+        calories: 237,
+        fat: 9.0,
+        carbs: 37,
+        protein: 4.3,
+        sodium: 129,
+        calcium: '8%',
+        iron: '1%',
+      },
+      {
+        name: 'Corn',
+        calories: 262,
+        fat: 16.0,
+        carbs: 23,
+        protein: 6.0,
+        sodium: 337,
+        calcium: '6%',
+        iron: '7%',
+      },
+      {
+        name: 'Layer concentrate',
+        calories: 305,
+        fat: 3.7,
+        carbs: 67,
+        protein: 4.3,
+        sodium: 413,
+        calcium: '3%',
+        iron: '8%',
+      },
+      {
+        name: 'Grower concentrate',
+        calories: 305,
+        fat: 3.7,
+        carbs: 67,
+        protein: 4.3,
+        sodium: 413,
+        calcium: '3%',
+        iron: '8%',
+      },
+      {
+        name: 'Chick feed',
+        calories: 305,
+        fat: 3.7,
+        carbs: 67,
+        protein: 4.3,
+        sodium: 413,
+        calcium: '3%',
+        iron: '8%',
+      },
+      {
+        name: 'Plastic crates',
+        calories: 305,
+        fat: 3.7,
+        carbs: 67,
+        protein: 4.3,
+        sodium: 413,
+        calcium: '3%',
+        iron: '8%',
+      },
+      {
+        name: 'Diesel',
+        calories: 305,
+        fat: 3.7,
+        carbs: 67,
+        protein: 4.3,
+        sodium: 413,
+        calcium: '3%',
+        iron: '8%',
+      }
+    ]
+  }),
   methods: {
-    createNew() {
-      this.$router.push({ name: ROUTES.NEW_PRODUCTION });
-    }
+    createNew() {}
   }
 };
 </script>

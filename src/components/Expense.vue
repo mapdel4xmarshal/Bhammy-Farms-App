@@ -4,14 +4,12 @@
       <v-card-title>New Expense</v-card-title>
       <v-divider></v-divider>
       <v-card-text>
-        <v-form v-model="valid">
+        <v-form>
           <v-container>
             <v-row>
               <v-col
               >
                 <v-text-field
-                  v-model="lastname"
-                  :rules="nameRules"
                   label="Date"
                   hint="Date incurred"
                   persistent-hint
@@ -21,8 +19,15 @@
 
               <v-col cols="12">
                 <v-text-field
-                  v-model="email"
-                  :rules="emailRules"
+                  label="Type"
+                  hint="Expense type."
+                  persistent-hint
+                  required
+                ></v-text-field>
+              </v-col>
+
+              <v-col cols="12">
+                <v-text-field
                   label="Category"
                   hint="Expense category."
                   persistent-hint
@@ -32,10 +37,8 @@
 
               <v-col>
                 <v-text-field
-                  v-model="lastname"
-                  :rules="nameRules"
                   type="number"
-                  label="quantity"
+                  label="Quantity"
                   hint="Quantity."
                   persistent-hint
                   required
@@ -44,102 +47,33 @@
 
               <v-col cols="12">
                 <v-text-field
-                  v-model="email"
-                  :rules="emailRules"
-                  label="Type"
-                  hint="Recurring or One time."
-                  persistent-hint
-                  required
-                ></v-text-field>
-              </v-col>
-
-              <v-col cols="12">
-                <v-text-field
-                  v-model="email"
-                  :rules="emailRules"
                   label="Invoice number"
                   hint="Invoice number."
                   persistent-hint
                 ></v-text-field>
               </v-col>
 
-              <v-col
-                cols="12"
-              >
+              <v-col cols="12">
                 <v-text-field
-                  v-model="lastname"
-                  :rules="nameRules"
+                  label="Provider/supplier"
+                  hint="Product supplier or service provider information"
+                  persistent-hint
+                ></v-text-field>
+              </v-col>
+
+              <v-col cols="12">
+                <v-file-input
+                  accept="image/*"
                   label="Proof of payment"
-                  hint="Image upload"
-                  persistent-hint
-                ></v-text-field>
-              </v-col>
-
-              <v-col
-                cols="12"
-              >
-                <v-text-field
-                  v-model="email"
-                  :rules="emailRules"
-                  label="Move out date"
-                  hint="Projected move out date."
-                  persistent-hint
-                  required
-                ></v-text-field>
-              </v-col>
-
-              <v-col
-                cols="12"
-              >
-                <v-text-field
-                  v-model="lastname"
-                  :rules="nameRules"
-                  label="Initial stock"
-                  hint="Total number of birds purchased or moved-in."
-                  persistent-hint
-                  required
-                ></v-text-field>
+                  hint="Upload proof of payment"
+                  prepend-icon=""
+                  persistent-hint/>
               </v-col>
 
               <v-col cols="12">
                 <v-text-field
-                  v-model="email"
-                  :rules="emailRules"
-                  label="Current stock"
-                  hint="Initial stock minus moralities."
-                  persistent-hint
-                  required
-                ></v-text-field>
-              </v-col>
-
-              <v-col cols="12">
-                <v-text-field
-                  v-model="lastname"
-                  :rules="nameRules"
-                  label="Initial age"
-                  hint="Age of the flock at move in date."
-                  persistent-hint
-                  required
-                ></v-text-field>
-              </v-col>
-
-              <v-col cols="12">
-                <v-text-field
-                  v-model="email"
-                  :rules="emailRules"
-                  label="Cost/bird"
-                  hint="Cost of purchasing a bird."
-                  persistent-hint
-                  required
-                ></v-text-field>
-              </v-col>
-
-              <v-col cols="12">
-                <v-text-field
-                  v-model="email"
-                  :rules="emailRules"
                   label="Amount"
-                  hint="Cost of purchasing the flock."
+                  hint="Cost of the purchase / service."
                   persistent-hint
                   required
                 ></v-text-field>
@@ -147,13 +81,11 @@
 
               <v-col cols="12">
                 <v-textarea
-                  v-model="email"
-                  :rules="emailRules"
-                  label="Note"
+                  label="Description"
                   clearable
                   filled
                   no-resize=""
-                  hint="Notable information about the flock."
+                  hint="Description of the expense or service."
                   persistent-hint
                   required
                 ></v-textarea>

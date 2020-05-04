@@ -3,6 +3,7 @@
     <v-toolbar flat dense color="transparent">
       <v-toolbar-title>New Production</v-toolbar-title>
       <v-spacer></v-spacer>
+      <v-btn text color="primary" class="spacer--right">cancel</v-btn>
       <v-btn color="primary" tile @click="createNew">
         Save
       </v-btn>

@@ -1,9 +1,10 @@
 <template>
   <section>
+    <expense :active="newExpense" @update="newExpense = false"/>
     <v-toolbar flat dense color="transparent">
       <v-toolbar-title class="grey--text">Expenses</v-toolbar-title>
       <v-spacer></v-spacer>
-      <v-btn tile color="primary" @click="createNew">
+      <v-btn tile color="primary" @click="newExpense = true">
         New Expenses
       </v-btn>
     </v-toolbar>
@@ -32,12 +33,15 @@
 
 <script>
 import ROUTES from '../router/routeNames';
+import Expense from '../components/Expense.vue';
 
 export default {
   name: 'Expenses',
+  components: { Expense },
   data() {
     return {
       dateMenu: false,
+      newExpense: false,
       date: null,
       search: '',
       headers: [
@@ -48,59 +52,59 @@ export default {
           value: 'date',
         },
         { text: 'Farm/Batch', value: 'batch' },
-        { text: 'Category', value: 'category' },
         { text: 'Type', value: 'type' },
-        { text: 'Amount (₦)', value: 'amount' },
+        { text: 'Category', value: 'category' },
+        { text: 'Amount', value: 'amount' },
       ],
       items: [
         {
           date: '2020-02-02',
           batch: 'AJG-P001-B01',
           category: 'Transport',
-          amount: 5780,
-          type: 'One time'
+          amount: '₦5780',
+          type: 'Purchases'
         },
         {
           date: '2020-02-02',
           batch: 'AJG-P001-B01',
           category: 'Medication',
-          amount: 5780,
-          type: 'Recurring'
+          amount: '₦5780',
+          type: 'Services'
         },
         {
           date: '2020-02-02',
           batch: 'AJG-P001-B01',
           category: 'Salaries',
-          amount: 5677,
-          type: 'Recurring'
+          amount: '₦5677',
+          type: 'Services'
         },
         {
           date: '2020-02-02',
           batch: 'AJG-P001-B01',
           category: 'Feed',
-          amount: 234,
-          type: 'Recurring'
+          amount: '₦234',
+          type: 'Services'
         },
         {
           date: '2020-02-02',
           batch: 'AJG-P001-B01',
           category: 'Construction/Repairs',
-          amount: 1000,
-          type: 'Recurring'
+          amount: '₦1000',
+          type: 'Services'
         },
         {
           date: '2020-02-02',
           batch: 'AJG-P001-B01',
           category: 'Fuel',
-          amount: 1000,
-          type: 'One time'
+          amount: '₦1000',
+          type: 'Purchases'
         },
         {
           date: '2020-02-02',
           batch: 'AJG-P001-B01',
           category: 'Other',
-          amount: 600,
-          type: 'One time'
+          amount: '₦600',
+          type: 'Purchases'
         }
       ]
     };

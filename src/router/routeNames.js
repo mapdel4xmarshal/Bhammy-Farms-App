@@ -5,6 +5,7 @@ const ROUTES = {
   DASHBOARD: 'Dashboard',
   EXPENSES: 'Expenses',
   INCOME: 'Income',
+  INCOME_DETAIL: 'IncomeDetail',
   NEW_PRODUCTION: 'NewProduction',
   PRODUCTION: 'Production',
   REPORT: 'Report',

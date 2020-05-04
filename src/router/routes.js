@@ -1,8 +1,9 @@
 import ROUTES from './routeNames';
 
 const routes = [{
-  path: '/',
+  path: '/dashboard',
   name: ROUTES.DASHBOARD,
+  alias: '/',
   component: () => import(/* webpackChunkName: "dashboard" */ '../views/Dashboard.vue')
 },
 {
@@ -21,6 +22,11 @@ const routes = [{
   component: () => import(/* webpackChunkName: "batches" */ '../views/Batches.vue'),
 },
 {
+  path: '/customers',
+  name: ROUTES.CUSTOMERS,
+  component: () => import(/* webpackChunkName: "batches" */ '../views/Customers.vue'),
+},
+{
   path: '/expenses',
   name: ROUTES.EXPENSES,
   component: () => import(/* webpackChunkName: "expenses" */ '../views/Expenses.vue'),
@@ -29,6 +35,11 @@ const routes = [{
   path: '/income',
   name: ROUTES.INCOME,
   component: () => import(/* webpackChunkName: "income" */ '../views/Income.vue'),
+},
+{
+  path: '/income/:id',
+  name: ROUTES.INCOME_DETAIL,
+  component: () => import(/* webpackChunkName: "income" */ '../views/IncomeDetail.vue'),
 },
 {
   path: '/production',
@@ -63,7 +74,7 @@ const routes = [{
 {
   path: '/settings',
   name: ROUTES.SETTINGS,
-  component: () => import(/* webpackChunkName: "store" */ '../views/Store.vue'),
+  component: () => import(/* webpackChunkName: "store" */ '../views/Settings.vue'),
 }
 ];
 

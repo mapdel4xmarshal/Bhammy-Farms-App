@@ -25,7 +25,11 @@
       multi-sort
       :search="search"
       class="elevation-1"
-    ></v-data-table>
+    >
+      <template v-slot:item.status="{ item }">
+        <v-chip color="green" dark outlined label>{{ item.status }}</v-chip>
+      </template>
+    </v-data-table>
 
   </section>
 </template>
@@ -54,6 +58,7 @@ export default {
           value: 'date',
         },
         { text: 'Farm/Batch', value: 'batch' },
+        { text: 'Type', value: 'type' },
         { text: 'Customer', value: 'customer' },
         { text: 'Status', value: 'status' },
         { text: 'Amount (₦)', value: 'amount' },
@@ -65,29 +70,33 @@ export default {
           batch: 'AJG-P001-B01',
           status: 'Paid',
           amount: 5780,
+          type: 'Egg',
           customer: 'Mrs Semirat'
         },
         {
-          id: '0001',
+          id: '0002',
           date: '2020-02-02',
           batch: 'AJG-P001-B01',
           status: 'Paid',
           amount: 5780,
+          type: 'Manure',
           customer: 'Mrs Semirat'
         },
         {
-          id: '0001',
+          id: '0003',
           date: '2020-02-02',
           batch: 'AJG-P001-B01',
           status: 'Paid',
           amount: 5780,
+          type: 'Old layers',
           customer: 'Mrs Semirat'
         },
         {
-          id: '0001',
+          id: '0004',
           date: '2020-02-02',
           batch: 'AJG-P001-B01',
           status: 'Paid',
+          type: 'Broiler',
           amount: 5780,
           customer: 'Mrs Semirat'
         }
@@ -96,7 +105,7 @@ export default {
   },
   methods: {
     createNew() {
-      this.$router.push({ name: ROUTES.NEW_PRODUCTION });
+      this.$router.push({ name: ROUTES.INCOME_DETAIL, params: { id: 'new' } });
     }
   }
 };
