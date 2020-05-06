@@ -14,9 +14,42 @@
   <v-container fluid>
     <v-data-iterator
       :items="items"
+      :sort-desc="sortDesc"
       :items-per-page.sync="itemsPerPage"
       hide-default-header
     >
+      <template v-slot:header>
+        <v-row
+          dark
+          color="primary"
+          class="mb-1"
+        >
+          <v-col cols="3">
+            <v-select
+            v-model="sortBy"
+            flat
+            solo-inverted
+            hide-details
+            :items="keys"
+            prepend-inner-icon="mdi-magnify"
+            label="Sort by"
+          ></v-select>
+          </v-col>
+          <v-spacer/>
+          <v-col cols="3">
+          <v-text-field
+            v-model="search"
+            clearable
+            flat
+            solo-inverted
+            hide-details
+            prepend-inner-icon="mdi-magnify"
+            label="Search"
+          ></v-text-field>
+          </v-col>
+        </v-row>
+      </template>
+
       <template v-slot:default="props">
         <v-row>
           <v-col
@@ -27,47 +60,56 @@
             md="4"
             lg="3"
           >
-            <v-card>
-              <v-card-title class="subheading font-weight-bold">{{ item.name }}</v-card-title>
+            <v-card
+              :loading="loading"
+              class="mx-auto my-12"
+              max-width="374"
+              hover
+            >
+              <v-img
+                height="250"
+                :src="item.img"
+              ></v-img>
 
-              <v-divider></v-divider>
+              <v-card-title>{{ item.name }}</v-card-title>
 
-              <v-list dense>
-                <v-list-item>
-                  <v-list-item-content>Calories:</v-list-item-content>
-                  <v-list-item-content class="align-end">{{ item.calories }}</v-list-item-content>
-                </v-list-item>
+              <v-card-text>
 
-                <v-list-item>
-                  <v-list-item-content>Fat:</v-list-item-content>
-                  <v-list-item-content class="align-end">{{ item.fat }}</v-list-item-content>
-                </v-list-item>
+                <div class="my-4 subtitle-1">
+                  $ • Italian, Cafe
+                </div>
 
-                <v-list-item>
-                  <v-list-item-content>Carbs:</v-list-item-content>
-                  <v-list-item-content class="align-end">{{ item.carbs }}</v-list-item-content>
-                </v-list-item>
+                <div>Small plates, salads & sandwiches - an intimate setting with 12 indoor seats plus
+                  patio seating.</div>
+              </v-card-text>
 
-                <v-list-item>
-                  <v-list-item-content>Protein:</v-list-item-content>
-                  <v-list-item-content class="align-end">{{ item.protein }}</v-list-item-content>
-                </v-list-item>
+              <v-divider class="mx-4"></v-divider>
 
-                <v-list-item>
-                  <v-list-item-content>Sodium:</v-list-item-content>
-                  <v-list-item-content class="align-end">{{ item.sodium }}</v-list-item-content>
-                </v-list-item>
-
-                <v-list-item>
-                  <v-list-item-content>Calcium:</v-list-item-content>
-                  <v-list-item-content class="align-end">{{ item.calcium }}</v-list-item-content>
-                </v-list-item>
-
-                <v-list-item>
-                  <v-list-item-content>Iron:</v-list-item-content>
-                  <v-list-item-content class="align-end">{{ item.iron }}</v-list-item-content>
-                </v-list-item>
-              </v-list>
+              <v-card-actions>
+                <v-row>
+                  <v-col>
+                  <v-progress-linear
+                    v-model="item.remaining"
+                    :color="item.remaining? 'green' : '#e50f1b'"
+                    :background-opacity="item.remaining? 0.35 : 1"
+                    height="20"
+                    reactive
+                  >
+                    <template v-slot="{ value }">
+                      <strong>{{ Math.ceil(value) }}%</strong>
+                    </template>
+                  </v-progress-linear>
+                  </v-col>
+                </v-row>
+                <v-spacer/>
+                <v-btn
+                  color="primary"
+                  text
+                  @click="reserve"
+                >
+                  Restock
+                </v-btn>
+              </v-card-actions>
             </v-card>
           </v-col>
         </v-row>
@@ -84,88 +126,43 @@ export default {
     items: [
       {
         name: 'Finished feed',
-        calories: 159,
-        fat: 6.0,
-        carbs: 24,
-        protein: 4.0,
-        sodium: 87,
-        calcium: '14%',
-        iron: '1%',
+        img: 'https://avianaquamiser.com/images/img/20120514chickenfeed.jpg',
+        remaining: 20
       },
       {
         name: 'Lasota',
-        calories: 237,
-        fat: 9.0,
-        carbs: 37,
-        protein: 4.3,
-        sodium: 129,
-        calcium: '8%',
-        iron: '1%',
+        img: 'https://vetvaco.com.vn/uploaded/san-pham/LASOTA/La_new.jpg'
       },
       {
         name: 'Corn',
-        calories: 262,
-        fat: 16.0,
-        carbs: 23,
-        protein: 6.0,
-        sodium: 337,
-        calcium: '6%',
-        iron: '7%',
+        img: 'https://img1.goodfon.com/wallpaper/big/9/3e/bag-beans-corn.jpg'
       },
       {
-        name: 'Layer concentrate',
-        calories: 305,
-        fat: 3.7,
-        carbs: 67,
-        protein: 4.3,
-        sodium: 413,
-        calcium: '3%',
-        iron: '8%',
+        name: 'Layer concentrate (Hybrid)',
+        img: 'https://hybridfeeds.com/wp-content/uploads/2018/09/12.jpg'
       },
       {
-        name: 'Grower concentrate',
-        calories: 305,
-        fat: 3.7,
-        carbs: 67,
-        protein: 4.3,
-        sodium: 413,
-        calcium: '3%',
-        iron: '8%',
+        name: 'Grower concentrate (Hybrid)',
+        img: 'https://www.afrimash.com/wp-content/uploads/2019/02/Grower-concentrate.jpg'
       },
       {
-        name: 'Chick feed',
-        calories: 305,
-        fat: 3.7,
-        carbs: 67,
-        protein: 4.3,
-        sodium: 413,
-        calcium: '3%',
-        iron: '8%',
+        name: 'Chick Mash Feed',
+        img: 'https://www.afrimash.com/wp-content/uploads/2019/05/New-Project-1-6.jpg'
       },
       {
         name: 'Plastic crates',
-        calories: 305,
-        fat: 3.7,
-        carbs: 67,
-        protein: 4.3,
-        sodium: 413,
-        calcium: '3%',
-        iron: '8%',
+        img: 'https://images.yaoota.com/NVWQ4T76kydBUKxc0J35f2D8Jng=/trim/yaootaweb-production-ng/media/crawledproductimages/ca53a6deb861381aa93323f2e97e2f6b43da489b.jpg'
       },
       {
-        name: 'Diesel',
-        calories: 305,
-        fat: 3.7,
-        carbs: 67,
-        protein: 4.3,
-        sodium: 413,
-        calcium: '3%',
-        iron: '8%',
+        name: 'Paper crates',
+        img: 'https://www.theroachcafe.com/wp-content/uploads/2015/12/eggcrate.jpg'
       }
     ]
   }),
   methods: {
-    createNew() {}
+    createNew() {
+      console.log(this.$vuetify.breakpoint);
+    }
   }
 };
 </script>
