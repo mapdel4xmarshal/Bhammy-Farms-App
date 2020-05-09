@@ -19,6 +19,27 @@
             dense
           ></v-select>
         </v-col>
+        <v-col cols="12" md="2">
+
+          <v-menu
+            :close-on-content-click="false"
+            :nudge-right="40"
+            transition="scale-transition"
+            offset-y
+            min-width="290px"
+          >
+            <template v-slot:activator="{ on }">
+              <v-text-field
+                v-model="dateRangeText"
+                dense
+                label="Date"
+                autocomplete="false"
+                v-on="on"
+              ></v-text-field>
+            </template>
+            <v-date-picker v-model="date" @input="menu2 = false" range></v-date-picker>
+          </v-menu>
+        </v-col>
         <v-spacer></v-spacer>
         <v-col cols="12" md="2">
           <v-text-field
@@ -28,6 +49,24 @@
             v-model="search"
             width='100'
           ></v-text-field>
+        </v-col>
+      </v-row>
+
+      <v-row>
+        <v-col cols="12" md="3">
+          <metric-card/>
+        </v-col>
+
+        <v-col cols="12" md="3">
+          <metric-card/>
+        </v-col>
+
+        <v-col cols="12" md="3">
+          <metric-card/>
+        </v-col>
+
+        <v-col cols="12" md="3">
+          <metric-card/>
         </v-col>
       </v-row>
     <v-data-table
@@ -44,13 +83,14 @@
 
 <script>
 import ROUTES from '../router/routeNames';
+import MetricCard from '../components/MetricCard.vue';
 
 export default {
   name: 'Production',
   data() {
     return {
       dateMenu: false,
-      date: null,
+      date: [],
       search: '',
       productionTypes: [
         'Eggs',
@@ -126,6 +166,14 @@ export default {
         },
       ]
     };
+  },
+  components: {
+    MetricCard
+  },
+  computed: {
+    dateRangeText() {
+      return this.date.join(' ~ ');
+    }
   },
   methods: {
     createNew() {

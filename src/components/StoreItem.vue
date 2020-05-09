@@ -1,17 +1,16 @@
 <template>
   <v-dialog v-model="active" persistent max-width="800px" scrollable>
     <v-card>
-      <v-card-title>New Expense</v-card-title>
+      <v-card-title>New Store Item</v-card-title>
       <v-divider></v-divider>
       <v-card-text>
         <v-form>
           <v-container>
             <v-row>
-              <v-col
-              >
+              <v-col cols="12">
                 <v-text-field
-                  label="Date"
-                  hint="Date incurred"
+                  label="Item name"
+                  hint="Item name"
                   persistent-hint
                   required
                 ></v-text-field>
@@ -19,8 +18,8 @@
 
               <v-col cols="12">
                 <v-text-field
-                  label="Type"
-                  hint="Expense type."
+                  label="Farm"
+                  hint="Farm house where the item is located."
                   persistent-hint
                   required
                 ></v-text-field>
@@ -28,16 +27,6 @@
 
               <v-col cols="12">
                 <v-text-field
-                  label="Category"
-                  hint="Expense category."
-                  persistent-hint
-                  required
-                ></v-text-field>
-              </v-col>
-
-              <v-col>
-                <v-text-field
-                  type="number"
                   label="Quantity"
                   hint="Quantity."
                   persistent-hint
@@ -47,36 +36,83 @@
 
               <v-col cols="12">
                 <v-text-field
-                  label="Invoice number"
-                  hint="Invoice number."
+                  label="Category"
+                  hint="Item category."
                   persistent-hint
+                  required
                 ></v-text-field>
               </v-col>
 
               <v-col cols="12">
                 <v-text-field
-                  label="Provider/supplier"
-                  hint="Product supplier or service provider information"
+                  label="Brand"
+                  hint="Item Brand."
                   persistent-hint
+                  required
+                ></v-text-field>
+              </v-col>
+
+              <v-col cols="12">
+                <v-text-field
+                  label="Price"
+                  hint="Price of the item."
+                  persistent-hint
+                  required
+                ></v-text-field>
+              </v-col>
+
+              <v-col cols="12">
+                <v-text-field
+                  label="Total"
+                  hint="Item total."
+                  persistent-hint
+                  required
+                ></v-text-field>
+              </v-col>
+
+              <v-col cols="12">
+                <v-text-field
+                  label="Supplier"
+                  hint="Item supplier."
+                  persistent-hint
+                  required
+                ></v-text-field>
+              </v-col>
+
+              <v-col cols="12">
+                <v-text-field
+                  label="Expiry date"
+                  hint="Item expiry date or shelf life."
+                  persistent-hint
+                  required
+                ></v-text-field>
+              </v-col>
+
+              <v-col cols="12">
+                <v-text-field
+                  label="Empty level (Threshold)"
+                  hint="No of items to be considered as low in stock."
+                  persistent-hint
+                  required
+                ></v-text-field>
+              </v-col>
+
+              <v-col cols="12">
+                <v-text-field
+                  label="Full level"
+                  hint="No of items to be considered as full stock."
+                  persistent-hint
+                  required
                 ></v-text-field>
               </v-col>
 
               <v-col cols="12">
                 <v-file-input
                   accept="image/*"
-                  label="Proof of payment"
-                  hint="Upload proof of payment"
-                  prepend-icon=""
+                  label="Image"
+                  hint="Item picture"
+                  prepend-icon
                   persistent-hint/>
-              </v-col>
-
-              <v-col cols="12">
-                <v-text-field
-                  label="Amount"
-                  hint="Cost of the purchase / service."
-                  persistent-hint
-                  required
-                ></v-text-field>
               </v-col>
 
               <v-col cols="12">
@@ -85,7 +121,7 @@
                   clearable
                   filled
                   no-resize
-                  hint="Description of the expense or service."
+                  hint="Additional information about the item."
                   persistent-hint
                   required
                 ></v-textarea>
@@ -106,7 +142,7 @@
 
 <script>
 export default {
-  name: 'Expense',
+  name: 'StoreItem',
   props: {
     active: {
       type: Boolean,
