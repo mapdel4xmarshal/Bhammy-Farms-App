@@ -34,6 +34,7 @@
                 dense
                 label="Date"
                 autocomplete="false"
+                clearable
                 v-on="on"
               ></v-text-field>
             </template>
@@ -54,19 +55,19 @@
 
       <v-row>
         <v-col cols="12" md="3">
-          <metric-card/>
+          <metric-card title="Total Eggs Produced" value="12,898 crates" img="https://ya-webdesign.com/transparent250_/whiter-egg.png"/>
         </v-col>
 
         <v-col cols="12" md="3">
-          <metric-card/>
+          <metric-card title="Total Flocks" value="12,898 birds" img="https://i.ya-webdesign.com/images/hen-vector-drawing-16.png"/>
         </v-col>
 
         <v-col cols="12" md="3">
-          <metric-card/>
+          <metric-card title="Feeds Consumed" value="324,223 tonnes" img="https://cdn5.vectorstock.com/i/1000x1000/54/99/bag-of-wheat-thin-line-icon-farming-agriculture-vector-20105499.jpg"/>
         </v-col>
 
         <v-col cols="12" md="3">
-          <metric-card/>
+          <metric-card title="Mortalities" value="120 birds" img="https://thumbs.dreamstime.com/b/dead-bones-line-illustration-icon-white-background-signs-symbols-can-be-used-web-logo-mobile-app-ui-ux-172929843.jpg"/>
         </v-col>
       </v-row>
     <v-data-table
