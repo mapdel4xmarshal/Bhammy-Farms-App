@@ -5,7 +5,7 @@
       <v-toolbar-title class="grey--text">Expenses</v-toolbar-title>
       <v-spacer></v-spacer>
       <v-btn tile color="primary" @click="newExpense = true">
-        New Expenses
+        New Expense
       </v-btn>
     </v-toolbar>
     <v-divider></v-divider>

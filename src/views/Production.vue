@@ -20,10 +20,8 @@
           ></v-select>
         </v-col>
         <v-col cols="12" md="2">
-
           <v-menu
             :close-on-content-click="false"
-            :nudge-right="40"
             transition="scale-transition"
             offset-y
             min-width="290px"
@@ -34,11 +32,10 @@
                 dense
                 label="Date"
                 autocomplete="false"
-                clearable
                 v-on="on"
               ></v-text-field>
             </template>
-            <v-date-picker v-model="date" @input="menu2 = false" range></v-date-picker>
+            <v-date-picker v-model="date" @input="menu2 = false" range landscape></v-date-picker>
           </v-menu>
         </v-col>
         <v-spacer></v-spacer>
@@ -67,7 +64,7 @@
         </v-col>
 
         <v-col cols="12" md="3">
-          <metric-card title="Mortalities" value="120 birds" img="https://thumbs.dreamstime.com/b/dead-bones-line-illustration-icon-white-background-signs-symbols-can-be-used-web-logo-mobile-app-ui-ux-172929843.jpg"/>
+          <metric-card title="Moralities" value="120 birds" img="https://thumbs.dreamstime.com/b/dead-bones-line-illustration-icon-white-background-signs-symbols-can-be-used-web-logo-mobile-app-ui-ux-172929843.jpg"/>
         </v-col>
       </v-row>
     <v-data-table

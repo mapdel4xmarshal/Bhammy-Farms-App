@@ -1,7 +1,7 @@
 <template>
-  <div>
-    Reports
-  </div>
+  <h1>
+    Reports coming soon!
+  </h1>
 </template>
 
 <script>

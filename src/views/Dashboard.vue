@@ -1,46 +1,122 @@
 <template>
-    <section class="dashboard">
+  <v-row>
+    <v-col cols="12">
+      <v-card class="mx-auto">
+        <v-sparkline
+          :value="value"
+          color="#404040"
+          height="80"
+          padding="5"
+          line-width="1"
+          stroke-linecap="round"
+          smooth
+          auto-line-width
+          type="bars"
+        >
+          <template v-slot:label="item">
+            ${{ item.value }}
+          </template>
+        </v-sparkline>
+      </v-card>
+    </v-col>
+
+    <v-col cols="12" md="4">
       <v-card
-        class="mx-auto"
-        max-width="400"
+        class="mx-auto text-center"
       >
-        <v-list-item two-line>
-          <v-list-item-content>
-            <v-list-item-title class="headline">San Francisco</v-list-item-title>
-            <v-list-item-subtitle>Mon, 12:30 PM, Mostly sunny</v-list-item-subtitle>
-          </v-list-item-content>
-        </v-list-item>
+        <div>
+          <v-sheet color="#7f277510">
+            <v-sparkline
+              :value="value"
+              color="#7f2775"
+              height="100"
+              padding="24"
+              stroke-linecap="round"
+              smooth
+            >
+              <template v-slot:label="item">
+                ${{ item.value }}
+              </template>
+            </v-sparkline>
+          </v-sheet>
+        </div>
 
         <v-card-text>
-          <v-row align="center">
-            <v-col class="display-3" cols="6">
-              23&deg;C
-            </v-col>
-            <v-col cols="6">
-              <v-img
-                src="https://cdn.vuetifyjs.com/images/cards/sun.png"
-                alt="Sunny image"
-                width="92"
-              ></v-img>
-            </v-col>
-          </v-row>
+          <div class="display-1 font-weight-thin">Feed Last 7 days</div>
         </v-card-text>
-
-        <v-sparkline
-          :labels="labels"
-          :value="value"
-          color="white"
-          line-width="2"
-          padding="16"
-        ></v-sparkline>
 
         <v-divider></v-divider>
 
-        <v-card-actions>
-          <v-btn text>Full Report</v-btn>
+        <v-card-actions class="justify-center">
+          <v-btn block text>Go to Report</v-btn>
         </v-card-actions>
       </v-card>
-    </section>
+    </v-col>
+    <v-col cols="12" md="4">
+      <v-card
+        class="mx-auto text-center"
+      >
+        <div>
+          <v-sheet color="#7f277510">
+            <v-sparkline
+              :value="value"
+              color="#7f2775"
+              height="100"
+              padding="24"
+              stroke-linecap="round"
+              smooth
+            >
+              <template v-slot:label="item">
+                ${{ item.value }}
+              </template>
+            </v-sparkline>
+          </v-sheet>
+        </div>
+
+        <v-card-text>
+          <div class="display-1 font-weight-thin">Sales Last 7 days</div>
+        </v-card-text>
+
+        <v-divider></v-divider>
+
+        <v-card-actions class="justify-center">
+          <v-btn block text>Go to Report</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-col>
+    <v-col cols="12" md="4">
+      <v-card
+        class="mx-auto text-center"
+      >
+        <div>
+          <v-sheet color="#7f277510">
+            <v-sparkline
+              :value="value"
+              color="#7f2775"
+              height="100"
+              padding="24"
+              stroke-linecap="round"
+              smooth
+            >
+              <template v-slot:label="item">
+                ${{ item.value }}
+              </template>
+            </v-sparkline>
+          </v-sheet>
+        </div>
+
+        <v-card-text>
+          <div class="display-1 font-weight-thin">Production Last 7 days</div>
+        </v-card-text>
+
+        <v-divider></v-divider>
+
+        <v-card-actions class="justify-center">
+          <v-btn block text>Go to Report</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-col>
+  </v-row>
 </template>
 
 <script>
@@ -84,8 +160,6 @@ export default {
 
       // eslint-disable-next-line no-unused-expressions
       inhale && await exhale(1000);
-
-      this.heartbeats = Array.from({ length: 20 }, this.heartbeat);
 
       this.checking = false;
     },

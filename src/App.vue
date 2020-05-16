@@ -10,7 +10,7 @@
       <v-app-bar-nav-icon
         v-if="$mq.phone"
         @click="drawer = !drawer"/>
-        <v-toolbar-title>Bhammy Farms</v-toolbar-title>
+        <farm-selector/>
         <v-spacer></v-spacer>
         <v-btn icon>
           <v-icon>mdi-bell</v-icon>
@@ -74,9 +74,11 @@
 
 <script>
 import ROUTES from './router/routeNames';
+import FarmSelector from './components/FarmSelector.vue';
 
 export default {
   name: 'App',
+  components: { FarmSelector },
   data: () => ({
     smallScreen: false,
     drawer: true,
@@ -90,7 +92,7 @@ export default {
       { title: ROUTES.REPORTS, icon: 'mdi-finance', to: ROUTES.REPORTS },
       { title: ROUTES.STORE, icon: 'mdi-silo', to: ROUTES.STORE },
       { title: ROUTES.CUSTOMERS, icon: 'mdi-account-multiple-outline', to: ROUTES.CUSTOMERS },
-      { title: 'Employees', icon: 'mdi-account-outline', to: ROUTES.CUSTOMERS },
+      { title: 'Employees', icon: 'mdi-account-outline', to: ROUTES.EMPLOYEES },
       { title: ROUTES.SCHEDULES, icon: 'mdi-calendar-check-outline', to: ROUTES.SCHEDULES },
       { title: ROUTES.SETTINGS, icon: 'mdi-cogs', to: ROUTES.SETTINGS }
     ],

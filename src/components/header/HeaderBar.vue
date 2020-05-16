@@ -16,7 +16,7 @@
 <script>
 import { sharedParams } from '../../main';
 import Profile from '../common/Profile';
-import FarmSelector from './FarmSelector';
+import FarmSelector from '../FarmSelector';
 
 export default {
   name: 'HeaderBar',

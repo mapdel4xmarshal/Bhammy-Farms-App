@@ -51,10 +51,11 @@ export default {
           sortable: true,
           value: 'id',
         },
-        { text: 'Name', value: 'name', width: '45%' },
+        { text: 'Name', value: 'name', width: '40%' },
         { text: 'Address', value: 'address' },
-        { text: 'Phone', value: 'phone' },
         { text: 'State', value: 'state' },
+        { text: 'Phone', value: 'phone' },
+        { text: 'Purchase interval', value: 'purchaseInterval' },
         { text: 'Total orders', value: 'orderTotal' }
       ],
       items: [
@@ -62,8 +63,9 @@ export default {
           id: 'AJG-001',
           name: 'Mrs. Semira Bolanle',
           address: '123 Eiyenkorin road, Oloko',
-          phone: '₦5780',
-          state: 'Purchases',
+          phone: '09088888708',
+          state: 'Ilorin',
+          purchaseInterval: 'Weekly',
           orderTotal: 'Purchases',
         },
       ]
