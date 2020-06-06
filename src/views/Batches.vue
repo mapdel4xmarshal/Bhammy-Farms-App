@@ -26,7 +26,7 @@
     <v-data-table
       no-results-text="No batch matching the search value found"
       :headers="headers"
-      :items="items"
+      :items="batches"
       :search="search"
       class="elevation-1"
       multi-sort
@@ -35,6 +35,7 @@
 </template>
 
 <script>
+import axios from 'axios';
 import Batch from '../components/Batch.vue';
 
 export default {
@@ -42,6 +43,7 @@ export default {
   components: { Batch },
   data() {
     return {
+      batches: [],
       newBatch: false,
       date: null,
       search: '',
@@ -61,8 +63,8 @@ export default {
           value: 'moveOutDate'
         },
         {
-          text: 'Type',
-          value: 'type'
+          text: 'Category',
+          value: 'category'
         },
         {
           text: 'Breed',
@@ -88,20 +90,6 @@ export default {
           text: 'State',
           value: 'state'
         },
-      ],
-      items: [
-        {
-          moveInDate: '2020-02-02',
-          id: 'AJG-P001-B01',
-          type: 'Chicks',
-          breed: 'Isa Brown',
-          moveOutDate: '2019-02-02',
-          initialStock: 4200,
-          currentStock: 4190,
-          moveInAge: 16,
-          currentAge: 24,
-          state: 'Active'
-        }
       ]
     };
   },
@@ -109,9 +97,18 @@ export default {
     createNew() {
       this.newBatch = true;
     },
+    getBatches() {
+      axios.get('batches')
+        .then(({ data }) => {
+          this.batches = data;
+        });
+    },
     handleBatchEvent(value) {
       this.newBatch = value;
     }
+  },
+  mounted() {
+    this.getBatches();
   }
 };
 </script>

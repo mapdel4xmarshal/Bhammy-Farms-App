@@ -22,7 +22,6 @@
 
           <v-text-field
             v-model="data.price"
-            :rules="nameRules"
             type="number"
             label="Price"
             prefix="₦"
@@ -32,7 +31,6 @@
 
           <v-text-field
             v-model="data.quantity"
-            :rules="nameRules"
             label="Quantity"
             type="number"
             required
@@ -40,7 +38,6 @@
 
           <v-text-field
             v-model="data.discount"
-            :rules="emailRules"
             label="Discount"
             type="number"
             prefix="₦"

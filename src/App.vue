@@ -10,7 +10,7 @@
       <v-app-bar-nav-icon
         v-if="$mq.phone"
         @click="drawer = !drawer"/>
-        <farm-selector/>
+        <farm-selector :locations="farmLocations"/>
         <v-spacer></v-spacer>
         <v-btn icon>
           <v-icon>mdi-bell</v-icon>
@@ -73,8 +73,10 @@
 </template>
 
 <script>
+import { mapGetters } from 'vuex';
 import ROUTES from './router/routeNames';
 import FarmSelector from './components/FarmSelector.vue';
+import { ACTION_TYPES, GETTER_TYPES } from './store/types';
 
 export default {
   name: 'App',
@@ -97,7 +99,15 @@ export default {
       { title: ROUTES.SETTINGS, icon: 'mdi-cogs', to: ROUTES.SETTINGS }
     ],
     mini: true,
-  })
+  }),
+  computed: {
+    ...mapGetters({
+      farmLocations: GETTER_TYPES.FARM_LOCATIONS
+    })
+  },
+  mounted() {
+    this.$store.dispatch(ACTION_TYPES.GET_FARM_LOCATIONS);
+  }
 };
 </script>
 

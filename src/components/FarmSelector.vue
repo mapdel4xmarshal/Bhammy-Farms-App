@@ -21,25 +21,25 @@
         </v-list-item>
         <v-divider/>
         <v-list-group
-          v-for="farm in farms"
-          :key="farm.name"
-          v-model="farm.active"
+          v-for="location in locations"
+          :key="location.name"
+          v-model="location.active"
           no-action
           prepend-icon="mdi-barn"
         >
           <template v-slot:activator>
             <v-list-item-content>
-              <v-list-item-title v-text="farm.name"></v-list-item-title>
+              <v-list-item-title v-text="location.name"></v-list-item-title>
             </v-list-item-content>
           </template>
 
           <v-list-item
-            v-for="unit in farm.units"
-            :key="unit.name"
+            v-for="house in location.houses"
+            :key="house.name"
             @click="selectFarm"
           >
             <v-list-item-content>
-              <v-list-item-title v-text="unit.name"></v-list-item-title>
+              <v-list-item-title v-text="house.name"></v-list-item-title>
             </v-list-item-content>
           </v-list-item>
         </v-list-group>
@@ -62,6 +62,12 @@ export default {
       ],
       menu: false
     };
+  },
+  props: {
+    locations: {
+      type: Array,
+      required: true
+    }
   },
   methods: {
     selectFarm() {}

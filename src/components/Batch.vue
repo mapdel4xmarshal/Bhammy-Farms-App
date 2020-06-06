@@ -4,14 +4,12 @@
       <v-card-title>New Batch</v-card-title>
       <v-divider></v-divider>
       <v-card-text>
-        <v-form v-model="valid">
+        <v-form>
           <v-container>
             <v-row>
               <v-col
               >
                 <v-text-field
-                  v-model="lastname"
-                  :rules="nameRules"
                   label="Farm"
                   hint="Farm location"
                   persistent-hint
@@ -21,8 +19,6 @@
 
               <v-col cols="12">
                 <v-text-field
-                  v-model="email"
-                  :rules="emailRules"
                   label="Pen"
                   hint="Farm house where the flock will be raised."
                   persistent-hint
@@ -33,8 +29,6 @@
               <v-col
               >
                 <v-text-field
-                  v-model="lastname"
-                  :rules="nameRules"
                   label="Breed"
                   hint="Strain of the flock."
                   persistent-hint
@@ -46,8 +40,6 @@
                 cols="12"
               >
                 <v-text-field
-                  v-model="email"
-                  :rules="emailRules"
                   label="Supplier"
                   hint="Supplier of the flock."
                   persistent-hint
@@ -57,8 +49,6 @@
 
               <v-col cols="12">
                 <v-text-field
-                  v-model="email"
-                  :rules="emailRules"
                   label="Source"
                   hint="Hatchery where flock is raised."
                   persistent-hint
@@ -70,8 +60,6 @@
                 cols="12"
               >
                 <v-text-field
-                  v-model="lastname"
-                  :rules="nameRules"
                   label="Move in date"
                   hint="Date when flock was moved to the pen."
                   persistent-hint
@@ -83,8 +71,6 @@
                 cols="12"
               >
                 <v-text-field
-                  v-model="email"
-                  :rules="emailRules"
                   label="Move out date"
                   hint="Projected move out date."
                   persistent-hint
@@ -96,8 +82,6 @@
                 cols="12"
               >
                 <v-text-field
-                  v-model="lastname"
-                  :rules="nameRules"
                   label="Initial stock"
                   hint="Total number of birds purchased or moved-in."
                   persistent-hint
@@ -107,8 +91,6 @@
 
               <v-col cols="12">
                 <v-text-field
-                  v-model="email"
-                  :rules="emailRules"
                   label="Current stock"
                   hint="Initial stock minus moralities."
                   persistent-hint
@@ -118,8 +100,6 @@
 
               <v-col cols="12">
                 <v-text-field
-                  v-model="lastname"
-                  :rules="nameRules"
                   label="Initial age"
                   hint="Age of the flock at move in date."
                   persistent-hint
@@ -129,8 +109,6 @@
 
               <v-col cols="12">
                 <v-text-field
-                  v-model="email"
-                  :rules="emailRules"
                   label="Cost/bird"
                   hint="Cost of purchasing a bird."
                   persistent-hint
@@ -140,8 +118,6 @@
 
               <v-col cols="12">
                 <v-text-field
-                  v-model="email"
-                  :rules="emailRules"
                   label="Amount"
                   hint="Cost of purchasing the flock."
                   persistent-hint
@@ -151,8 +127,6 @@
 
               <v-col cols="12">
                 <v-textarea
-                  v-model="email"
-                  :rules="emailRules"
                   label="Note"
                   clearable
                   filled
