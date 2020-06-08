@@ -1,39 +1,17 @@
-const { batch, house } = require('../../models');
-
-setTimeout(() => {
-  house.findAll({
-    attributes: ['id'],
-    where: {
-      name: 'OLO-P001'
-    }
-  }).then((house) => {
-    console.log('house', house[0].id);
-    batch.create({
-      batch_id: 'AJG-P001-B01',
-      move_in_date: new Date('2020-02-02'),
-      move_out_date: new Date('2021-06-02'),
-      move_in_age: 16,
-      animal_category_id: 1,
-      animal_breed_id: 2,
-      initial_stock_count: 4100,
-      mortality_count: 392,
-      supplier_id: 121,
-      source_id: 10,
-      cost_per_unit: 1500,
-      total_cost: 5600000,
-      description: 'This birds were gotten from an unknown brooder in Ilorin.',
-      is_active: 1,
-      houseId: house[0].id
-    },
-    { include: [batch.house] })
-      .then((newBatch) => newBatch.id);
-  });
-}, 2000000);
+const { Batch, Breed } = require('../../models');
 
 class Controller {
   async getBatches() {
-    return batch.findAll({ attributes: { exclude: ['createdAt', 'updatedAt'] } })
+    return Batch.findAll({ attributes: { exclude: ['createdAt', 'updatedAt'] } })
       .then((batches) => batches.map((batch) => this._apiJSON(batch.dataValues)));
+  }
+
+  async getBreeds() {   console.log("--------breed")
+    return Breed.findAll({
+      attributes: [['breed_id', 'id'], 'name', 'type', 'category'],
+      order: [['name', 'ASC']]
+    })
+      .then((breeds) => breeds);
   }
 
   async addBatch(batchInfo) {

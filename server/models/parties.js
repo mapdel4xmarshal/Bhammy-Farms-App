@@ -1,4 +1,3 @@
-
 const { Model, DataTypes } = require('sequelize');
 
 class Parties extends Model {
@@ -42,6 +41,10 @@ class Parties extends Model {
         allowNull: true
       }
     };
+  }
+
+  static associate({ Supplier }) {
+   // Parties.suppliers = Parties.belongsTo(Supplier);
   }
 }
 

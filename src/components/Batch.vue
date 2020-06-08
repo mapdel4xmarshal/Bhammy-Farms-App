@@ -6,45 +6,77 @@
       <v-card-text>
         <v-form>
           <v-container>
-            <v-row>
-              <v-col
-              >
-                <v-text-field
+            <v-row>           {{ suppliers }}
+              <v-col>
+                <v-select
                   label="Farm"
                   hint="Farm location"
                   persistent-hint
+                  return-object
                   required
-                ></v-text-field>
+                  v-model="farm"
+                  item-text="name"
+                  item-value="name"
+                  :items="farmLocations"
+                ></v-select>
               </v-col>
 
               <v-col cols="12">
-                <v-text-field
+                <v-select
                   label="Pen"
                   hint="Farm house where the flock will be raised."
                   persistent-hint
                   required
-                ></v-text-field>
+                  :disabled="farm === ''"
+                  item-text="name"
+                  item-value="name"
+                  :items="farm.houses"
+                ></v-select>
               </v-col>
 
-              <v-col
-              >
-                <v-text-field
+              <v-col>
+                <v-select
                   label="Breed"
                   hint="Strain of the flock."
                   persistent-hint
+                  :items="breeds"
+                  item-text="name"
+                  item-value="name"
                   required
-                ></v-text-field>
+                >
+                  <template v-slot:item="{ item, on }">
+                    <v-list-item v-on="on" dense color="primary">
+                      <v-list-item-content>
+                        <v-list-item-title>{{ item.name }}</v-list-item-title>
+                        <v-list-item-subtitle>{{ item.type }}</v-list-item-subtitle>
+                      </v-list-item-content>
+                    </v-list-item>
+                  </template>
+                </v-select>
               </v-col>
 
-              <v-col
-                cols="12"
-              >
-                <v-text-field
+              <v-col cols="12">
+                <v-autocomplete
+                  v-model="supplier"
                   label="Supplier"
                   hint="Supplier of the flock."
                   persistent-hint
                   required
-                ></v-text-field>
+                  clearable
+                  :items="suppliers"
+                  item-text="name"
+                  item-value="name"
+                >
+                  <template v-slot:item="{ item }">
+                    <v-list-item-avatar color="primary" tile>
+                      <span class="white--text">AM</span>
+                    </v-list-item-avatar>
+                    <v-list-item-content>
+                      <v-list-item-title>{{ item.name }}</v-list-item-title>
+                      <v-list-item-subtitle>{{ item.address }}</v-list-item-subtitle>
+                    </v-list-item-content>
+                  </template>
+                </v-autocomplete>
               </v-col>
 
               <v-col cols="12">
@@ -130,7 +162,7 @@
                   label="Note"
                   clearable
                   filled
-                  no-resize=""
+                  no-resize
                   hint="Notable information about the flock."
                   persistent-hint
                   required
@@ -151,22 +183,40 @@
 </template>
 
 <script>
+import { mapGetters } from 'vuex';
+import { ACTION_TYPES, GETTER_TYPES } from '../store/types';
+import { BATCH_GETTER_TYPES, BATCH_ACTION_TYPES } from '../store/modules/batch/types';
+
+
 export default {
   name: 'Batch',
+  data() {
+    return {
+      farm: '',
+      supplier: ''
+    };
+  },
   props: {
     active: {
       type: Boolean,
       required: true
     }
   },
+  computed: {
+    ...mapGetters({
+      farmLocations: GETTER_TYPES.FARM_LOCATIONS,
+      breeds: BATCH_GETTER_TYPES.BREEDS,
+      suppliers: GETTER_TYPES.SUPPLIERS
+    })
+  },
   methods: {
     update() {
       this.$emit('update', false);
     }
+  },
+  created() {
+    this.$store.dispatch(BATCH_ACTION_TYPES.GET_BREEDS);
+    this.$store.dispatch(ACTION_TYPES.GET_SUPPLIERS);
   }
 };
 </script>
-
-<style scoped>
-
-</style>

@@ -43,7 +43,7 @@ class Locations extends Model {
   }
 
   static associate({ House }) {
-    Locations.house = Locations.hasMany(House);
+    Locations.houses = Locations.hasMany(House, { as: 'houses'});
   }
 }
 

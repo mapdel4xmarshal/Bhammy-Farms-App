@@ -8,6 +8,11 @@ router.get('/', async (req, res) => {
   res.json(batches);
 });
 
+router.get('/breeds', async (req, res) => {
+  const breeds = await controllers.getBreeds();
+  res.json(breeds);
+});
+
 router.post('/', async (req, res) => {
   const batch = await controllers.addBatch(req.body);
   res.json(batch);

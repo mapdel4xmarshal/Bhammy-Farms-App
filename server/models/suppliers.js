@@ -24,8 +24,8 @@ class Suppliers extends Model {
     };
   }
 
-  static association({ parties }) {
-    Suppliers.parties = Suppliers.belongsTo(parties);
+  static associate({ Party }) {
+    Suppliers.party = Suppliers.belongsTo(Party);
   }
 }
 

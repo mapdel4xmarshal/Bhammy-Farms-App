@@ -1,0 +1,13 @@
+const BATCH_MUTATION_TYPES = {
+  SET_BREEDS: 'setBreeds'
+};
+
+const BATCH_GETTER_TYPES = {
+  BREEDS: 'breeds'
+};
+
+const BATCH_ACTION_TYPES = {
+  GET_BREEDS: 'getBreeds'
+};
+
+export { BATCH_MUTATION_TYPES, BATCH_GETTER_TYPES, BATCH_ACTION_TYPES };
