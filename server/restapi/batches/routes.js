@@ -15,6 +15,7 @@ router.get('/breeds', async (req, res) => {
 
 router.post('/', async (req, res) => {
   const batch = await controllers.addBatch(req.body);
+  if(batch.error) res.status(batch.status);
   res.json(batch);
 });
 

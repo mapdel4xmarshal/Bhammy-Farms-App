@@ -17,4 +17,10 @@ router.get('/sources', async (req, res) => {
   const sources = await controllers.getSources();
   res.json(sources);
 });
+
+router.get('/sources/:sourceId', async (req, res) => {
+  const sources = await controllers.getSourceById(req.params.sourceId);
+  res.json(sources);
+});
+
 module.exports = router;

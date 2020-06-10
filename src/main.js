@@ -1,4 +1,5 @@
 import Vue from 'vue';
+import Vuelidate from 'vuelidate';
 import App from './App.vue';
 import './registerServiceWorker';
 import router from './router';
@@ -8,6 +9,7 @@ import mq from './plugins/mq';
 import 'roboto-fontface/css/roboto/roboto-fontface.css';
 import '@mdi/font/css/materialdesignicons.css';
 
+Vue.use(Vuelidate);
 Vue.config.productionTip = false;
 
 new Vue({

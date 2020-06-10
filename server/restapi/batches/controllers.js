@@ -1,4 +1,6 @@
-const { Batch, Breed } = require('../../models');
+'use strict';
+
+const { Batch, Breed, House, Sequelize: { Op } } = require('../../models');
 
 class Controller {
   async getBatches() {
@@ -6,7 +8,7 @@ class Controller {
       .then((batches) => batches.map((batch) => this._apiJSON(batch.dataValues)));
   }
 
-  async getBreeds() {   console.log("--------breed")
+  async getBreeds() {
     return Breed.findAll({
       attributes: [['breed_id', 'id'], 'name', 'type', 'category'],
       order: [['name', 'ASC']]
@@ -14,25 +16,58 @@ class Controller {
       .then((breeds) => breeds);
   }
 
-  async addBatch(batchInfo) {
-    return batch.create({
-      batch_id: 'AJG-P001-B01',
-      move_in_date: new Date('2020-02-02'),
-      move_out_date: new Date('2021-06-02'),
-      move_in_age: 16,
+  async addBatch(batch) {
+    const farm = await House.findOne({
+      where: { house_id: batch.houseId },
+      attributes: ['name']
+    });
+
+    const moveOutDate = new Date(batch.moveOutDate);
+    const activeBatchCount = await Batch.count({
+      where: {
+        house_id: batch.houseId,
+        move_out_date: {
+          [Op.gt]: new Date()
+        }
+      }
+    });
+
+    const batchCount = await Batch.count({ where: { 'house_id': batch.houseId } });
+
+    if (activeBatchCount > 0) {
+      return {
+        error: 'A batch already exist for the specified house. ' +
+          'Please end the current batch or select a different house.',
+        status: 409
+      };
+    }
+
+    return Batch.create({
+      name: `${farm.name}-${batchCount.toString()
+        .padStart(3, '0')}`,
+      move_in_date: new Date(batch.moveInDate),
+      move_out_date: moveOutDate,
+      move_in_age: batch.initialAge,
       animal_category_id: 1,
-      animal_breed_id: 2,
-      initial_stock_count: 4100,
-      mortality_count: 392,
-      supplier_id: 121,
-      source_id: 10,
-      cost_per_unit: 1500,
-      total_cost: 5600000,
-      description: 'This birds were gotten from an unknown brooder in Ilorin.',
-      is_active: 1,
-      house_id: '5e4ad559-db3e-4f43-b806-52601671289e'
+      animal_breed_id: batch.breedId,
+      initial_stock_count: batch.initialStock,
+      mortality_count: batch.initialStock - batch.currentStock,
+      supplier_id: batch.supplierId,
+      source_id: batch.sourceId,
+      cost_per_unit: batch.costPerBird,
+      total_cost: batch.amount,
+      description: batch.note,
+      is_active: moveOutDate > new Date(),
+      house_id: batch.houseId
     })
-      .then((newBatch) => newBatch.id);
+      .then((newBatch) => newBatch.batch_id)
+      .catch(error => {
+        console.log(error); // todo: add proper logger
+        return {
+          error: 'Unable to process request. Please try again later!',
+          status: 500
+        };
+      });
   }
 
   async getBatchById(BatchId) {

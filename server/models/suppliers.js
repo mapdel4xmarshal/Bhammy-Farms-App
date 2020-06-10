@@ -1,3 +1,4 @@
+'use strict';
 
 const { Model, DataTypes } = require('sequelize');
 
@@ -25,7 +26,7 @@ class Suppliers extends Model {
   }
 
   static associate({ Party }) {
-    Suppliers.party = Suppliers.belongsTo(Party);
+    Suppliers.party = Suppliers.belongsTo(Party, { foreignKey: 'party_id' });
   }
 }
 

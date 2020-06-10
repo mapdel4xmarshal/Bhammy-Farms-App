@@ -25,8 +25,7 @@ class Controller {
       }]
     })
       .then((location) => location);
-  }                                                                                                                                      /**/
+  } /**/
 }
 
 module.exports = new Controller();
-

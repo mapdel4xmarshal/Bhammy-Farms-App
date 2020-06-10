@@ -5,7 +5,8 @@ module.exports = {
   up: (queryInterface) => queryInterface.bulkInsert(Source.tblName, [
     {
       source_id: 1,
-      remark: 'Good source',
+      party_id: '316756f5-ae9d-4068-b16d-ed6982bb0c3b',
+      remark: 'Good birds',
       created_at: new Date(),
       updated_at: new Date()
     }

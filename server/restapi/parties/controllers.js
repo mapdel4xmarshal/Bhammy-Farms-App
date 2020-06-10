@@ -1,6 +1,17 @@
-const { Supplier, Party, Sequelize } = require('../../models');
+'use strict';
+
+const { Supplier, Party, Source, Sequelize } = require('../../models');
 
 class Controller {
+  constructor() {
+    this._commonFields = [[Sequelize.literal('party.name'), 'name'],
+      [Sequelize.literal('party.email'), 'email'],
+      [Sequelize.literal('party.address'), 'address'],
+      [Sequelize.literal('party.phone'), 'phone'],
+      [Sequelize.literal('party.alt_phone'), 'altPhone'],
+      [Sequelize.literal('party.state'), 'state']];
+  }
+
   async getSuppliers() {
     return Supplier.findAll({
       include: [{
@@ -10,31 +21,62 @@ class Controller {
       raw: true,
       attributes: [
         ['supplier_id', 'id'],
-        [Sequelize.literal('party.name'), 'name'], [Sequelize.literal('party.email'), 'email'],
-        [Sequelize.literal('party.address'), 'address'], [Sequelize.literal('party.phone'), 'phone'],
-        [Sequelize.literal('party.alt_phone'), 'altPhone'], [Sequelize.literal('party.state'), 'state'],
+        ...this._commonFields,
+        'remark'
       ]
     })
       .then((suppliers) => suppliers);
   }
 
-  async getSupplierById(locationId) {
-    return Location.findOne({
-      where: { id: locationId },
-      attributes: [['location_id', 'id'], 'address', 'state', 'name', 'phone', ['alt_phone', 'altPhone']],
+  async getSupplierById(supplierId) {
+    return Supplier.findOne({
+      where: { supplier_id: supplierId },
+      raw: true,
+      attributes: [['supplier_id', 'id'],
+        ...this._commonFields,
+        'remark'],
       include: [{
-        model: House,
-        as: 'houses',
-        attributes: [['house_id', 'id'], 'name', 'type', 'capacity']
+        model: Party,
+        attributes: []
       }]
     })
-      .then((location) => location);
+      .then((supplier) => supplier);
   }
 
   async addSupplier() {
 
   }
+
+  async getSources() {
+    return Source.findAll({
+      include: [{
+        model: Party,
+        attributes: []
+      }],
+      raw: true,
+      attributes: [
+        ['source_id', 'id'],
+        ...this._commonFields,
+        'remark'
+      ]
+    })
+      .then((suppliers) => suppliers);
+  }
+
+  async getSourceById(sourceId) {
+    return Source.findOne({
+      where: { source_id: sourceId },
+      raw: true,
+      attributes: [['source_id', 'id'],
+        ...this._commonFields,
+        'remark'],
+      include: [{
+        model: Party,
+        attributes: []
+      }]
+    })
+      .then((supplier) => supplier);
+  }
 }
 
 module.exports = new Controller();
-

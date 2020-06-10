@@ -1,3 +1,4 @@
+'use strict';
 
 const { Model, DataTypes } = require('sequelize');
 
@@ -43,7 +44,7 @@ class Locations extends Model {
   }
 
   static associate({ House }) {
-    Locations.houses = Locations.hasMany(House, { as: 'houses'});
+    Locations.houses = Locations.hasMany(House, { as: 'houses', foreignKey: 'location_id' });
   }
 }
 
