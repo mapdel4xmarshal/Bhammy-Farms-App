@@ -4,7 +4,7 @@ const { Batch, Breed, House, Sequelize: { Op } } = require('../../models');
 
 class Controller {
   async getBatches() {
-    return Batch.findAll({ attributes: { exclude: ['createdAt', 'updatedAt'] } })
+    return Batch.findAll({ attributes: { exclude: ['createdAt', 'updatedAt'] }, include: [Breed] })
       .then((batches) => batches.map((batch) => this._apiJSON(batch.dataValues)));
   }
 
@@ -43,13 +43,13 @@ class Controller {
     }
 
     return Batch.create({
-      name: `${farm.name}-${batchCount.toString()
+      name: `${farm.name}-${(batchCount + 1).toString()
         .padStart(3, '0')}`,
       move_in_date: new Date(batch.moveInDate),
       move_out_date: moveOutDate,
       move_in_age: batch.initialAge,
       animal_category_id: 1,
-      animal_breed_id: batch.breedId,
+      breed_id: batch.breedId,
       initial_stock_count: batch.initialStock,
       mortality_count: batch.initialStock - batch.currentStock,
       supplier_id: batch.supplierId,
@@ -90,15 +90,16 @@ class Controller {
     return str.replace(/([-_]\w)/g, (g) => g[1].toUpperCase());
   }
 
-  _apiJSON(batch) {
+  _apiJSON(batch) { console.log(batch);
     return {
       id: batch.batch_id,
+      name: batch.name,
       moveInDate: this._normalizeDateString(batch.move_in_date),
       moveOutDate: this._normalizeDateString(batch.move_out_date),
       moveInAge: batch.move_in_age,
       currentAge: batch.move_in_age + this._weekDiff(batch.move_in_date, Date.now()),
-      category: batch.animal_category_id,
-      breed: batch.animal_breed_id,
+      category: batch.Breed.type,
+      breed: batch.Breed.name,
       initialStock: batch.initial_stock_count,
       currentStock: batch.initial_stock_count - batch.mortality_count,
       mortality: batch.mortality_count,

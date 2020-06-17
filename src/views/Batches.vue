@@ -14,7 +14,7 @@
 
     <v-row>
       <v-spacer></v-spacer>
-      <v-col  cols="12" md="2">
+      <v-col cols="12" md="2">
         <v-text-field
           append-icon="mdi-magnify"
           label="Search"
@@ -29,8 +29,24 @@
       :items="batches"
       :search="search"
       class="elevation-1"
+      no-data-text="No batch available, please add a batch."
       multi-sort
     ></v-data-table>
+
+    <v-snackbar
+      v-model="snackbar"
+      :timeout="3000"
+      absolute
+    >
+      Batch created.
+      <v-btn
+        color="blue"
+        text
+        @click="snackbar = false"
+      >
+        Close
+      </v-btn>
+    </v-snackbar>
   </section>
 </template>
 
@@ -43,16 +59,17 @@ export default {
   components: { Batch },
   data() {
     return {
+      snackbar: false,
       batches: [],
       newBatch: false,
       date: null,
       search: '',
       headers: [
         {
-          text: 'Batch Id',
+          text: 'Batch name',
           align: 'start',
           sortable: true,
-          value: 'id',
+          value: 'name',
         },
         {
           text: 'Move in date',
@@ -103,8 +120,11 @@ export default {
           this.batches = data;
         });
     },
-    handleBatchEvent(value) {
-      this.newBatch = value;
+    handleBatchEvent(state) {
+      this.snackbar = state;
+      this.newBatch = false;
+
+      if (state) this.getBatches();
     }
   },
   mounted() {

@@ -33,14 +33,6 @@ class Batches extends Model {
         allowNull: false,
         comment: 'Move in age in weeks'
       },
-      animal_category_id: {
-        type: DataTypes.SMALLINT,
-        allowNull: false
-      },
-      animal_breed_id: {
-        type: DataTypes.SMALLINT,
-        allowNull: false
-      },
       initial_stock_count: {
         type: DataTypes.INTEGER,
         allowNull: false

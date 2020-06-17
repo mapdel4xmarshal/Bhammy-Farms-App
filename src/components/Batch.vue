@@ -246,7 +246,7 @@
       </v-card-text>
       <v-divider></v-divider>
       <v-card-actions>
-        <v-btn color="primary darken-1" text @click="update">Cancel</v-btn>
+        <v-btn color="primary darken-1" text @click="update(false)">Cancel</v-btn>
         <v-spacer></v-spacer>
         <v-btn color="primary darken-1" tile @click="createBatch">Save</v-btn>
       </v-card-actions>
@@ -254,11 +254,10 @@
 
     <v-snackbar
       v-model="snackbar"
-      :timeout="3000"
     >
       {{ feedbackMessage }}
       <v-btn
-        color="blue"
+        color="red"
         text
         @click="snackbar = false"
       >
@@ -316,8 +315,8 @@ export default {
     })
   },
   methods: {
-    update() {
-      this.$emit('update', false);
+    update(state) {
+      this.$emit('update', state);
     },
     createBatch() {
       if (this.$refs.form.validate()) {
@@ -333,7 +332,8 @@ export default {
           ...otherValues
         })
           .then(() => {
-            this.update();
+            this.update(true);
+            this.$ref.form.reset();
           })
           .catch(({ response: { data } }) => {
             this.feedbackMessage = data.error;

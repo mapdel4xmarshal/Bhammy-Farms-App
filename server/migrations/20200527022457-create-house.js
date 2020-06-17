@@ -1,7 +1,7 @@
 
-const { house } = require('../models');
+const { House } = require('../models');
 
 module.exports = {
-  up: (queryInterface) => queryInterface.createTable(house.tblName, house.schema),
-  down: (queryInterface) => queryInterface.dropTable(house.tblName)
+  up: (queryInterface) => queryInterface.createTable(House.tblName, House.schema),
+  down: (queryInterface) => queryInterface.dropTable(House.tblName)
 };
