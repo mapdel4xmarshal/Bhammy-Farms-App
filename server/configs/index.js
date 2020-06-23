@@ -7,5 +7,6 @@ module.exports = {
   dbUser: process.env.DB_USER || 'test',
   dbPass: process.env.DB_PASS || 'test',
   dbHost: process.env.DB_HOST || 'localhost',
-  dbName: process.env.DB_NAME || 'bhammyfarms'
+  dbName: process.env.DB_NAME || 'bhammyfarms',
+  fileUploadPath: process.env.UPLOAD_PATH || path.resolve(__dirname, '../')
 };

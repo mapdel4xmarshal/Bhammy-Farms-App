@@ -4,7 +4,7 @@ const controllers = require('./controllers');
 const router = express.Router();
 
 router.get('/', async (req, res) => {
-  const batches = await controllers.getBatches();
+  const batches = await controllers.getBatches(req.query);
   res.json(batches);
 });
 
@@ -15,7 +15,7 @@ router.get('/breeds', async (req, res) => {
 
 router.post('/', async (req, res) => {
   const batch = await controllers.addBatch(req.body);
-  if(batch.error) res.status(batch.status);
+  if (batch.error) res.status(batch.status);
   res.json(batch);
 });
 

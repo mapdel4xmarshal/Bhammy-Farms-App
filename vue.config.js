@@ -8,6 +8,11 @@ module.exports = {
         target: 'http://localhost:8888/',
         logLevel: 'debug',
         prependPath: true
+      },
+      '/uploads/': {
+        target: 'http://localhost:8888/',
+        logLevel: 'debug',
+        prependPath: true
       }
     }
   }

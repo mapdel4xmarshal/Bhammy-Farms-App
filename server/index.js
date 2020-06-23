@@ -5,6 +5,7 @@ const path = require('path');
 const locations = require('./restapi/locations/routes');
 const batches = require('./restapi/batches/routes');
 const parties = require('./restapi/parties/routes');
+const expenses = require('./restapi/expenses/routes');
 
 const app = express();
 const port = process.env.PORT || 8888;
@@ -15,9 +16,17 @@ app.use(bodyParser.urlencoded({ extended: false }));
 // parse application/json
 app.use(bodyParser.json());
 
+app.use((req, res, next) => {
+  console.log(req.path); next();
+});
+
 // Serve all the files in '/dist' directory
 app.use(express.static(path.resolve(__dirname, '../dist')));
 
+// uploads
+app.use('/uploads', express.static(path.resolve(__dirname, 'uploads')));
+
+app.use('/api/v1/expenses', expenses);
 app.use('/api/v1/locations', locations);
 app.use('/api/v1/batches', batches);
 app.use('/api/v1/parties', parties);

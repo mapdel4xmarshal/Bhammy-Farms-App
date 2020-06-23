@@ -1,10 +1,14 @@
-'use strict';
 
-const { Batch, Breed, House, Sequelize: { Op } } = require('../../models');
+const {
+  Batch, Breed, House, Sequelize: { Op }
+} = require('../../models');
 
 class Controller {
-  async getBatches() {
-    return Batch.findAll({ attributes: { exclude: ['createdAt', 'updatedAt'] }, include: [Breed] })
+  async getBatches({ house }) {
+    let where = {};
+    if (house) where = { house_id: house };
+
+    return Batch.findAll({ where, attributes: { exclude: ['createdAt', 'updatedAt'] }, include: [Breed] })
       .then((batches) => batches.map((batch) => this._apiJSON(batch.dataValues)));
   }
 
@@ -32,12 +36,12 @@ class Controller {
       }
     });
 
-    const batchCount = await Batch.count({ where: { 'house_id': batch.houseId } });
+    const batchCount = await Batch.count({ where: { house_id: batch.houseId } });
 
     if (activeBatchCount > 0) {
       return {
-        error: 'A batch already exist for the specified house. ' +
-          'Please end the current batch or select a different house.',
+        error: 'A batch already exist for the specified house. '
+          + 'Please end the current batch or select a different house.',
         status: 409
       };
     }
@@ -61,7 +65,7 @@ class Controller {
       house_id: batch.houseId
     })
       .then((newBatch) => newBatch.batch_id)
-      .catch(error => {
+      .catch((error) => {
         console.log(error); // todo: add proper logger
         return {
           error: 'Unable to process request. Please try again later!',
@@ -90,7 +94,7 @@ class Controller {
     return str.replace(/([-_]\w)/g, (g) => g[1].toUpperCase());
   }
 
-  _apiJSON(batch) { console.log(batch);
+  _apiJSON(batch) {
     return {
       id: batch.batch_id,
       name: batch.name,
@@ -114,7 +118,6 @@ class Controller {
   }
 
   _weekDiff(date1, date2) {
-    console.log('(date2 - date1)', (date2 - date1));
     return Math.round((date2 - date1) / (7 * 24 * 60 * 60 * 1000));
   }
 

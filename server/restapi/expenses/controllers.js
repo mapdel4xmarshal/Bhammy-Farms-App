@@ -1,34 +1,101 @@
-const Expenses = require('../../models');
+const path = require('path');
+const formidable = require('formidable');
+const {
+  Expense, ExpenseType, Supplier, Sequelize, Batch, Location, House
+} = require('../../models');
+const { fileUploadPath } = require('../../configs');
 
 class Controller {
   async getExpenses() {
-    return Expenses.findAll({ attributes: { exclude: ['createdAt', 'updatedAt'] } })
+    return Expense.findAll({
+      attributes: [
+        [Sequelize.literal('supplier.supplier_id'), 'supplier_id'],
+        [Sequelize.literal('ExpenseType.name'), 'type'],
+        [Sequelize.literal('Batch.name'), 'batch'],
+        [Sequelize.literal('House.name'), 'house'],
+        [Sequelize.literal('Location.name'), 'farm'],
+        ['expense_id', 'id'], [Sequelize.fn('date_format', Sequelize.col('date'), '%Y-%m-%d'), 'date'],
+        'category', 'quantity', ['invoice_number', 'referenceId'], 'amount', ['proof_of_payment', 'attachment'],
+        'description'
+      ],
+      order: [
+        ['date', 'DESC'],
+      ],
+      include: [{
+        model: Supplier,
+        attributes: []
+      },
+      {
+        model: ExpenseType,
+        attributes: []
+      },
+      {
+        model: Batch,
+        attributes: []
+      },
+      {
+        model: Location,
+        attributes: []
+      },
+      {
+        model: House,
+        attributes: []
+      }],
+      raw: true,
+    })
       .then((expenses) => expenses);
   }
 
+  async getExpenseTypes() {
+    return ExpenseType.findAll({ attributes: { exclude: ['createdAt', 'updatedAt'] } })
+      .then((expenseTypes) => expenseTypes);
+  }
+
   async getExpenseById(expenseId) {
-    return Expenses.findOne({ where: { id: expenseId }, attributes: { exclude: ['createdAt', 'updatedAt'] } })
+    return Expense.findOne({
+      where: { id: expenseId },
+      attributes: { exclude: ['createdAt', 'updatedAt'] }
+    })
       .then((expense) => expense);
   }
 
-  async addExpense(expense) {
-    return Expenses.create({
-      date: expense.date,
-      category: expense.category,
-      quantity: expense.quantity,
-      invoice_number: expense.referenceId,
-      amount: expense.totalAmount,
-      proof_of_payment: expense.attachment,
-      description: expense.description,
-    })
-      .then((expense) => expense.expense_id)
-      .catch(error => {
-        console.log(error); // todo: add proper logger
-        return {
-          error: 'Unable to process request. Please try again later!',
-          status: 500
-        };
+  async addExpense(req) {
+    const form = formidable({
+      multiples: false,
+      keepExtensions: true,
+      uploadDir: `${fileUploadPath}${path.sep}uploads`
+    });
+
+    return new Promise((resolve, reject) => {
+      form.parse(req, async (err, expense, files) => {
+        if (err) reject(err);
+
+        const attachment = files.attachment ? files.attachment.path.replace(`${fileUploadPath}${path.sep}`, '') : null;
+
+        Expense.create({
+          date: expense.date,
+          category: expense.category,
+          quantity: expense.quantity,
+          expense_type_id: expense.type,
+          supplier_id: expense.supplier,
+          location_id: expense.farm,
+          house_id: expense.pen,
+          batch_id: expense.batch,
+          invoice_number: expense.invoiceNumber,
+          amount: expense.amount,
+          proof_of_payment: attachment,
+          description: expense.description
+        })
+          .then(resolve)
+          .catch(reject);
       });
+    }).catch((e) => {
+      console.log(e); // todo: add proper logger
+      return {
+        error: 'Unable to process request. Please try again later!',
+        status: 500
+      };
+    });
   }
 }
 

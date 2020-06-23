@@ -8,14 +8,19 @@ router.get('/', async (req, res) => {
   res.json(expenses);
 });
 
+router.get('/types', async (req, res) => {
+  const expenseTypes = await controllers.getExpenseTypes();
+  res.json(expenseTypes);
+});
+
 router.get('/:expenseId', async (req, res) => {
   const expense = await controllers.getExpenseById(req.params.expenseId);
   res.json(expense);
 });
 
 router.post('/', async (req, res) => {
-  const expenseId = await controllers.addExpense(req.body);
-  res.json(expenseId);
+  const expenseResponse = await controllers.addExpense(req, req.body);
+  res.status(expenseResponse.status || 200).json(expenseResponse);
 });
 
 module.exports = router;
