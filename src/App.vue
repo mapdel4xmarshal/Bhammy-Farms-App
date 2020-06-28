@@ -91,7 +91,6 @@ export default {
       { title: ROUTES.BATCHES, icon: 'mdi-factory', to: ROUTES.BATCHES },
       { title: ROUTES.EXPENSES, icon: 'mdi-trending-down', to: ROUTES.EXPENSES },
       { title: ROUTES.INCOME, icon: 'mdi-currency-ngn', to: ROUTES.INCOME },
-      { title: ROUTES.REPORTS, icon: 'mdi-finance', to: ROUTES.REPORTS },
       { title: ROUTES.STORE, icon: 'mdi-silo', to: ROUTES.STORE },
       { title: ROUTES.CUSTOMERS, icon: 'mdi-account-multiple-outline', to: ROUTES.CUSTOMERS },
       { title: 'Employees', icon: 'mdi-account-outline', to: ROUTES.EMPLOYEES },

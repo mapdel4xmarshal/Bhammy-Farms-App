@@ -23,4 +23,19 @@ router.get('/sources/:sourceId', async (req, res) => {
   res.json(sources);
 });
 
+router.get('/customers', async (req, res) => {
+  const customers = await controllers.getCustomers();
+  res.json(customers);
+});
+
+router.post('/customers', async (req, res) => {
+  const customer = await controllers.addCustomer();
+  res.json(customer);
+});
+
+router.get('/customers/:customerId', async (req, res) => {
+  const customer = await controllers.getCustomerById();
+  res.json(customer);
+});
+
 module.exports = router;

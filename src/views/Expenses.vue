@@ -106,7 +106,6 @@ export default {
         },
         { text: 'Farm', value: 'farm' },
         { text: 'Pen', value: 'house' },
-        { text: 'Batch', value: 'batch' },
         { text: 'Type', value: 'type' },
         { text: 'Category', value: 'category' },
         { text: 'Amount', value: 'amount' }

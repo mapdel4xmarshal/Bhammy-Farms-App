@@ -1,10 +1,10 @@
 <template>
   <section>
-    <expense :active="newExpense" @update="newExpense = false"/>
+    <customer :active="newCustomer" @update="newCustomer = false"/>
     <v-toolbar flat dense color="transparent">
       <v-toolbar-title class="grey--text">Customers</v-toolbar-title>
       <v-spacer></v-spacer>
-      <v-btn tile color="primary" @click="newExpense = true">
+      <v-btn tile color="primary" @click="newCustomer = true">
         New Customer
       </v-btn>
     </v-toolbar>
@@ -26,22 +26,34 @@
       multi-sort
       :search="search"
       class="elevation-1"
-    ></v-data-table>
+    >
+      <template v-slot:item.rating="{ item }">
+        <v-rating
+          :value="item.rating"
+          background-color="orange lighten-3"
+          color="orange"
+          dense
+          medium
+          readonly
+          half-increments
+        ></v-rating>
+      </template>
+    </v-data-table>
 
   </section>
 </template>
 
 <script>
 import ROUTES from '../router/routeNames';
-import Expense from '../components/Expense.vue';
+import Customer from '../components/Customer.vue';
 
 export default {
   name: 'Customers',
-  components: { Expense },
+  components: { Customer },
   data() {
     return {
       dateMenu: false,
-      newExpense: false,
+      newCustomer: false,
       date: null,
       search: '',
       headers: [
@@ -55,8 +67,8 @@ export default {
         { text: 'Address', value: 'address' },
         { text: 'State', value: 'state' },
         { text: 'Phone', value: 'phone' },
-        { text: 'Purchase interval', value: 'purchaseInterval' },
-        { text: 'Total orders', value: 'orderTotal' }
+        { text: 'Total orders', value: 'orderTotal' },
+        { text: 'Rating', value: 'rating' }
       ],
       items: [
         {
@@ -65,8 +77,8 @@ export default {
           address: '123 Eiyenkorin road, Oloko',
           phone: '09088888708',
           state: 'Ilorin',
-          purchaseInterval: 'Weekly',
-          orderTotal: 'Purchases',
+          orderTotal: '1290',
+          rating: 4.5
         },
       ]
     };

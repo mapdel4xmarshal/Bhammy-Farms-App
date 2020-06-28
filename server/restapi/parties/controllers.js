@@ -1,6 +1,8 @@
-'use strict';
 
-const { Supplier, Party, Source, Sequelize } = require('../../models');
+const uuid = require('uuid/v4');
+const {
+  Supplier, Party, Source, Customer, Sequelize
+} = require('../../models');
 
 class Controller {
   constructor() {
@@ -43,10 +45,6 @@ class Controller {
       .then((supplier) => supplier);
   }
 
-  async addSupplier() {
-
-  }
-
   async getSources() {
     return Source.findAll({
       include: [{
@@ -76,6 +74,51 @@ class Controller {
       }]
     })
       .then((supplier) => supplier);
+  }
+
+  async addCustomer(customer) {
+    return Customer.create({
+      Party: {
+        party_id: uuid(),
+        name: customer.name,
+        address: customer.address,
+        state: customer.state,
+        email: customer.email,
+        phone: customer.phone,
+        alt_phone: customer.altPhone
+      },
+      title: customer.title,
+      gender: customer.gender,
+      rating: customer.rating,
+      comment: customer.remark
+    }, { include: [{ Party }] })
+      .then((newBatch) => newBatch.batch_id)
+      .catch((error) => {
+        console.log(error); // todo: add proper logger
+        return {
+          error: 'Unable to process request. Please try again later!',
+          status: 500
+        };
+      });
+  }
+
+  async getCustomers() {
+    return Customer.findAll({
+      include: [{
+        model: Party,
+        attributes: []
+      }],
+      raw: true,
+      attributes: [
+        ['customer_id', 'id'],
+        ...this._commonFields,
+        'title',
+        'gender',
+        'rating',
+        'comment'
+      ]
+    })
+      .then((customers) => customers);
   }
 }
 
