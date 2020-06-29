@@ -1,5 +1,5 @@
 <template>
-  <v-dialog v-model="active" persistent max-width="800px" scrollable>
+  <v-dialog v-model="active" persistent max-width="800px" scrollable :fullscreen="$mq.phone">
     <v-card>
       <v-card-title>New Expense</v-card-title>
       <v-divider></v-divider>

@@ -32,7 +32,7 @@ class Parties extends Model {
       },
       email: {
         type: DataTypes.STRING,
-        allowNull: false
+        allowNull: true
       },
       phone: {
         type: DataTypes.STRING,

@@ -35,7 +35,7 @@ class Customers extends Model {
   }
 
   static associate({ Party }) {
-    Customers.party = Customers.belongsTo(Party, { foreignKey: 'customer_id' });
+    Customers.party = Customers.belongsTo(Party, { foreignKey: 'party_id' });
   }
 }
 

@@ -1,5 +1,6 @@
+'strict'
 
-const uuid = require('uuid/v4');
+const uuid = require('uuid');
 const {
   Supplier, Party, Source, Customer, Sequelize
 } = require('../../models');
@@ -79,8 +80,8 @@ class Controller {
   async addCustomer(customer) {
     return Customer.create({
       Party: {
-        party_id: uuid(),
-        name: customer.name,
+        party_id: uuid.v4(),
+        name: `${customer.firstName} ${customer.lastName}`,
         address: customer.address,
         state: customer.state,
         email: customer.email,
@@ -91,7 +92,7 @@ class Controller {
       gender: customer.gender,
       rating: customer.rating,
       comment: customer.remark
-    }, { include: [{ Party }] })
+    }, { include: [Party] })
       .then((newBatch) => newBatch.batch_id)
       .catch((error) => {
         console.log(error); // todo: add proper logger

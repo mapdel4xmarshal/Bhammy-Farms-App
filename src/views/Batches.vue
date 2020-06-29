@@ -51,7 +51,7 @@
 </template>
 
 <script>
-import axios from 'axios';
+import axios from '../plugins/axios';
 import Batch from '../components/Batch.vue';
 
 export default {

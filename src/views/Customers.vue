@@ -1,6 +1,6 @@
 <template>
   <section>
-    <customer :active="newCustomer" @update="newCustomer = false"/>
+    <customer :active="newCustomer" @update="customerCreated"/>
     <v-toolbar flat dense color="transparent">
       <v-toolbar-title class="grey--text">Customers</v-toolbar-title>
       <v-spacer></v-spacer>
@@ -22,14 +22,15 @@
     </v-row>
     <v-data-table
       :headers="headers"
-      :items="items"
+      :items="customers"
+      no-data-text="No customers available."
       multi-sort
       :search="search"
       class="elevation-1"
     >
       <template v-slot:item.rating="{ item }">
         <v-rating
-          :value="item.rating"
+          :value="item.rating + 1"
           background-color="orange lighten-3"
           color="orange"
           dense
@@ -40,10 +41,25 @@
       </template>
     </v-data-table>
 
+    <v-snackbar
+      v-model="snackbar"
+      :timeout="3000"
+      absolute
+    >
+      Customer created successfully.
+      <v-btn
+        color="blue"
+        text
+        @click="snackbar = false"
+      >
+        Close
+      </v-btn>
+    </v-snackbar>
   </section>
 </template>
 
 <script>
+import axios from '../plugins/axios';
 import ROUTES from '../router/routeNames';
 import Customer from '../components/Customer.vue';
 
@@ -53,7 +69,9 @@ export default {
   data() {
     return {
       dateMenu: false,
+      snackbar: false,
       newCustomer: false,
+      customers: [],
       date: null,
       search: '',
       headers: [
@@ -68,25 +86,27 @@ export default {
         { text: 'State', value: 'state' },
         { text: 'Phone', value: 'phone' },
         { text: 'Total orders', value: 'orderTotal' },
-        { text: 'Rating', value: 'rating' }
-      ],
-      items: [
-        {
-          id: 'AJG-001',
-          name: 'Mrs. Semira Bolanle',
-          address: '123 Eiyenkorin road, Oloko',
-          phone: '09088888708',
-          state: 'Ilorin',
-          orderTotal: '1290',
-          rating: 4.5
-        },
-      ]
+        { text: 'Rating', value: 'rating' }]
     };
   },
   methods: {
     createNew() {
       this.$router.push({ name: ROUTES.NEW_PRODUCTION });
+    },
+    getCustomers() {
+      axios.get('/parties/customers')
+        .then(({ data }) => {
+          this.customers = data;
+        });
+    },
+    customerCreated() {
+      this.newCustomer = false;
+      this.snackbar = true;
+      this.getCustomers();
     }
+  },
+  created() {
+    this.getCustomers();
   }
 };
 </script>

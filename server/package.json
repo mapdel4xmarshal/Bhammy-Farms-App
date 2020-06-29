@@ -10,7 +10,7 @@
     "formidable": "^1.2.2",
     "mysql2": "^2.1.0",
     "sequelize": "^5.21.9",
-    "uuid": "^8.1.0"
+    "uuid": "^8.2.0"
   },
   "eslintConfig": {
     "root": true,

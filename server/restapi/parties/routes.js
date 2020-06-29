@@ -29,7 +29,7 @@ router.get('/customers', async (req, res) => {
 });
 
 router.post('/customers', async (req, res) => {
-  const customer = await controllers.addCustomer();
+  const customer = await controllers.addCustomer(req.body);
   res.json(customer);
 });
 
