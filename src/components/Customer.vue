@@ -239,10 +239,9 @@ export default {
         axios.post('/parties/customers', this.customer)
           .then(() => {
             this.update(true);
-            this.$ref.form.reset();
+            this.$refs.form.reset();
           })
           .catch((response) => {
-            console.log(response);
             this.feedbackMessage = response.data.error;
           })
           .finally(() => {

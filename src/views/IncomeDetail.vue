@@ -1,6 +1,6 @@
 <template>
   <section>
-    <income :active="addItem" @update="addItem = false"/>
+    <income :active="showItemDialog" @cancel="showItemDialog = false" @addItem="addItem" v-if="showItemDialog"/>
     <v-toolbar flat dense color="transparent">
       <v-toolbar-title class="grey--text">New Income</v-toolbar-title>
       <v-spacer></v-spacer>
@@ -76,14 +76,19 @@
         :items="items"
         disable-sort
         disable-pagination
+        no-data-text="No item selected. Please add an item."
         hide-default-footer
-      ></v-data-table>
+      >
+        <template v-slot:item.amount="{ item }">
+          {{ (item.price * item.quantity) - item.discount }}
+        </template>
+      </v-data-table>
       <v-card-actions>
       </v-card-actions>
     </v-card>
 
     <v-row justify="end" class="item__action">
-      <v-btn outlined color="primary" text @click="addItem = true">Add item</v-btn>
+      <v-btn outlined color="primary" text @click="showItemDialog = true; itemIndex = items.length">Add item</v-btn>
     </v-row>
 
     <v-row>
@@ -119,7 +124,8 @@ export default {
   components: { Income, CustomerDetail },
   data() {
     return {
-      addItem: false,
+      showItemDialog: false,
+      itemIndex: 0,
       invoiceDateMenu: false,
       paymentDateMenu: false,
       paymentDate: '',
@@ -141,33 +147,20 @@ export default {
         },
         { text: 'Item name', value: 'name', width: '65%' },
         { text: 'Quantity', value: 'quantity' },
-        { text: 'Price', value: 'price' },
-        { text: 'Discount', value: 'discount' },
-        { text: 'Amount', value: 'totalAmount' },
+        { text: 'Price(₦)', value: 'price' },
+        { text: 'Discount(₦)', value: 'discount' },
+        { text: 'Amount(₦)', value: 'amount' },
       ],
-      items: [
-        {
-          id: '212',
-          name: 'Large sized egg',
-          quantity: 127,
-          totalAmount: '₦5780',
-          price: '₦800',
-          discount: '₦50'
-        },
-        {
-          id: '121',
-          name: 'Medium sized egg',
-          quantity: 100,
-          totalAmount: '₦672',
-          price: '₦700',
-          discount: '₦50'
-        }
-      ]
+      items: []
     };
   },
   methods: {
     save() {
 
+    },
+    addItem(item) {
+      this.showItemDialog = false;
+      this.items.splice(this.itemIndex, 1, item);
     },
     resetCustomer() {
       this.customer = {};

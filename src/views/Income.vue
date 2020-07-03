@@ -29,12 +29,16 @@
       <template v-slot:item.status="{ item }">
         <v-chip color="green" dark outlined label>{{ item.status }}</v-chip>
       </template>
+      <template v-slot:item.amount="{ item }">
+        ₦{{ item.status }}
+      </template>
     </v-data-table>
 
   </section>
 </template>
 
 <script>
+import axios from '../plugins/axios';
 import ROUTES from '../router/routeNames';
 
 export default {
@@ -57,11 +61,10 @@ export default {
           sortable: true,
           value: 'date',
         },
-        { text: 'Farm/Batch', value: 'batch' },
-        { text: 'Type', value: 'type' },
+        { text: 'Farm', value: 'batch' },
         { text: 'Customer', value: 'customer' },
         { text: 'Status', value: 'status' },
-        { text: 'Amount (₦)', value: 'amount' },
+        { text: 'Amount', value: 'amount' },
       ],
       items: [
         {
@@ -106,6 +109,12 @@ export default {
   methods: {
     createNew() {
       this.$router.push({ name: ROUTES.INCOME_DETAIL, params: { id: 'new' } });
+    },
+    getItems() {
+      axios.get('items?groupBy=category')
+        .then(({ data }) => {
+          this.itemCategories = Object.keys(data);
+        });
     }
   }
 };

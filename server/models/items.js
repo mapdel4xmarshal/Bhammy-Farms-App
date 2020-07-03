@@ -22,7 +22,7 @@ class Items extends Model {
         allowNull: false
       },
       category: {
-        type: DataTypes.ENUM('Egg', 'Broiler', 'Cockerel', 'Manure', 'Old layer'),
+        type: DataTypes.STRING, // ENUM('Broiler', 'Cockerel', 'Egg', 'Manure', 'Old layer'),
         allowNull: false
       },
       size: {

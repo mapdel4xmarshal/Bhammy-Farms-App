@@ -6,7 +6,7 @@ mysql.createConnection({
   host: process.env.DB_HOST || '127.0.0.1',
   port: process.env.DB_PORT || '3306',
   user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || 'Mapdel@01',
+  password: process.env.DB_PASSWORD || 'admin',
 }).then((connection) => {
   connection.query(`CREATE DATABASE IF NOT EXISTS ${dbName};`).then(() => {
     console.info('Database create or successfully checked');

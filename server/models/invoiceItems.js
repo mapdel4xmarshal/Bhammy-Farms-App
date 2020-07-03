@@ -1,5 +1,6 @@
+'strict';
 
-const { Model, DataTypes } = require('sequelize');
+const { Model } = require('sequelize');
 
 class InvoiceItems extends Model {
   static get tblName() {
@@ -11,7 +12,7 @@ class InvoiceItems extends Model {
   }
 
   static get schema() {
-    return {  / };
+    return {};
   }
 
   static associate({ Invoice, Item }) {
