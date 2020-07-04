@@ -4,7 +4,7 @@
       <v-card-title>Add Item</v-card-title>
       <v-divider></v-divider>
       <v-card-text>
-        <v-form v-model="formValid">
+        <v-form ref="form" v-model="formValid" lazy-validation>
           <v-container>
             <v-row>
               <v-col cols="12">
@@ -12,6 +12,7 @@
                   :items="itemCategories"
                   return-object
                   v-model="item.category"
+                  :rules="[v => !!v || 'Please select an item.']"
                   label="Name"
                   hint="Item name"
                   persistent-hint
@@ -24,6 +25,7 @@
                   label="Size"
                   v-model="itemSize"
                   :disabled="!item.category"
+                  :rules="[v => !!v || 'Please select a size.']"
                   return-object
                   item-text="size"
                   item-value="size"
@@ -38,6 +40,7 @@
                   label="Quantity"
                   hint="Quantity"
                   :suffix="itemUnit"
+                  :rules="[v => !!v || 'Please input item quantity.']"
                   v-model="item.quantity"
                   persistent-hint
                   required
@@ -72,6 +75,7 @@
                   :value="item.discountType"
                   v-model="item.discountType"
                   :disabled="!item.discount"
+                  :rules="[v => !!v || 'Please select discount type.']"
                   hint="Discount type"
                   persistent-hint
                 ></v-select>
@@ -155,9 +159,12 @@ export default {
       this.$emit('cancel', true);
     },
     addItem() {
-      if (!this.item.discount) this.item.discount = 0;
-      else if (this.item.discountType === 'Per item') this.item.discount *= this.item.quantity;
-      this.$emit('addItem', { ...this.item });
+      if (this.$refs.form.validate()) {
+        if (!this.item.discount) this.item.discount = 0;
+        else if (this.item.discountType === 'Per item') this.item.discount *= this.item.quantity;
+        this.item.amount = (this.item.price * this.item.quantity) - this.item.discount;
+        this.$emit('addItem', { ...this.item });
+      }
     }
   },
   created() {

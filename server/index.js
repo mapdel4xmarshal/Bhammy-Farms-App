@@ -7,6 +7,7 @@ const batches = require('./restapi/batches/routes');
 const parties = require('./restapi/parties/routes');
 const expenses = require('./restapi/expenses/routes');
 const items = require('./restapi/items/routes');
+const invoices = require('./restapi/invoices/routes');
 
 const app = express();
 const port = process.env.PORT || 8888;
@@ -28,6 +29,7 @@ app.use('/api/v1/locations', locations);
 app.use('/api/v1/batches', batches);
 app.use('/api/v1/parties', parties);
 app.use('/api/v1/items', items);
+app.use('/api/v1/invoices', invoices);
 
 app.listen(port, () => {
   console.log(`Bhammy Farms App running on port ${port}`);

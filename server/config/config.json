@@ -1,7 +1,7 @@
 {
   "development": {
     "username": "root",
-    "password": "admin",
+    "password": "Mapdel@01",
     "database": "bhammyfarms",
     "host": "127.0.0.1",
     "dialect": "mysql"

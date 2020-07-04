@@ -11,7 +11,7 @@
   </div>
 
   <div v-else class="customer-detail--empty">
-    Select a customer or <a href="#">add</a> a new one.
+    Select a customer or <router-link to="/customers">add</router-link> a new one.
   </div>
 </template>
 

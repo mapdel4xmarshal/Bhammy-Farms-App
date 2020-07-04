@@ -18,7 +18,11 @@ class Invoices extends Model {
         autoIncrement: true,
         primaryKey: true
       },
-      date: {
+      invoice_date: {
+        type: DataTypes.DATE,
+        allowNull: false
+      },
+      payment_date: {
         type: DataTypes.DATE,
         allowNull: false
       },
@@ -40,6 +44,11 @@ class Invoices extends Model {
       },
       discount: {
         type: DataTypes.INTEGER,
+        allowNull: true,
+        defaultValue: 0
+      },
+      notes: {
+        type: DataTypes.STRING,
         allowNull: true,
         defaultValue: 0
       }

@@ -63,7 +63,7 @@
               </v-col>
 
               <v-col cols="12">
-                <v-autocomplete
+                <v-autocompletex
                   v-model="batch.supplier"
                   label="Supplier"
                   hint="Supplier of the flock."
@@ -85,7 +85,7 @@
                       <v-list-item-subtitle>{{ item.address }}</v-list-item-subtitle>
                     </v-list-item-content>
                   </template>
-                </v-autocomplete>
+                </v-autocompletex>
               </v-col>
 
               <v-col cols="12">

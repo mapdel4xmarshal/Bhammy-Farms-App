@@ -2,15 +2,16 @@
   <section>
     <income :active="showItemDialog" @cancel="showItemDialog = false" @addItem="addItem" v-if="showItemDialog"/>
     <v-toolbar flat dense color="transparent">
-      <v-toolbar-title class="grey--text">New Income</v-toolbar-title>
+      <v-toolbar-title class="grey--text">New Invoice</v-toolbar-title>
       <v-spacer></v-spacer>
-      <v-btn text color="primary" class="spacer--right">cancel</v-btn>
+      <v-btn text color="primary" class="spacer--right" @click="$router.push('/income')">cancel</v-btn>
       <v-btn tile color="primary" @click="save">
         Save invoice
       </v-btn>
     </v-toolbar>
     <v-divider></v-divider>
-    <v-row>
+    <v-form ref="invoiceForm" lazy-validation>
+      <v-row>
       <v-col cols="12" md="6">
         <v-menu
         ref="invoiceDateMenu"
@@ -25,6 +26,7 @@
             v-model="invoiceDate"
             label="Invoice date"
             hint="Invoice date"
+            :rules="[v => !!v || 'Please select invoice date.']"
             persistent-hint
             v-on="on"
           ></v-text-field>
@@ -44,6 +46,7 @@
             <v-text-field
               v-model="paymentDate"
               label="Payment date"
+              :rules="[v => !!v || 'Please select payment date.']"
               hint="Payment date"
               persistent-hint
               v-on="on"
@@ -57,7 +60,10 @@
           v-model="customer"
           :items="customers"
           return-object
+          required
           color="primary"
+          no-data-text="No customers available."
+          :rules="[v => !!v || 'Please select a customer.']"
           label="Customer"
           item-text="name"
           item-value="name"
@@ -68,7 +74,7 @@
         <customer-detail :customer="customer"/>
       </v-col>
     </v-row>
-
+    </v-form>
     <v-card>
       <v-data-table
         class="item__table"
@@ -80,7 +86,13 @@
         hide-default-footer
       >
         <template v-slot:item.amount="{ item }">
-          {{ (item.price * item.quantity) - item.discount }}
+          ₦{{ item.amount | toMoney }}
+        </template>
+        <template v-slot:item.discount="{ item }">
+          ₦{{ item.discount | toMoney }}
+        </template>
+        <template v-slot:item.price="{ item }">
+          ₦{{ item.price | toMoney }}
         </template>
       </v-data-table>
       <v-card-actions>
@@ -104,11 +116,11 @@
       <v-col cols="12" md="4">
         <div class="income__summary">
           <span>Total</span>
-          <span>₦12,000.00</span>
+          <span>₦{{totalAmount | toMoney}}</span>
           <span>Discount</span>
-          <span>₦0.00</span>
+          <span>₦{{discount | toMoney}}</span>
           <strong>Total</strong>
-          <strong>₦12,000.00</strong>
+          <strong>₦{{ (totalAmount - discount) | toMoney}}</strong>
         </div>
       </v-col>
     </v-row>
@@ -116,6 +128,7 @@
 </template>
 
 <script>
+import axios from '../plugins/axios';
 import CustomerDetail from '../components/CustomerDetail.vue';
 import Income from '../components/IncomeItem.vue';
 
@@ -124,21 +137,16 @@ export default {
   components: { Income, CustomerDetail },
   data() {
     return {
+      totalAmount: 0,
+      discount: 0,
       showItemDialog: false,
       itemIndex: 0,
       invoiceDateMenu: false,
       paymentDateMenu: false,
       paymentDate: '',
       invoiceDate: '',
-      customer: {},
-      customers: [
-        { name: 'Semira Bolanle', address: 'House 35 Test Address', phone: '080900099988' },
-        { name: 'Mrs Bolanle', address: 'House 35 Test Address', phone: '080900099988' },
-        { name: 'Mummy Ramadan', address: 'House 35 Test Address', phone: '080900099988' },
-        { name: 'Mummy Baraka', address: 'House 35 Test Address', phone: '080900099988' },
-        { name: 'Edo Egg', address: 'House 35 Test Address', phone: '080900099988' },
-        { name: 'Ogele Egg', address: 'House 35 Test Address', phone: '080900099988' },
-      ],
+      customer: null,
+      customers: [],
       headers: [
         {
           text: 'SKU',
@@ -147,24 +155,57 @@ export default {
         },
         { text: 'Item name', value: 'name', width: '65%' },
         { text: 'Quantity', value: 'quantity' },
-        { text: 'Price(₦)', value: 'price' },
-        { text: 'Discount(₦)', value: 'discount' },
-        { text: 'Amount(₦)', value: 'amount' },
+        { text: 'Price', value: 'price' },
+        { text: 'Discount', value: 'discount' },
+        { text: 'Amount', value: 'amount' },
       ],
       items: []
     };
   },
+  computed: {
+  },
   methods: {
     save() {
-
+      if (this.$refs.invoiceForm.validate()) {
+        axios.post('/invoices', {})
+          .then(() => {
+            this.$router.push('/income');
+          });
+      }
+    },
+    getCustomers() {
+      axios.get('/parties/customers')
+        .then(({ data }) => {
+          this.customers = data;
+        });
     },
     addItem(item) {
       this.showItemDialog = false;
       this.items.splice(this.itemIndex, 1, item);
+      this.calculateValues();
+    },
+    calculateValues() {
+      this.totalAmount = 0;
+      this.discount = 0;
+      this.items.forEach((item) => {
+        this.discount += item.discount;
+        this.totalAmount += item.amount;
+      });
+
+      this.totalAmount -= this.discount;
+      return this.item;
     },
     resetCustomer() {
       this.customer = {};
     }
+  },
+  filters: {
+    toMoney(value) {
+      return new Intl.NumberFormat('en-US', { minimumFractionDigits: 2 }).format(value);
+    }
+  },
+  created() {
+    this.getCustomers();
   }
 };
 </script>
