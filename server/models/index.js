@@ -21,7 +21,7 @@ fs
   .readdirSync(__dirname)
   .filter((file) => (file.indexOf('.') !== 0) && (file !== basename) && (file.slice(-3) === '.js'))
   .forEach((file) => {
-    const model = require(`./${file}`)(sequelize); console.log(basename, model.modelName);
+    const model = require(`./${file}`)(sequelize);
     db[model.modelName] = model;
   });
 

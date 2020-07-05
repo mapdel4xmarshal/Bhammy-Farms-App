@@ -12,6 +12,8 @@ import '@mdi/font/css/materialdesignicons.css';
 Vue.use(Vuelidate);
 Vue.config.productionTip = false;
 
+Vue.config.errorHandler = console.log;
+
 new Vue({
   router,
   store,

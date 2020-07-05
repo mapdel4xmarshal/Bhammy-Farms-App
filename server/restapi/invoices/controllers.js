@@ -1,19 +1,28 @@
-
-const { Invoice, Customer } = require('../../models');
+const { Invoice: InvoiceModel, Customer, InvoiceItem, Party, Sequelize } = require('../../models');
+const Invoice = require('./invoice');
 
 class Controller {
   async getInvoices() {
-    return Invoice.findAll({
-      attributes: [['invoice_id', 'id'], ['invoice_date', 'invoiceDate'], ['payment_date', 'paymentDate'],
+    return InvoiceModel.findAll({
+      attributes: [['invoice_id', 'id'],
+        [Sequelize.fn('date_format', Sequelize.col('invoice_date'), '%Y-%m-%d'), 'invoiceDate'],
+        [Sequelize.fn('date_format', Sequelize.col('payment_date'), '%Y-%m-%d'), 'paymentDate'],
         ['customer_id', 'customerId'], ['payment_status', 'paymentStatus'], ['fulfilment_status', 'fulfilmentStatus'],
-      'amount', 'discount', 'notes'],
-      order: [['invoice_id', 'DESC'], ['created_at', 'DESC']]
+        [Sequelize.literal('CONCAT(Customer.title, " ", `Customer->Party`.name)'), 'customerName'], 'amount', 'discount', 'notes'],
+      order: [['invoice_id', 'DESC'], ['created_at', 'DESC']],
+      raw: true,
+      include: [{
+        model: Customer,
+        include: [{ model: Party, attributes: [] }],
+        attributes: []
+      }]
     })
-      .then((breeds) => breeds);
+      .then((invoices) => invoices);
   }
 
 
   async addInvoice(invoice) {
+    console.log(invoice);
     const validCustomer = await Customer.count({
       where: {
         customer_id: invoice.customerId
@@ -28,25 +37,22 @@ class Controller {
       };
     }
 
-    return Customer.create({
-      name: `${farm.name}-${(batchCount + 1).toString()
-        .padStart(3, '0')}`,
-      move_in_date: new Date(batch.moveInDate),
-      move_out_date: moveOutDate,
-      move_in_age: batch.initialAge,
-      animal_category_id: 1,
-      breed_id: batch.breedId,
-      initial_stock_count: batch.initialStock,
-      mortality_count: batch.initialStock - batch.currentStock,
-      supplier_id: batch.supplierId,
-      source_id: batch.sourceId,
-      cost_per_unit: batch.costPerBird,
-      total_cost: batch.amount,
-      description: batch.note,
-      is_active: moveOutDate > new Date(),
-      house_id: batch.houseId
+    if (!invoice.items || invoice.items.length === 0) {
+      return {
+        error: 'At least on item is required. Please specify an item and try again!',
+        status: 400
+      };
+    }
+
+    const normalizedInvoice = new Invoice(invoice);
+
+    return InvoiceModel.create({
+      ...normalizedInvoice.toDBFormat()
     })
-      .then((newBatch) => newBatch.batch_id)
+      .then(async (newInvoice) => {
+        await InvoiceItem.bulkCreate(normalizedInvoice.formatItems(newInvoice.invoice_id));
+        return newInvoice.invoice_id;
+      })
       .catch((error) => {
         console.log(error); // todo: add proper logger
         return {
@@ -57,7 +63,7 @@ class Controller {
   }
 
   async getInvoiceById(invoiceId) {
-    return Invoice.findOne({
+    return InvoiceModel.findOne({
       where: { invoice_id: invoiceId },
       attributes: { exclude: ['createdAt', 'updatedAt'] }
     })

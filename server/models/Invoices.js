@@ -26,16 +26,12 @@ class Invoices extends Model {
         type: DataTypes.DATE,
         allowNull: false
       },
-      customer_id: {
-        type: DataTypes.SMALLINT,
-        allowNull: true
-      },
       payment_status: {
         type: DataTypes.ENUM(['paid', 'unpaid', 'partial']),
         allowNull: false
       },
       fulfilment_status: {
-        type: DataTypes.ENUM(['supplied', 'pending', 'partial']),
+        type: DataTypes.ENUM(['Fulfilled', 'Partially fulfilled', 'Unfulfilled']),
         allowNull: false
       },
       amount: {
@@ -53,6 +49,11 @@ class Invoices extends Model {
         defaultValue: 0
       }
     };
+  }
+
+  static associate({ InvoiceItem, Item, Customer }) {
+    Invoices.items =  Invoices.belongsToMany(Item, { through: InvoiceItem, foreignKey: 'invoice_id' });
+    Invoices.customer =  Invoices.belongsTo(Customer, { through: InvoiceItem, foreignKey: 'customer_id' });
   }
 }
 

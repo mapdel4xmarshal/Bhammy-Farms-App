@@ -47,6 +47,10 @@ class Items extends Model {
       }
     };
   }
+
+  static associate({ InvoiceItem, Invoice }) {
+    Items.items =  Items.belongsToMany(Invoice, { through: InvoiceItem, foreignKey: 'item_id' });
+  }
 }
 
 module.exports = (sequelize) => {

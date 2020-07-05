@@ -20,17 +20,23 @@
       </v-col>
     </v-row>
     <v-data-table
+      no-data-text="No invoices available."
       :headers="headers"
-      :items="items"
+      :items="invoices"
       multi-sort
       :search="search"
       class="elevation-1"
     >
       <template v-slot:item.status="{ item }">
-        <v-chip color="green" dark outlined label>{{ item.status }}</v-chip>
+        <v-chip class="payment-status"
+                pill
+                :class="{[`payment-status--${item.paymentStatus}`]: true}" outlined="">{{ item.paymentStatus }}</v-chip>
       </template>
       <template v-slot:item.amount="{ item }">
-        ₦{{ item.status }}
+        ₦{{ item.amount | formatNumber }}
+      </template>
+      <template v-slot:item.id="{ item }">
+        {{ item.id | pad }}
       </template>
     </v-data-table>
 
@@ -45,6 +51,7 @@ export default {
   name: 'Income',
   data() {
     return {
+      invoices: [],
       dateMenu: false,
       date: null,
       search: '',
@@ -59,50 +66,12 @@ export default {
           text: 'Date',
           align: 'start',
           sortable: true,
-          value: 'date',
+          value: 'invoiceDate',
         },
         { text: 'Farm', value: 'batch' },
-        { text: 'Customer', value: 'customer' },
+        { text: 'Customer', value: 'customerName' },
         { text: 'Status', value: 'status' },
-        { text: 'Amount', value: 'amount' },
-      ],
-      items: [
-        {
-          id: '0001',
-          date: '2020-02-02',
-          batch: 'AJG-P001-B01',
-          status: 'Paid',
-          amount: 5780,
-          type: 'Egg',
-          customer: 'Mrs Semirat'
-        },
-        {
-          id: '0002',
-          date: '2020-02-02',
-          batch: 'AJG-P001-B01',
-          status: 'Paid',
-          amount: 5780,
-          type: 'Manure',
-          customer: 'Mrs Semirat'
-        },
-        {
-          id: '0003',
-          date: '2020-02-02',
-          batch: 'AJG-P001-B01',
-          status: 'Paid',
-          amount: 5780,
-          type: 'Old layers',
-          customer: 'Mrs Semirat'
-        },
-        {
-          id: '0004',
-          date: '2020-02-02',
-          batch: 'AJG-P001-B01',
-          status: 'Paid',
-          type: 'Broiler',
-          amount: 5780,
-          customer: 'Mrs Semirat'
-        }
+        { text: 'Amount', value: 'amount', align: 'end' },
       ]
     };
   },
@@ -110,12 +79,48 @@ export default {
     createNew() {
       this.$router.push({ name: ROUTES.INCOME_DETAIL, params: { id: 'new' } });
     },
+    getInvoices() {
+      axios.get('/invoices')
+        .then(({ data }) => {
+          this.invoices = data;
+          console.log(data);
+        });
+    },
     getItems() {
       axios.get('items?groupBy=category')
         .then(({ data }) => {
           this.itemCategories = Object.keys(data);
         });
     }
+  },
+  filters: {
+    formatNumber(value) {
+      return new Intl.NumberFormat('en-US', { minimumFractionDigits: 2 }).format(value);
+    },
+    pad(value) {
+      return value.toString().padStart(4, '0');
+    }
+  },
+  created() {
+    this.getInvoices();
   }
 };
 </script>
+
+<style lang="scss">
+  .payment-status {
+    text-transform: uppercase;
+
+    &--paid {
+      border-color: green !important;
+    }
+
+    &--unpaid {
+      border-color: crimson !important;
+    }
+
+    &--partial {
+      border-color: #2b2b2b !important;
+    }
+  }
+</style>

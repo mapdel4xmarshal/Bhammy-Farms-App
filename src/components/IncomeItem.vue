@@ -75,7 +75,7 @@
                   :value="item.discountType"
                   v-model="item.discountType"
                   :disabled="!item.discount"
-                  :rules="[v => !!v || 'Please select discount type.']"
+                  :rules="[v => !!v && item.discount >= 0 ||  !item.discount || 'Please select discount type.']"
                   hint="Discount type"
                   persistent-hint
                 ></v-select>
@@ -159,11 +159,15 @@ export default {
       this.$emit('cancel', true);
     },
     addItem() {
-      if (this.$refs.form.validate()) {
-        if (!this.item.discount) this.item.discount = 0;
-        else if (this.item.discountType === 'Per item') this.item.discount *= this.item.quantity;
-        this.item.amount = (this.item.price * this.item.quantity) - this.item.discount;
-        this.$emit('addItem', { ...this.item });
+      try {
+        if (this.$refs.form.validate()) {
+          if (!this.item.discount) this.item.discount = 0;
+          else if (this.item.discountType === 'Per item') this.item.discount *= this.item.quantity;
+          this.item.amount = (this.item.price * this.item.quantity) - this.item.discount;
+          this.$emit('addItem', { ...this.item });
+        }
+      } catch (e) {
+        console.log(e);
       }
     }
   },

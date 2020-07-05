@@ -13,20 +13,19 @@ class InvoiceItems extends Model {
 
   static get schema() {
     return {
+      quantity: {
+        type: DataTypes.INTEGER,
+        allowNull: false
+      },
       item_price: {
-        type: DataTypes.NUMBER,
+        type: DataTypes.INTEGER,
         allowNull: false
       },
       discount: {
-        type: DataTypes.Number,
+        type: DataTypes.INTEGER,
         allowNull: true
       }
     };
-  }
-
-  static associate({ Invoice, Item }) {
-    InvoiceItems.invoice = InvoiceItems.belongsTo(Invoice, { foreignKey: 'invoice_id' });
-    InvoiceItems.item = InvoiceItems.belongsTo(Item, { foreignKey: 'item_id' });
   }
 }
 
