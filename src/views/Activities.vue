@@ -1,10 +1,13 @@
 <template>
   <section>
-    <activity :active="newExpense" @update="newExpense = false"/>
+    <activity :active="newActivity"
+              :farm-locations="farmLocations"
+              @save="handleSave"
+              @cancel="newActivity = false"/>
     <v-toolbar flat dense color="transparent">
-      <v-toolbar-title class="grey--text">Expenses</v-toolbar-title>
+      <v-toolbar-title class="grey--text">Activities</v-toolbar-title>
       <v-spacer></v-spacer>
-      <v-btn tile color="primary" @click="newExpense = true">
+      <v-btn tile color="primary" @click="newActivity = true">
         New Activity
       </v-btn>
     </v-toolbar>
@@ -22,26 +25,52 @@
     </v-row>
     <v-data-table
       :headers="headers"
-      :items="items"
-      multi-sort
+      :items="activities"
+      no-data-text="No activities available."
       :search="search"
       class="elevation-1"
-    ></v-data-table>
-
+    >
+      <template v-slot:item.description="{ item }">
+        {{ item.description | truncate }}
+      </template>
+    </v-data-table>
+    <v-snackbar
+      v-model="snackbar"
+      :timeout="3000"
+      absolute
+    >
+      Activity created successfully.
+      <v-btn
+        color="blue"
+        text
+        @click="snackbar = false"
+      >
+        Close
+      </v-btn>
+    </v-snackbar>
   </section>
 </template>
 
 <script>
+import { mapGetters } from 'vuex';
+import axios from '../plugins/axios';
+import { GETTER_TYPES } from '../store/types';
 import ROUTES from '../router/routeNames';
 import Activity from '../components/Activity.vue';
 
 export default {
   name: 'Activities',
   components: { Activity },
+  computed: {
+    ...mapGetters({
+      farmLocations: GETTER_TYPES.FARM_LOCATIONS
+    })
+  },
   data() {
     return {
       dateMenu: false,
-      newExpense: false,
+      newActivity: false,
+      snackbar: false,
       date: null,
       search: '',
       headers: [
@@ -51,39 +80,35 @@ export default {
           sortable: true,
           value: 'date',
         },
-        { text: 'Farm/Batch', value: 'batch' },
+        { text: 'Farm', value: 'location.name' },
         { text: 'Category', value: 'category' },
-        { text: 'Occurrence', value: 'occurrence' },
-        { text: 'Description', value: 'description' },
+        { text: 'Description', value: 'description', width: '35%' },
       ],
-      items: [
-        {
-          date: '2020-02-02',
-          batch: 'AJG-P001-B01',
-          category: 'Vaccination',
-          description: 'This is a sample description...',
-          occurrence: 'Recurring'
-        },
-        {
-          date: '2020-02-02',
-          batch: 'AJG-P001-B01',
-          category: 'Medication',
-          description: '...',
-          occurrence: 'One time'
-        },
-        {
-          date: '2020-02-02',
-          batch: 'AJG-P001-B01',
-          category: 'Deworming',
-          description: 'This is another sample',
-          occurrence: 'Bi-weekly'
-        }
-      ]
+      activities: []
     };
   },
   methods: {
+    getActivities() {
+      axios.get('activities')
+        .then(({ data }) => {
+          this.activities = data;
+        });
+    },
     createNew() {
       this.$router.push({ name: ROUTES.NEW_PRODUCTION });
+    },
+    handleSave() {
+      this.snackbar = true;
+      this.newActivity = false;
+      this.getActivities();
+    }
+  },
+  created() {
+    this.getActivities();
+  },
+  filters: {
+    truncate(string) {
+      return string.length > 40 ? `${string.substring(0, 37)}...` : string;
     }
   }
 };

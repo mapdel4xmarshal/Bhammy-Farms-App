@@ -12,104 +12,118 @@
     <v-divider></v-divider>
     <v-form ref="invoiceForm" lazy-validation>
       <v-row>
-      <v-col cols="12" md="6">
-        <v-row>
-          <v-col cols="6">
-            <v-menu
-            ref="invoiceDateMenu"
-            v-model="invoiceDateMenu"
-            :close-on-content-click="false"
-            offset-y
-            max-width="290px"
-            min-width="290px"
-          >
-            <template v-slot:activator="{ on }">
-              <v-text-field
-                v-model="invoiceDate"
-                label="Invoice date"
-                hint="Invoice date"
-                :rules="[v => !!v || 'Please select invoice date.']"
+        <v-col cols="12" md="6">
+          <v-row>
+            <v-col cols="12">
+              <v-select
+                label="Farm"
+                hint="Farm location"
                 persistent-hint
-                v-on="on"
-              ></v-text-field>
-            </template>
-            <v-date-picker v-model="invoiceDate" no-title @input="invoiceDateMenu = false"></v-date-picker>
-          </v-menu>
-          </v-col>
-          <v-col cols="6">
-            <v-menu
-            ref="paymentDateMenu"
-            v-model="paymentDateMenu"
-            :close-on-content-click="false"
-            transition="scale-transition"
-            offset-y
-            max-width="290px"
-            min-width="290px"
-          >
-            <template v-slot:activator="{ on }">
-              <v-text-field
-                v-model="paymentDate"
-                label="Payment date"
-                :rules="[v => !!v || 'Please select payment date.']"
-                hint="Payment date"
+                return-object
+                required
+                :rules="[v => !!v || 'Please select a farm.']"
+                v-model="farm"
+                item-text="name"
+                item-value="name"
+                :items="farmLocations"
+              ></v-select>
+            </v-col>
+            <v-col cols="6">
+              <v-menu
+              ref="invoiceDateMenu"
+              v-model="invoiceDateMenu"
+              :close-on-content-click="false"
+              offset-y
+              max-width="290px"
+              min-width="290px"
+            >
+              <template v-slot:activator="{ on }">
+                <v-text-field
+                  v-model="invoiceDate"
+                  label="Invoice date"
+                  hint="Invoice date"
+                  :rules="[v => !!v || 'Please select invoice date.']"
+                  persistent-hint
+                  v-on="on"
+                ></v-text-field>
+              </template>
+              <v-date-picker v-model="invoiceDate" no-title @input="invoiceDateMenu = false"></v-date-picker>
+            </v-menu>
+            </v-col>
+            <v-col cols="6">
+              <v-menu
+              ref="paymentDateMenu"
+              v-model="paymentDateMenu"
+              :close-on-content-click="false"
+              transition="scale-transition"
+              offset-y
+              max-width="290px"
+              min-width="290px"
+            >
+              <template v-slot:activator="{ on }">
+                <v-text-field
+                  v-model="paymentDate"
+                  label="Payment date"
+                  :rules="[v => !!v || 'Please select payment date.']"
+                  hint="Payment date"
+                  persistent-hint
+                  v-on="on"
+                ></v-text-field>
+              </template>
+              <v-date-picker v-model="paymentDate" no-title @input="paymentDateMenu = false"></v-date-picker>
+            </v-menu>
+            </v-col>
+            <v-col cols="6">
+              <v-select
+                label="Payment status"
+                hint="Invoice's payment status."
                 persistent-hint
-                v-on="on"
-              ></v-text-field>
-            </template>
-            <v-date-picker v-model="paymentDate" no-title @input="paymentDateMenu = false"></v-date-picker>
-          </v-menu>
-          </v-col>
-          <v-col cols="6">
-            <v-select
-              label="Payment status"
-              hint="Invoice's payment status."
-              persistent-hint
-              :items="['Paid', 'Partial', 'Unpaid']"
-              return-object
-              v-model="paymentStatus"
-              :rules="[v => !!v || 'Please select a payment status.']"
-              item-text="name"
-              item-value="name"
-              required>
-            </v-select>
-          </v-col>
-          <v-col cols="6">
-            <v-select
-              label="Fulfilment status"
-              hint="Invoice's fulfilment status."
-              persistent-hint
-              :items="['Fulfilled', 'Partially fulfilled', 'Unfulfilled']"
-              return-object
-              v-model="fulfilmentStatus"
-              :rules="[v => !!v || 'Please select a fulfilment status.']"
-              item-text="name"
-              item-value="name"
-              required>
-            </v-select>
-          </v-col>
-        </v-row>
-      </v-col>
-      <v-col cols="12" md="6">
-        <v-col>
-          <v-autocomplete
-          v-model="customer"
-          :items="customers"
-          return-object
-          required
-          color="primary"
-          no-data-text="No customers available."
-          :rules="[v => !!v || 'Please select a customer.']"
-          label="Customer"
-          item-text="name"
-          item-value="name"
-          clearable
-          @click:clear="resetCustomer"
-        >
-        </v-autocomplete>
+                :items="['Paid', 'Partial', 'Unpaid']"
+                return-object
+                v-model="paymentStatus"
+                :rules="[v => !!v || 'Please select a payment status.']"
+                item-text="name"
+                item-value="name"
+                required>
+              </v-select>
+            </v-col>
+            <v-col cols="6">
+              <v-select
+                label="Fulfilment status"
+                hint="Invoice's fulfilment status."
+                persistent-hint
+                :items="['Fulfilled', 'Partially fulfilled', 'Unfulfilled']"
+                return-object
+                v-model="fulfilmentStatus"
+                :rules="[v => !!v || 'Please select a fulfilment status.']"
+                item-text="name"
+                item-value="name"
+                required>
+              </v-select>
+            </v-col>
+          </v-row>
         </v-col>
-        <customer-detail :customer="customer"/>
-      </v-col>
-    </v-row>
+        <v-col cols="12" md="6">
+          <v-col>
+            <v-autocomplete
+            v-model="customer"
+            :items="customers"
+            return-object
+            required
+            color="primary"
+            no-data-text="No customers available."
+            :rules="[v => !!v || 'Please select a customer.']"
+            label="Customer"
+            item-text="name"
+            item-value="name"
+            clearable
+            @click:clear="resetCustomer"
+          >
+          </v-autocomplete>
+          </v-col>
+          <customer-detail :customer="customer"/>
+        </v-col>
+      </v-row>
     </v-form>
     <v-card>
       <v-data-table
@@ -176,15 +190,18 @@
 </template>
 
 <script>
+import { mapGetters } from 'vuex';
 import axios from '../plugins/axios';
 import CustomerDetail from '../components/CustomerDetail.vue';
 import Income from '../components/IncomeItem.vue';
+import { GETTER_TYPES } from '../store/types';
 
 export default {
   name: 'IncomeDetail',
   components: { Income, CustomerDetail },
   data() {
     return {
+      farm: {},
       feedbackMessage: '',
       snackbar: false,
       totalAmount: 0,
@@ -216,11 +233,15 @@ export default {
     };
   },
   computed: {
+    ...mapGetters({
+      farmLocations: GETTER_TYPES.FARM_LOCATIONS,
+    })
   },
   methods: {
     save() {
       if (this.$refs.invoiceForm.validate()) {
         axios.post('/invoices', {
+          farmLocation: this.farm.id,
           paymentDate: this.paymentDate,
           invoiceDate: this.invoiceDate,
           customerId: this.customer.id,
@@ -253,11 +274,10 @@ export default {
       this.totalAmount = 0;
       this.discount = 0;
       this.items.forEach((item) => {
-        this.discount += item.discount;
+        this.discount += (+item.discount);
         this.totalAmount += item.amount;
       });
 
-      this.totalAmount -= this.discount;
       return this.item;
     },
     resetCustomer() {

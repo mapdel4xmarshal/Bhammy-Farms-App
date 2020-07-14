@@ -15,6 +15,7 @@ class Invoice {
       customer_id: this._rawInvoice.customerId,
       payment_status: this._rawInvoice.paymentStatus,
       fulfilment_status: this._rawInvoice.fulfilmentStatus,
+      location_id: this._rawInvoice.farmLocation,
       amount: this.amount,
       discount: this.discount,
       notes: this._rawInvoice.notes || ''
@@ -35,9 +36,10 @@ class Invoice {
 
   _calculate() {
     this.amount = 0;
+    this.discount = 0;
     this._rawInvoice.items.forEach(item => {
-      this.amount += item.price;
-      this.discount += item.discount;
+      this.amount += (+item.amount);
+      this.discount += (+item.discount);
     });
 
     this.amount -= this.discount;

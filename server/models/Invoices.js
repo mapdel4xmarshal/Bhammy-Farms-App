@@ -51,9 +51,10 @@ class Invoices extends Model {
     };
   }
 
-  static associate({ InvoiceItem, Item, Customer }) {
+  static associate({ InvoiceItem, Item, Customer, Location }) {
     Invoices.items =  Invoices.belongsToMany(Item, { through: InvoiceItem, foreignKey: 'invoice_id' });
     Invoices.customer =  Invoices.belongsTo(Customer, { through: InvoiceItem, foreignKey: 'customer_id' });
+    Invoices.location =  Invoices.belongsTo(Location, { foreignKey: 'location_id' });
   }
 }
 

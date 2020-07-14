@@ -63,15 +63,19 @@ export default {
           value: 'id',
         },
         {
-          text: 'Date',
-          align: 'start',
+          text: 'Invoice Date',
           sortable: true,
           value: 'invoiceDate',
         },
-        { text: 'Farm', value: 'batch' },
+        {
+          text: 'Payment Date',
+          sortable: true,
+          value: 'paymentDate',
+        },
+        { text: 'Farm', value: 'farmLocation' },
         { text: 'Customer', value: 'customerName' },
-        { text: 'Status', value: 'status' },
-        { text: 'Amount', value: 'amount', align: 'end' },
+        { text: 'Amount', value: 'amount' },
+        { text: 'Payment Status', value: 'status', align: 'end' },
       ]
     };
   },
@@ -83,13 +87,6 @@ export default {
       axios.get('/invoices')
         .then(({ data }) => {
           this.invoices = data;
-          console.log(data);
-        });
-    },
-    getItems() {
-      axios.get('items?groupBy=category')
-        .then(({ data }) => {
-          this.itemCategories = Object.keys(data);
         });
     }
   },

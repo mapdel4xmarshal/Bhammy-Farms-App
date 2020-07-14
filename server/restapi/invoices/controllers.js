@@ -1,4 +1,4 @@
-const { Invoice: InvoiceModel, Customer, InvoiceItem, Party, Sequelize } = require('../../models');
+const { Invoice: InvoiceModel, Customer, InvoiceItem, Party, Sequelize, Location } = require('../../models');
 const Invoice = require('./invoice');
 
 class Controller {
@@ -7,6 +7,7 @@ class Controller {
       attributes: [['invoice_id', 'id'],
         [Sequelize.fn('date_format', Sequelize.col('invoice_date'), '%Y-%m-%d'), 'invoiceDate'],
         [Sequelize.fn('date_format', Sequelize.col('payment_date'), '%Y-%m-%d'), 'paymentDate'],
+        [Sequelize.col('Location.name'), 'farmLocation'],
         ['customer_id', 'customerId'], ['payment_status', 'paymentStatus'], ['fulfilment_status', 'fulfilmentStatus'],
         [Sequelize.literal('CONCAT(Customer.title, " ", `Customer->Party`.name)'), 'customerName'], 'amount', 'discount', 'notes'],
       order: [['invoice_id', 'DESC'], ['created_at', 'DESC']],
@@ -15,7 +16,7 @@ class Controller {
         model: Customer,
         include: [{ model: Party, attributes: [] }],
         attributes: []
-      }]
+      }, { model: Location, attributes: [] }]
     })
       .then((invoices) => invoices);
   }
@@ -44,7 +45,7 @@ class Controller {
       };
     }
 
-    const normalizedInvoice = new Invoice(invoice);
+    const normalizedInvoice = new Invoice(invoice); console.log("normalizedInvoice.toDBFormat()",normalizedInvoice.toDBFormat());
 
     return InvoiceModel.create({
       ...normalizedInvoice.toDBFormat()
