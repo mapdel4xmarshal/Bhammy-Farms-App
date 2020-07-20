@@ -4,466 +4,515 @@
       <v-toolbar-title>New Production</v-toolbar-title>
       <v-spacer></v-spacer>
       <v-btn text color="primary" class="spacer--right">cancel</v-btn>
-      <v-btn color="primary" tile @click="createNew">
-        Save
+      <v-btn color="primary" tile @click="saveProduction" :disabled="!validProduction">
+        Save production
       </v-btn>
     </v-toolbar>
 
     <v-divider></v-divider>
+    <v-form ref="form">
+      <v-row>
+        <v-col cols="12" md="4">
+          <v-menu
+            v-model="dateMenu"
+            :close-on-content-click="false"
+            max-width="290"
+          >
+            <template v-slot:activator="{ on }">
+              <v-text-field
+                v-model="production.date"
+                clearable
+                label="Date*"
+                hint="Production day."
+                :rules="[v => !!v || 'Please select a valid production day.']"
+                readonly
+                persistent-hint
+                v-on="on"
+                @click:clear="production.date = null"
+              ></v-text-field>
+            </template>
+            <v-date-picker
+              v-model="production.date"
+              @change="dateMenu = false"
+            ></v-date-picker>
+          </v-menu>
+        </v-col>
 
-    <v-row>
-      <v-col>
-        <v-expansion-panels>
-        <v-expansion-panel>
-          <v-expansion-panel-header v-slot="{ open }">
-            <v-row no-gutters>
-              <v-col cols="4">Eggs collected</v-col>
-              <v-col
-                cols="8"
-                class="text--secondary"
-              >
-                <v-fade-transition leave-absolute>
-              <span
-                v-if="open"
-                key="0"
-              >
-                Select trip destination
-              </span>
-                  <span
-                    v-else
-                    key="1"
-                  >
-                {{ trip.location }}
-              </span>
-                </v-fade-transition>
-              </v-col>
-            </v-row>
-          </v-expansion-panel-header>
-          <v-expansion-panel-content>
-            <v-row no-gutters>
-              <v-col cols="8">
-                <v-data-table
-                  disable-sort
-                  hide-default-footer
-                  :headers="eggCollectionHeaders"
-                  :items="eggCollection"
-                >
-                </v-data-table>
-              </v-col>
+        <v-col cols="12" md="4">
+          <v-select
+            label="Farm*"
+            hint="Farm where the expense is incurred."
+            persistent-hint
+            return-object
+            @blur="updateBatchList"
+            required
+            :rules="[v => !!v || 'Please select a farm location.']"
+            v-model="production.farm"
+            item-text="name"
+            item-value="name"
+            :items="farmLocations"
+          ></v-select>
+        </v-col>
 
-              <v-divider
-                vertical
-                class="mx-4"
-              ></v-divider>
+        <v-col cols="12" md="4">
+          <v-select
+            label="Batch"
+            hint="Flock/Batch this expense applied to."
+            persistent-hint
+            required
+            return-object
+            v-model="production.batch"
+            :disabled="!production.farm"
+            item-text="name"
+            no-data-text="No batch found."
+            :rules="[v => !!v || 'Please select a batch.']"
+            item-value="name"
+            :items="batches"
+          ></v-select>
+        </v-col>
 
-              <v-col cols="3" class="caption">
-                <ul>
-                  <li>Add an egg collection record by clicking on "Add item".</li>
-                  <li>You can add multiple records for this batch/flock, for the selected date.
-                    This can be the different grades of eggs or eggs collected at different times of the day.</li>
-                </ul>
-                <br>
-                <a href="javascript:void(0)">Learn more</a>
-              </v-col>
-            </v-row>
-
-            <v-card-actions>
-              <v-btn
-                text
-                color="primary"
-                @click="addItem('EggCollection')"
-              >
-                Add item
-              </v-btn>
-            </v-card-actions>
-          </v-expansion-panel-content>
-        </v-expansion-panel>
-
-        <v-expansion-panel>
-          <v-expansion-panel-header v-slot="{ open }">
-            <v-row no-gutters>
-              <v-col cols="4">Feed consumed</v-col>
-              <v-col
-                cols="8"
-                class="text--secondary"
-              >
-                <v-fade-transition leave-absolute>
-                  <span v-if="open">When do you want to travel?</span>
-                  <v-row
-                    v-else
-                    no-gutters
-                    style="width: 100%"
-                  >
-                    <v-col cols="6">Start date: {{ trip.start || 'Not set' }}</v-col>
-                    <v-col cols="6">End date: {{ trip.end || 'Not set' }}</v-col>
-                  </v-row>
-                </v-fade-transition>
-              </v-col>
-            </v-row>
-          </v-expansion-panel-header>
-          <v-expansion-panel-content>
-            <v-row no-gutters>
-              <v-col cols="8">
-                <v-data-table
-                  disable-sort
-                  hide-default-footer
-                  :headers="feedConsumed.headers"
-                  :items="feedConsumed.data"
-                ></v-data-table>
-              </v-col>
-
-              <v-divider
-                vertical
-                class="mx-4"
-              ></v-divider>
-
-              <v-col cols="3" class="caption">
-                <ul>
-                  <li>Add a feeding record record by clicking on "Add item".</li>
-                  <li>You can add multiple records for this batch/flock, for the selected date.
-                    This can be the different grades of eggs or eggs collected at different times of the day.</li>
-                </ul>
-                <br>
-                <a href="javascript:void(0)">Learn more</a>
-              </v-col>
-            </v-row>
-
-            <v-card-actions>
-              <v-btn
-                text
-                color="primary"
-                @click="addItem('FeedConsumed')"
-              >
-                Add item
-              </v-btn>
-            </v-card-actions>
-          </v-expansion-panel-content>
-        </v-expansion-panel>
-
-        <v-expansion-panel>
-          <v-expansion-panel-header v-slot="{ open }">
-            <v-row no-gutters>
-              <v-col cols="4">Mortality</v-col>
-              <v-col
-                cols="8"
-                class="text--secondary"
-              >
-                <v-fade-transition leave-absolute>
-              <span
-                v-if="open"
-                key="0"
-              >
-                Select trip destination
-              </span>
-                  <span
-                    v-else
-                    key="1"
-                  >
-                {{ trip.location }}
-              </span>
-                </v-fade-transition>
-              </v-col>
-            </v-row>
-          </v-expansion-panel-header>
-          <v-expansion-panel-content>
-            <v-row no-gutters>
-              <v-col cols="8">
-                <v-data-table
-                  disable-sort
-                  hide-default-footer
-                  :headers="mortality.headers"
-                  :items="mortality.data"
-                ></v-data-table>
-              </v-col>
-
-              <v-divider
-                vertical
-                class="mx-4"
-              ></v-divider>
-
-              <v-col cols="3" class="caption">
-                <ul>
-                  <li>Add an egg collection record by clicking on "Add item".</li>
-                  <li>You can add multiple records for this batch/flock, for the selected date.
-                    This can be the different grades of eggs or eggs collected at different times of the day.</li>
-                </ul>
-                <br>
-                <a href="javascript:void(0)">Learn more</a>
-              </v-col>
-            </v-row>
-
-            <v-card-actions>
-              <v-btn
-                text
-                color="primary"
-                @click="addItem('Mortality')"
-              >
-                Add item
-              </v-btn>
-            </v-card-actions>
-          </v-expansion-panel-content>
-        </v-expansion-panel>
-
-        <v-expansion-panel>
-          <v-expansion-panel-header v-slot="{ open }">
-            <v-row no-gutters>
-              <v-col cols="4">Water consumed</v-col>
-              <v-col
-                cols="8"
-                class="text--secondary"
-              >
-                <v-fade-transition leave-absolute>
-              <span
-                v-if="open"
-                key="0"
-              >
-                Select trip destination
-              </span>
-                  <span
-                    v-else
-                    key="1"
-                  >
-                {{ trip.location }}
-              </span>
-                </v-fade-transition>
-              </v-col>
-            </v-row>
-          </v-expansion-panel-header>
-          <v-expansion-panel-content>
-            <v-row no-gutters>
-              <v-col cols="8">
-                <v-data-table
-                  disable-sort
-                  hide-default-footer
-                  :headers="waterConsumed.headers"
-                  :items="waterConsumed.data"
-                ></v-data-table>
-              </v-col>
-
-              <v-divider
-                vertical
-                class="mx-4"
-              ></v-divider>
-
-              <v-col cols="3" class="caption">
-                <ul>
-                  <li>Add an egg collection record by clicking on "Add item".</li>
-                  <li>You can add multiple records for this batch/flock, for the selected date.
-                    This can be the different grades of eggs or eggs collected at different times of the day.</li>
-                </ul>
-                <br>
-                <a href="javascript:void(0)">Learn more</a>
-              </v-col>
-            </v-row>
-
-            <v-card-actions>
-              <v-btn
-                text
-                color="primary"
-                @click="addItem('WaterConsumed')"
-              >
-                Add item
-              </v-btn>
-            </v-card-actions>
-          </v-expansion-panel-content>
-        </v-expansion-panel>
-
-        <v-expansion-panel>
-          <v-expansion-panel-header v-slot="{ open }">
-            <v-row no-gutters>
-              <v-col cols="4">Vaccination</v-col>
-              <v-col
-                cols="8"
-                class="text--secondary"
-              >
-                <v-fade-transition leave-absolute>
-              <span
-                v-if="open"
-                key="0"
-              >
-                Select trip destination
-              </span>
-                  <span
-                    v-else
-                    key="1"
-                  >
-                {{ trip.location }}
-              </span>
-                </v-fade-transition>
-              </v-col>
-            </v-row>
-          </v-expansion-panel-header>
-          <v-expansion-panel-content>
-            <v-row no-gutters>
-              <v-col cols="8">
-                <v-data-table
-                  disable-sort
-                  hide-default-footer
-                  :headers="mortality.headers"
-                  :items="mortality.data"
-                ></v-data-table>
-              </v-col>
-
-              <v-divider
-                vertical
-                class="mx-4"
-              ></v-divider>
-
-              <v-col cols="3" class="caption">
-                <ul>
-                  <li>Add an egg collection record by clicking on "Add item".</li>
-                  <li>You can add multiple records for this batch/flock, for the selected date.
-                    This can be the different grades of eggs or eggs collected at different times of the day.</li>
-                </ul>
-                <br>
-                <a href="javascript:void(0)">Learn more</a>
-              </v-col>
-            </v-row>
-
-            <v-card-actions>
-              <v-btn
-                text
-                color="primary"
-                @click="addItem('Mortality')"
-              >
-                Add item
-              </v-btn>
-            </v-card-actions>
-          </v-expansion-panel-content>
-        </v-expansion-panel>
-
-        <v-expansion-panel>
-          <v-expansion-panel-header v-slot="{ open }">
-            <v-row no-gutters>
-              <v-col cols="4">Medication</v-col>
-              <v-col
-                cols="8"
-                class="text--secondary"
-              >
-                <v-fade-transition leave-absolute>
-              <span
-                v-if="open"
-                key="0"
-              >
-                Select trip destination
-              </span>
-                  <span
-                    v-else
-                    key="1"
-                  >
-                {{ trip.location }}
-              </span>
-                </v-fade-transition>
-              </v-col>
-            </v-row>
-          </v-expansion-panel-header>
-          <v-expansion-panel-content>
-            <v-row no-gutters>
-              <v-col cols="8">
-                <v-data-table
-                  disable-sort
-                  hide-default-footer
-                  :headers="mortality.headers"
-                  :items="mortality.data"
-                ></v-data-table>
-              </v-col>
-
-              <v-divider
-                vertical
-                class="mx-4"
-              ></v-divider>
-
-              <v-col cols="3" class="caption">
-                <ul>
-                  <li>Add an egg collection record by clicking on "Add item".</li>
-                  <li>You can add multiple records for this batch/flock, for the selected date.
-                    This can be the different grades of eggs or eggs collected at different times of the day.</li>
-                </ul>
-                <br>
-                <a href="javascript:void(0)">Learn more</a>
-              </v-col>
-            </v-row>
-
-            <v-card-actions>
-              <v-btn
-                text
-                color="primary"
-                @click="addItem('Mortality')"
-              >
-                Add item
-              </v-btn>
-            </v-card-actions>
-          </v-expansion-panel-content>
-        </v-expansion-panel>
-
-        <v-expansion-panel>
-            <v-expansion-panel-header v-slot="{ open }">
-              <v-row no-gutters>
-                <v-col cols="4">Note</v-col>
-                <v-col
-                  cols="8"
-                  class="text--secondary"
-                >
-                  <v-fade-transition leave-absolute>
-              <span
-                v-if="open"
-                key="0"
-              >
-                Select trip destination
-              </span>
-                    <span
-                      v-else
-                      key="1"
+        <v-slide-y-reverse-transition
+          class="py-0"
+          tag="v-col"
+        >
+          <v-col v-if="validProduction">
+            <v-expansion-panels>
+              <v-expansion-panel>
+                <v-expansion-panel-header v-slot="{ open }">
+                  <v-row no-gutters>
+                    <v-col cols="4">Eggs collected</v-col>
+                    <v-col
+                      cols="8"
+                      class="text--secondary"
                     >
-                {{ trip.location }}
-              </span>
-                  </v-fade-transition>
-                </v-col>
-              </v-row>
-            </v-expansion-panel-header>
-            <v-expansion-panel-content>
-              <v-row no-gutters>
-                <v-col cols="8">
-                  <v-textarea
-                    clearable
-                    label="Note"
-                    value="Attendant notes"
-                  ></v-textarea>
-                </v-col>
+                      <v-fade-transition leave-absolute>
+                <span
+                  v-if="open"
+                  key="0"
+                >
+                  Select trip destination
+                </span>
+                        <span
+                          v-else
+                          key="1"
+                        >
+                  testststst
+                </span>
+                      </v-fade-transition>
+                    </v-col>
+                  </v-row>
+                </v-expansion-panel-header>
+                <v-expansion-panel-content>
+                  <v-row no-gutters>
+                    <v-col cols="8">
+                      <v-data-table
+                        disable-sort
+                        no-data-text="Record eggs collected here"
+                        hide-default-footer
+                        :headers="eggCollectionHeaders"
+                        :items="production.eggs"
+                      >
+                        <template v-slot:item.total="{ item }">
+                          {{ +item.crates + +((+item.pieces / 30).toFixed(2)) | formatNumber }} crates
+                        </template>
+                      </v-data-table>
+                      <v-btn
+                        class="float-right"
+                        outlined
+                        color="primary"
+                        @click="addItem('EggCollection')"
+                      >
+                        Add item
+                      </v-btn>
+                    </v-col>
 
-                <v-divider
-                  vertical
-                  class="mx-4"
-                ></v-divider>
+                    <v-divider
+                      vertical
+                      class="mx-4"
+                    ></v-divider>
 
-                <v-col cols="3" class="caption">
-                  <ul>
-                    <li>Add an egg collection record by clicking on "Add item".</li>
-                    <li>You can add multiple records for this batch/flock, for the selected date.
-                      This can be the different grades of eggs or eggs collected at different times of the day.</li>
-                  </ul>
-                  <br>
-                  <a href="javascript:void(0)">Learn more</a>
-                </v-col>
-              </v-row>
-            </v-expansion-panel-content>
-          </v-expansion-panel>
-      </v-expansion-panels>
-      </v-col>
-    </v-row>
+                    <v-col cols="3" class="subtitle-2">
+                      <ul>
+                        <li>Add an egg collection record by clicking on "Add item".</li>
+                        <li>You can add multiple records for this batch/flock, for the selected date.
+                          This can be the different grades of eggs or eggs collected at different times of the day.</li>
+                      </ul>
+                    </v-col>
+                  </v-row>
+                </v-expansion-panel-content>
+              </v-expansion-panel>
 
+              <v-expansion-panel>
+                <v-expansion-panel-header v-slot="{ open }">
+                  <v-row no-gutters>
+                    <v-col cols="4">Feed consumed</v-col>
+                    <v-col
+                      cols="8"
+                      class="text--secondary"
+                    >
+                      <v-fade-transition leave-absolute>
+                        <span v-if="open">When do you want to travel?</span>
+                        <v-row
+                          v-else
+                          no-gutters
+                          style="width: 100%"
+                        >
+                          <v-col cols="6">Start date: {{ trip.start || 'Not set' }}</v-col>
+                          <v-col cols="6">End date: {{ trip.end || 'Not set' }}</v-col>
+                        </v-row>
+                      </v-fade-transition>
+                    </v-col>
+                  </v-row>
+                </v-expansion-panel-header>
+                <v-expansion-panel-content>
+                  <v-row no-gutters>
+                    <v-col cols="8">
+                      <v-data-table
+                        disable-sort
+                        hide-default-footer
+                        :headers="feedConsumedHeaders"
+                        no-data-text="No feed recorded."
+                        :items="production.feeds"
+                      >
+                        <template v-slot:item.feedPerBird="{ item }">
+                          {{ (item.quantity / production.batch.currentStock) * 1000 | formatNumber }}g
+                        </template>
+                        <template v-slot:item.quantity="{ item }">
+                          {{ item.quantity | formatNumber }}kg
+                        </template>
+                      </v-data-table>
+
+                      <v-btn
+                        class="float-right"
+                        outlined
+                        color="primary"
+                        @click="addItem('FeedConsumed')"
+                      >
+                        Add item
+                      </v-btn>
+                    </v-col>
+
+                    <v-divider
+                      vertical
+                      class="mx-4"
+                    ></v-divider>
+
+                    <v-col cols="3" class="subtitle-2">
+                      <ul>
+                        <li>Add a feeding record record by clicking on "Add item".</li>
+                        <li>You can add multiple records for this batch/flock, for the selected date.
+                          This can be the different grades of eggs or eggs collected at different times of the day.</li>
+                      </ul>
+                    </v-col>
+                  </v-row>
+                </v-expansion-panel-content>
+              </v-expansion-panel>
+
+              <v-expansion-panel>
+                <v-expansion-panel-header v-slot="{ open }">
+                  <v-row no-gutters>
+                    <v-col cols="4">Mortality</v-col>
+                    <v-col
+                      cols="8"
+                      class="text--secondary"
+                    >
+                      <v-fade-transition leave-absolute>
+                  <span
+                    v-if="open"
+                    key="0"
+                  >
+                    Select trip destination
+                  </span>
+                        <span
+                          v-else
+                          key="1"
+                        >
+                    {{ trip.location }}
+                  </span>
+                      </v-fade-transition>
+                    </v-col>
+                  </v-row>
+                </v-expansion-panel-header>
+                <v-expansion-panel-content>
+                  <v-row no-gutters>
+                    <v-col cols="8">
+                      <v-data-table
+                        disable-sort
+                        hide-default-footer
+                        no-data-text="No mortality recorded."
+                        :headers="mortalityHeaders"
+                        :items="production.mortality"
+                      ></v-data-table>
+
+                      <v-btn
+                        class="float-right"
+                        outlined
+                        color="primary"
+                        @click="addItem('Mortality')"
+                      >
+                        Add item
+                      </v-btn>
+                    </v-col>
+
+                    <v-divider
+                      vertical
+                      class="mx-4"
+                    ></v-divider>
+
+                    <v-col cols="3" class="subtitle-2">
+                      <ul>
+                        <li>Record a mortality by clicking on "Add item".</li>
+                        <li>You can add multiple records for this batch/flock, for the selected date.
+                          This can be the different mortality recorded at different times of the day.</li>
+                      </ul>
+                    </v-col>
+                  </v-row>
+                </v-expansion-panel-content>
+              </v-expansion-panel>
+
+              <v-expansion-panel>
+                <v-expansion-panel-header v-slot="{ open }">
+                  <v-row no-gutters>
+                    <v-col cols="4">Water consumed</v-col>
+                    <v-col
+                      cols="8"
+                      class="text--secondary"
+                    >
+                      <v-fade-transition leave-absolute>
+                  <span
+                    v-if="open"
+                    key="0"
+                  >
+                    Select trip destination
+                  </span>
+                        <span
+                          v-else
+                          key="1"
+                        >
+                    {{ trip.location }}
+                  </span>
+                      </v-fade-transition>
+                    </v-col>
+                  </v-row>
+                </v-expansion-panel-header>
+                <v-expansion-panel-content>
+                  <v-row no-gutters>
+                    <v-col cols="8">
+                      <v-data-table
+                        disable-sort
+                        hide-default-footer
+                        :headers="waterConsumedHeaders"
+                        :items="production.water"
+                      ></v-data-table>
+                      <v-btn
+                        outlined
+                        class="float-right"
+                        color="primary"
+                        @click="addItem('WaterConsumed')"
+                      >
+                        Add item
+                      </v-btn>
+                    </v-col>
+
+                    <v-divider
+                      vertical
+                      class="mx-4"
+                    ></v-divider>
+
+                    <v-col cols="3" class="subtitle-2">
+                      <ul>
+                        <li>Add an egg collection record by clicking on "Add item".</li>
+                        <li>You can add multiple records for this batch/flock, for the selected date.
+                          This can be the different grades of eggs or eggs collected at different times of the day.</li>
+                      </ul>
+                    </v-col>
+                  </v-row>
+                </v-expansion-panel-content>
+              </v-expansion-panel>
+
+              <v-expansion-panel>
+                <v-expansion-panel-header v-slot="{ open }">
+                  <v-row no-gutters>
+                    <v-col cols="4">Vaccination</v-col>
+                    <v-col
+                      cols="8"
+                      class="text--secondary"
+                    >
+                      <v-fade-transition leave-absolute>
+                  <span
+                    v-if="open"
+                    key="0"
+                  >
+                    Select trip destination
+                  </span>
+                        <span
+                          v-else
+                          key="1"
+                        >
+                    {{ trip.location }}
+                  </span>
+                      </v-fade-transition>
+                    </v-col>
+                  </v-row>
+                </v-expansion-panel-header>
+                <v-expansion-panel-content>
+                  <v-row no-gutters>
+                    <v-col cols="8">
+                      <v-data-table
+                        disable-sort
+                        hide-default-footer
+                        :headers="mortalityHeaders"
+                        :items="production.mortality"
+                      ></v-data-table>
+                      <v-btn
+                        outlined
+                        class="float-right"
+                        color="primary"
+                        @click="addItem('Mortality')"
+                      >
+                        Add item
+                      </v-btn>
+                    </v-col>
+
+                    <v-divider
+                      vertical
+                      class="mx-4"
+                    ></v-divider>
+
+                    <v-col cols="3" class="subtitle-2">
+                      <ul>
+                        <li>Add an egg collection record by clicking on "Add item".</li>
+                        <li>You can add multiple records for this batch/flock, for the selected date.
+                          This can be the different grades of eggs or eggs collected at different times of the day.</li>
+                      </ul>
+                    </v-col>
+                  </v-row>
+                </v-expansion-panel-content>
+              </v-expansion-panel>
+
+              <v-expansion-panel>
+                <v-expansion-panel-header v-slot="{ open }">
+                  <v-row no-gutters>
+                    <v-col cols="4">Medication</v-col>
+                    <v-col
+                      cols="8"
+                      class="text--secondary"
+                    >
+                      <v-fade-transition leave-absolute>
+                  <span
+                    v-if="open"
+                    key="0"
+                  >
+                    Select trip destination
+                  </span>
+                        <span
+                          v-else
+                          key="1"
+                        >
+                    {{ trip.location }}
+                  </span>
+                      </v-fade-transition>
+                    </v-col>
+                  </v-row>
+                </v-expansion-panel-header>
+                <v-expansion-panel-content>
+                  <v-row no-gutters>
+                    <v-col cols="8">
+                      <v-data-table
+                        disable-sort
+                        hide-default-footer
+                        :headers="mortalityHeaders"
+                        :items="production.mortality"
+                      ></v-data-table>
+                      <v-btn
+                        outlined
+                        class="float-right"
+                        color="primary"
+                        @click="addItem('Mortality')"
+                      >
+                        Add item
+                      </v-btn>
+                    </v-col>
+
+                    <v-divider
+                      vertical
+                      class="mx-4"
+                    ></v-divider>
+
+                    <v-col cols="3" class="subtitle-2">
+                      <ul>
+                        <li>Add an egg collection record by clicking on "Add item".</li>
+                        <li>You can add multiple records for this batch/flock, for the selected date.
+                          This can be the different grades of eggs or eggs collected at different times of the day.</li>
+                      </ul>
+                    </v-col>
+                  </v-row>
+                </v-expansion-panel-content>
+              </v-expansion-panel>
+
+              <v-expansion-panel>
+                <v-expansion-panel-header v-slot="{ open }">
+                  <v-row no-gutters>
+                    <v-col cols="4">Note</v-col>
+                    <v-col
+                      cols="8"
+                      class="text--secondary"
+                    >
+                      <v-fade-transition leave-absolute>
+                  <span
+                    v-if="open"
+                    key="0"
+                  >
+                    Select trip destination
+                  </span>
+                        <span
+                          v-else
+                          key="1"
+                        >
+                    {{ trip.location }}
+                  </span>
+                      </v-fade-transition>
+                    </v-col>
+                  </v-row>
+                </v-expansion-panel-header>
+                <v-expansion-panel-content>
+                  <v-row no-gutters>
+                    <v-col md="12" cols="12">
+                      <v-textarea
+                        clearable
+                        label="Note"
+                        value="Attendant notes"
+                      ></v-textarea>
+                    </v-col>
+                  </v-row>
+                </v-expansion-panel-content>
+              </v-expansion-panel>
+            </v-expansion-panels>
+          </v-col>
+        </v-slide-y-reverse-transition>
+
+        <v-col cols="12">
+          <v-btn color="primary"
+                 class="float-right"
+                 @click="saveProduction"
+                 tile>
+            {{ validProduction? 'Save production' : 'Continue' }}
+          </v-btn>
+        </v-col>
+      </v-row>
+    </v-form>
     <v-dialog v-model="dialog" persistent max-width="600px">
       <v-card>
-        <v-card-title>{{ activeSection }}</v-card-title>
+        <v-card-title>{{ sectionNames[activeSection].title }}</v-card-title>
         <v-divider></v-divider>
         <v-card-text>
-          <component :is="activeSection"/>
+          <component :is="activeSection" v-model="sectionData" :ref="activeSection"/>
         </v-card-text>
         <v-divider></v-divider>
       <v-card-actions>
         <v-spacer></v-spacer>
-        <v-btn color="blue darken-1" text @click="dialog = false">Close</v-btn>
-        <v-btn color="blue darken-1" text @click="dialog = false">Save</v-btn>
+        <v-btn color="primary darken-1" text @click="dialog = false">Close</v-btn>
+        <v-btn color="primary darken-1" tile @click="updateSectionData">Add item</v-btn>
       </v-card-actions>
       </v-card>
     </v-dialog>
@@ -471,6 +520,9 @@
 </template>
 
 <script>
+import { mapGetters } from 'vuex';
+import axios from '../plugins/axios';
+import { GETTER_TYPES } from '../store/types';
 import EggCollection from '../components/EggCollection.vue';
 import FeedConsumed from '../components/FeedConsumed.vue';
 import Mortality from '../components/Mortality.vue';
@@ -480,71 +532,71 @@ export default {
   name: 'ProductionDetail',
   data() {
     return {
-      activeSection: '',
-      dialog: false,
-      panel: [0, 1, 2, 3],
-      eggCollection: [
-        {
-          size: 'small', quantity: 290, damaged: 20, total: 310, damagedPercent: 8.2
+      validProduction: false,
+      production: {
+        date: this.today(),
+        eggs: [],
+        feeds: [],
+        water: [],
+        mortality: [],
+        vaccinations: [],
+        medications: [],
+        note: ''
+      },
+      sectionNames: {
+        EggCollection: {
+          id: 'eggs',
+          key: 'size',
+          title: 'Eggs collected'
         },
-        {
-          size: 'medium', quantity: 780, damaged: 10, total: 790, damagedPercent: 8.2
+        FeedConsumed: {
+          id: 'feeds',
+          key: 'type',
+          title: 'Feed consumed'
         },
-        {
-          size: 'large', quantity: 10, damaged: 0, total: 10, damagedPercent: 8.2
+        Mortality: {
+          id: 'mortality',
+          key: 'reason',
+          title: 'Mortality'
+        },
+        WaterConsumed: {
+          id: 'water',
+          key: 'quantity',
+          title: 'Water consumed'
         }
-      ],
+      },
+      batches: [],
+      sectionData: {},
+      dateMenu: false,
+      activeSection: 'EggCollection',
+      dialog: false,
       eggCollectionHeaders: [
         {
           text: 'Size',
           align: 'start',
           value: 'size',
         },
+        { text: 'Crates', value: 'crates' },
+        { text: 'Pieces', value: 'pieces' },
+        { text: 'Total', value: 'total' }
+      ],
+      feedConsumedHeaders: [
+        { text: 'Type', align: 'start', value: 'type' },
+        { text: 'Bags (25kg)', value: 'bags' },
         { text: 'Quantity', value: 'quantity' },
-        { text: 'Damaged', value: 'damaged' },
-        { text: 'Damaged %', value: 'damagedPercent' },
-        { text: 'Total', value: 'total' },
+        { text: 'Feed / bird', value: 'feedPerBird' }
+      ],
+      waterConsumedHeaders: [
+        { text: 'Quantity (ltr)', value: 'quantity' },
+        { text: 'Water / Bird (ml)', value: 'waterPerBird' },
         { text: '', value: '' },
       ],
-      feedConsumed: {
-        headers: [
-          { text: 'Type', align: 'start', value: 'type' },
-          { text: 'Quantity (kg)', value: 'quantity' },
-          { text: 'Cost per (kg)', value: 'cost' },
-          { text: '', value: '' },
-        ],
-        data: [
-          { type: 'Layer Mash', quantity: 290 },
-          { type: 'Grower Mash', quantity: 780 }
-        ]
-      },
-      waterConsumed: {
-        headers: [
-          { text: 'Quantity (ltr)', value: 'quantity' },
-          { text: 'Water / Bird (ml)', value: 'waterPerBird' },
-          { text: '', value: '' },
-        ],
-        data: [
-          { waterPerBird: 750, quantity: 2000 }
-        ]
-      },
-      mortality: {
-        headers: [
-          { text: 'Number of birds', align: 'start', value: 'count' },
-          { text: 'Time', value: 'time' },
-          { text: 'Reason', value: 'reason' },
-          { text: '', value: '' },
-        ],
-        data: [
-          { count: 2, reason: 'Prolapse', time: '07:15 AM' },
-          { count: 1, reason: 'Suffocation', time: '07:15 AM' },
-          { count: 2, reason: 'Crushed', time: '07:15 AM' },
-          { count: 2, reason: 'Predator', time: '07:15 AM' },
-          { count: 2, reason: 'Dead', time: '07:15 AM' },
-          { count: 2, reason: 'Disease ', time: '07:15 AM' },
-        ]
-      },
-      date: null,
+      mortalityHeaders: [
+        { text: 'Number of birds', align: 'start', value: 'count' },
+        { text: 'Time', value: 'time' },
+        { text: 'Reason', value: 'reason' },
+        { text: '', value: '' },
+      ],
       trip: {
         name: '',
         location: null,
@@ -560,11 +612,61 @@ export default {
     Mortality,
     WaterConsumed
   },
+  computed: {
+    ...mapGetters({
+      farmLocations: GETTER_TYPES.FARM_LOCATIONS
+    })
+  },
   methods: {
+    updateBatchList() {
+      axios.get('/batches?status=active')
+        .then(({ data }) => {
+          this.batches = data;
+        });
+    },
     addItem(section) {
       this.activeSection = section;
       this.dialog = true;
+    },
+    saveProduction() {
+      if (this.validProduction) axios.post();
+      else this.validProduction = this.$refs.form.validate();
+    },
+    updateSectionData() {
+      if (this.$refs[this.activeSection].validate()) {
+        const sectionInfo = this.sectionNames[this.activeSection];
+
+        const itemIndex = this.itemIndex(this.production[sectionInfo.id], this.sectionData, sectionInfo.key);
+        if (itemIndex === -1) this.production[sectionInfo.id].push(JSON.parse(JSON.stringify(this.sectionData)));
+        else this.production[sectionInfo.id][itemIndex] = JSON.parse(JSON.stringify(this.sectionData));
+        console.log(this.production[sectionInfo.id]);
+        this.production[sectionInfo.id] = [...this.production[sectionInfo.id]];
+        this.$refs[this.activeSection].reset();
+        this.dialog = false;
+      }
+    },
+    itemIndex(items, item, key) {
+      return items.findIndex((itm) => itm[key] === item[key]);
+    },
+    today() {
+      const date = new Date();
+      return `${date.getFullYear()}-${date.getMonth().toString().padStart(2, '0')}-${date.getDate()
+        .toString().padStart(2, '0')}`;
     }
-  }
+  },
+  filters: {
+    formatNumber(value) {
+      return new Intl.NumberFormat('en-US', { minimumFractionDigits: 2 }).format(value);
+    },
+    pad(value) {
+      return value.toString().padStart(4, '0');
+    }
+  },
 };
 </script>
+
+<style>
+  .float-right {
+    float: right;
+  }
+</style>
