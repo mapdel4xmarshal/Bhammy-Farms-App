@@ -1,6 +1,5 @@
 <template>
-  <v-container>
-    <v-form ref="form">
+  <v-form ref="form">
       <v-row>
         <v-col cols="12">
           <v-select
@@ -33,7 +32,6 @@
         </v-col>
       </v-row>
     </v-form>
-  </v-container>
 </template>
 
 <script>

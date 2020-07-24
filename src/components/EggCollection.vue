@@ -1,6 +1,5 @@
 <template>
-  <v-container>
-    <v-form ref="form">
+  <v-form ref="form">
       <v-row>
         <v-col cols="12">
           <v-select
@@ -11,7 +10,7 @@
             required
           ></v-select>
         </v-col>
-        <v-col cols="6">
+        <v-col cols="12" md="6">
           <v-text-field label="Total crates*"
                         type="number"
                         required
@@ -21,7 +20,7 @@
                         @change="update">
           </v-text-field>
         </v-col>
-        <v-col cols="6">
+        <v-col cols="12" md="6">
           <v-text-field
             :rules="pieceRules"
             type="number"
@@ -34,7 +33,6 @@
         </v-col>
       </v-row>
     </v-form>
-  </v-container>
 </template>
 
 <script>
