@@ -80,7 +80,7 @@
               <v-expansion-panel>
                 <v-expansion-panel-header>
                   <v-row no-gutters>
-                    <v-col cols="4">Eggs collected</v-col>
+                    <v-col cols="4"><div :class="{'error-state': sectionErrors['eggs']}">Eggs collected</div></v-col>
                   </v-row>
                 </v-expansion-panel-header>
                 <v-expansion-panel-content>
@@ -96,9 +96,13 @@
                         <template v-slot:item.total="{ item }">
                           {{ +item.crates + +((+item.pieces / 30).toFixed(2)) | formatNumber }} crates
                         </template>
+
+                        <template v-slot:item.actions="{ item }">
+                          <TableAction :item="item" :edit-item="editItem" :delete-item="deleteItem"/>
+                        </template>
                       </v-data-table>
                       <v-btn
-                        class="float-right"
+                        class="float-right mt-6"
                         outlined
                         tile
                         color="primary"
@@ -127,7 +131,7 @@
               <v-expansion-panel>
                 <v-expansion-panel-header>
                   <v-row no-gutters>
-                    <v-col cols="4">Feed consumed</v-col>
+                    <v-col cols="4"><div :class="{'error-state': sectionErrors['feeds']}">Feed consumed</div></v-col>
                   </v-row>
                 </v-expansion-panel-header>
                 <v-expansion-panel-content>
@@ -178,7 +182,7 @@
               <v-expansion-panel>
                 <v-expansion-panel-header>
                   <v-row no-gutters>
-                    <v-col cols="4">Mortality</v-col>
+                    <v-col cols="4"><div :class="{'error-state': sectionErrors['mortality']}">Mortality</div></v-col>
                   </v-row>
                 </v-expansion-panel-header>
                 <v-expansion-panel-content>
@@ -222,7 +226,7 @@
               <v-expansion-panel>
                 <v-expansion-panel-header>
                   <v-row no-gutters>
-                    <v-col cols="4">Water consumed</v-col>
+                    <v-col cols="4"><div :class="{'error-state': sectionErrors['water']}">Water consumed</div></v-col>
                   </v-row>
                 </v-expansion-panel-header>
                 <v-expansion-panel-content>
@@ -279,7 +283,7 @@
                         hide-default-footer
                         no-data-text="No medication recorded."
                         :headers="medicationHeaders"
-                        :items="production.medication"
+                        :items="production.medications"
                       ></v-data-table>
                       <v-btn
                         outlined
@@ -411,12 +415,14 @@ import Mortality from '../components/Mortality.vue';
 import WaterConsumed from '../components/WaterConsumed.vue';
 import Vaccination from '../components/Vaccination.vue';
 import Medication from '../components/Medication.vue';
+import TableAction from '../components/TableAction.vue';
 
 export default {
   name: 'ProductionDetail',
   data() {
     return {
       validProduction: false,
+      sectionErrors: {},
       production: {
         date: this.today(),
         eggs: [],
@@ -472,7 +478,8 @@ export default {
         },
         { text: 'Crates', value: 'crates' },
         { text: 'Pieces', value: 'pieces' },
-        { text: 'Total', value: 'total' }
+        { text: 'Total', value: 'total' },
+        { text: 'Actions', value: 'actions' }
       ],
       feedConsumedHeaders: [
         { text: 'Type', align: 'start', value: 'type' },
@@ -512,6 +519,7 @@ export default {
     };
   },
   components: {
+    TableAction,
     EggCollection,
     FeedConsumed,
     Mortality,
@@ -535,13 +543,29 @@ export default {
       this.activeSection = section;
       this.dialog = true;
     },
+    editItem(section, item) {
+      this.activeSection = section;
+      this.sectionData = item;
+      this.dialog = true;
+    },
+    deleteItem(section, item) {
+      this.activeSection = section;
+      const sectionInfo = this.sectionNames[section];
+
+      const itemIndex = this.production[sectionInfo.id].indexOf(item);
+      this.production[sectionInfo.id].splice(itemIndex, 1);
+    },
     saveProduction() {
-      if (this.validProduction) axios.post();
-      else this.validProduction = this.$refs.form.validate();
+      if (this.validProduction) {
+        if (this.validateSections()) axios.post();
+      } else this.validProduction = this.$refs.form.validate();
     },
     updateSectionData() {
       if (this.$refs[this.activeSection].validate()) {
         const sectionInfo = this.sectionNames[this.activeSection];
+
+        this.sectionErrors[sectionInfo.id] = false;
+
         const itemIndex = this.itemIndex(this.production[sectionInfo.id], this.sectionData, sectionInfo.key);
 
         if (itemIndex === -1) this.production[sectionInfo.id].push(JSON.parse(JSON.stringify(this.sectionData)));
@@ -559,6 +583,19 @@ export default {
       const date = new Date();
       return `${date.getFullYear()}-${date.getMonth().toString().padStart(2, '0')}-${date.getDate()
         .toString().padStart(2, '0')}`;
+    },
+    validateSections() {
+      let isValid = true;
+      this.sectionErrors = {};
+
+      ['eggs', 'feeds', 'water', 'mortality'].forEach((section) => {
+        if (this.production[section].length === 0) {
+          this.sectionErrors[section] = true;
+          isValid = false;
+        }
+      });
+
+      return isValid;
     }
   },
   filters: {
@@ -575,5 +612,31 @@ export default {
 <style>
   .float-right {
     float: right;
+  }
+
+  .error-state {
+    animation: shake 0.82s cubic-bezier(.36,.07,.19,.97) both;
+    transform: translate3d(0, 0, 0);
+    backface-visibility: hidden;
+    perspective: 1000px;
+    color: #ff5252;
+  }
+
+  @keyframes shake {
+    10%, 90% {
+      transform: translate3d(-1px, 0, 0);
+    }
+
+    20%, 80% {
+      transform: translate3d(2px, 0, 0);
+    }
+
+    30%, 50%, 70% {
+      transform: translate3d(-4px, 0, 0);
+    }
+
+    40%, 60% {
+      transform: translate3d(4px, 0, 0);
+    }
   }
 </style>

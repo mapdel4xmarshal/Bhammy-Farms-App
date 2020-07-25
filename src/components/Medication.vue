@@ -57,11 +57,11 @@
 
         <v-col cols="12">
           <v-select
-            label="Vaccination method*"
-            :items="vaccinationMethods"
+            label="Medication method*"
+            :items="medicationMethods"
             required
-            :rules="[v => !!v || 'Select a Vaccination method.']"
-            v-model="value.vaccinationMethod"
+            :rules="[v => !!v || 'Select a Medication method.']"
+            v-model="value.medicationMethod"
           ></v-select>
         </v-col>
 
@@ -97,7 +97,7 @@ export default {
       noOfBirdsRules: this.commonRules('No of birds'),
       totalDosageRules: this.commonRules('Total dosage'),
       medicaments: ['Lasota', 'Gumboro', 'Neodox'],
-      vaccinationMethods: [
+      medicationMethods: [
         'Intraocular (Eye Drop)',
         'Beak Dipping',
         'Subcutaneous Injection',
