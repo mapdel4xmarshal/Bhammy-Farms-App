@@ -5,7 +5,7 @@
 
         <v-spacer></v-spacer>
         <v-btn tile color="primary" @click="createNew">
-          Add new
+          New Production
         </v-btn>
       </v-toolbar>
 

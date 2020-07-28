@@ -3,7 +3,7 @@
     <v-toolbar flat dense color="transparent">
       <v-toolbar-title>New Production</v-toolbar-title>
       <v-spacer></v-spacer>
-      <v-btn text color="primary" class="spacer--right">cancel</v-btn>
+      <v-btn text color="primary" class="spacer--right" to="/production">cancel</v-btn>
       <v-btn color="primary" tile @click="saveProduction" :disabled="!validProduction">
         Save production
       </v-btn>
@@ -79,13 +79,14 @@
             <v-expansion-panels>
               <v-expansion-panel>
                 <v-expansion-panel-header>
-                  <v-row no-gutters>
-                    <v-col cols="4"><div :class="{'error-state': sectionErrors['eggs']}">Eggs collected</div></v-col>
+                  <v-row no-gutters align="center">
+                    <v-col cols="12"><div :class="{'error-state': sectionErrors['eggs']}">
+                      <v-icon>mdi-egg</v-icon> Eggs collected</div></v-col>
                   </v-row>
                 </v-expansion-panel-header>
                 <v-expansion-panel-content>
                   <v-row no-gutters>
-                    <v-col cols="8">
+                    <v-col cols="12" md="9">
                       <v-data-table
                         disable-sort
                         no-data-text="No eggs recorded."
@@ -98,7 +99,11 @@
                         </template>
 
                         <template v-slot:item.actions="{ item }">
-                          <TableAction :item="item" :edit-item="editItem" :delete-item="deleteItem"/>
+                          <TableAction id="EggCollection"
+                                       :item="item"
+                                       :edit-item="editItem"
+                                       :delete-item="deleteItem"
+                          />
                         </template>
                       </v-data-table>
                       <v-btn
@@ -117,7 +122,7 @@
                       class="mx-4"
                     ></v-divider>
 
-                    <v-col cols="3" class="subtitle-2">
+                    <v-col cols="12" md="3" class="subtitle-2" v-if="!$mq.phone">
                       <ul>
                         <li>Add an egg collection record by clicking on "Add item".</li>
                         <li>You can add multiple records for this batch/flock, for the selected date.
@@ -130,13 +135,15 @@
 
               <v-expansion-panel>
                 <v-expansion-panel-header>
-                  <v-row no-gutters>
-                    <v-col cols="4"><div :class="{'error-state': sectionErrors['feeds']}">Feed consumed</div></v-col>
+                  <v-row no-gutters align="center">
+                    <v-col cols="4"><div :class="{'error-state': sectionErrors['feeds']}">
+                      <v-icon>mdi-barley</v-icon>
+                      Feed consumed</div></v-col>
                   </v-row>
                 </v-expansion-panel-header>
                 <v-expansion-panel-content>
                   <v-row no-gutters>
-                    <v-col cols="8">
+                    <v-col cols="12" md="9">
                       <v-data-table
                         disable-sort
                         hide-default-footer
@@ -147,13 +154,22 @@
                         <template v-slot:item.feedPerBird="{ item }">
                           {{ (item.quantity / production.batch.currentStock) * 1000 | formatNumber }}g
                         </template>
+
                         <template v-slot:item.quantity="{ item }">
                           {{ item.quantity | formatNumber }}kg
+                        </template>
+
+                        <template v-slot:item.actions="{ item }">
+                          <TableAction id="FeedConsumed"
+                                       :item="item"
+                                       :edit-item="editItem"
+                                       :delete-item="deleteItem"
+                          />
                         </template>
                       </v-data-table>
 
                       <v-btn
-                        class="float-right"
+                        class="float-right mt-6"
                         outlined
                         tile
                         color="primary"
@@ -168,7 +184,7 @@
                       class="mx-4"
                     ></v-divider>
 
-                    <v-col cols="3" class="subtitle-2">
+                    <v-col cols="12" md="3" class="subtitle-2" v-if="!$mq.phone">
                       <ul>
                         <li>Add a feeding record record by clicking on "Add item".</li>
                         <li>You can add multiple records for this batch/flock, for the selected date.
@@ -181,23 +197,32 @@
 
               <v-expansion-panel>
                 <v-expansion-panel-header>
-                  <v-row no-gutters>
-                    <v-col cols="4"><div :class="{'error-state': sectionErrors['mortality']}">Mortality</div></v-col>
+                  <v-row no-gutters align="center">
+                    <v-col cols="12"><div :class="{'error-state': sectionErrors['mortality']}">
+                      <v-icon>mdi-skull-crossbones</v-icon> Mortality</div></v-col>
                   </v-row>
                 </v-expansion-panel-header>
                 <v-expansion-panel-content>
                   <v-row no-gutters>
-                    <v-col cols="8">
+                    <v-col cols="12" md="9">
                       <v-data-table
                         disable-sort
                         hide-default-footer
                         no-data-text="No mortality recorded."
                         :headers="mortalityHeaders"
                         :items="production.mortality"
-                      ></v-data-table>
+                      >
+                        <template v-slot:item.actions="{ item }">
+                          <TableAction id="Mortality"
+                                       :item="item"
+                                       :edit-item="editItem"
+                                       :delete-item="deleteItem"
+                          />
+                        </template>
+                      </v-data-table>
 
                       <v-btn
-                        class="float-right"
+                        class="float-right mt-6"
                         outlined
                         color="primary"
                         tile
@@ -212,7 +237,7 @@
                       class="mx-4"
                     ></v-divider>
 
-                    <v-col cols="3" class="subtitle-2">
+                    <v-col cols="12" md="3" class="subtitle-2" v-if="!$mq.phone">
                       <ul>
                         <li>Record a mortality by clicking on "Add item".</li>
                         <li>You can add multiple records for this batch/flock, for the selected date.
@@ -225,13 +250,15 @@
 
               <v-expansion-panel>
                 <v-expansion-panel-header>
-                  <v-row no-gutters>
-                    <v-col cols="4"><div :class="{'error-state': sectionErrors['water']}">Water consumed</div></v-col>
+                  <v-row no-gutters align="center">
+                    <v-col cols="12"><div :class="{'error-state': sectionErrors['water']}">
+                      <v-icon>mdi-water</v-icon> Water consumed</div>
+                    </v-col>
                   </v-row>
                 </v-expansion-panel-header>
                 <v-expansion-panel-content>
                   <v-row no-gutters>
-                    <v-col cols="8">
+                    <v-col cols="12" md="9">
                       <v-data-table
                         disable-sort
                         hide-default-footer
@@ -242,10 +269,18 @@
                         <template v-slot:item.waterPerBird="{ item }">
                           {{ (item.quantity / production.batch.currentStock) * 1000 | formatNumber }}ml
                         </template>
+
+                        <template v-slot:item.actions="{ item }">
+                          <TableAction id="WaterConsumed"
+                                       :item="item"
+                                       :edit-item="editItem"
+                                       :delete-item="deleteItem"
+                          />
+                        </template>
                       </v-data-table>
                       <v-btn
                         outlined
-                        class="float-right"
+                        class="float-right mt-6"
                         color="primary"
                         tile
                         @click="addItem('WaterConsumed')"
@@ -259,7 +294,7 @@
                       class="mx-4"
                     ></v-divider>
 
-                    <v-col cols="3" class="subtitle-2">
+                    <v-col cols="12" md="3" class="subtitle-2" v-if="!$mq.phone">
                       <ul>
                         <li>Record water consumed by clicking on "Add item".</li>
                         <li>You can add multiple records for this batch/flock, for the selected date.</li>
@@ -271,94 +306,77 @@
 
               <v-expansion-panel>
                 <v-expansion-panel-header>
-                  <v-row no-gutters>
-                    <v-col cols="4">Medication</v-col>
+                  <v-row no-gutters align="center">
+                    <v-col cols="4"><v-icon>mdi-medical-bag</v-icon> Medication</v-col>
                   </v-row>
                 </v-expansion-panel-header>
                 <v-expansion-panel-content>
-                  <v-row no-gutters>
-                    <v-col cols="8">
-                      <v-data-table
-                        disable-sort
-                        hide-default-footer
-                        no-data-text="No medication recorded."
-                        :headers="medicationHeaders"
-                        :items="production.medications"
-                      ></v-data-table>
-                      <v-btn
-                        outlined
-                        class="float-right"
-                        color="primary"
-                        tile
-                        @click="addItem('Medication')"
-                      >
-                        Add item
-                      </v-btn>
-                    </v-col>
-
-                    <v-divider
-                      vertical
-                      class="mx-4"
-                    ></v-divider>
-
-                    <v-col cols="3" class="subtitle-2">
-                      <ul>
-                        <li>Add an egg collection record by clicking on "Add item".</li>
-                        <li>You can add multiple records for this batch/flock, for the selected date.
-                          This can be the different grades of eggs or eggs collected at different times of the day.</li>
-                      </ul>
-                    </v-col>
-                  </v-row>
+                  <v-data-table
+                    disable-sort
+                    hide-default-footer
+                    no-data-text="No medication recorded."
+                    :headers="medicationHeaders"
+                    :items="production.medications"
+                  >
+                    <template v-slot:item.actions="{ item }">
+                      <TableAction id="Medication"
+                                   :item="item"
+                                   :edit-item="editItem"
+                                   :delete-item="deleteItem"
+                      />
+                    </template>
+                  </v-data-table>
+                  <v-btn
+                    outlined
+                    class="float-right mt-6"
+                    color="primary"
+                    tile
+                    @click="addItem('Medication')"
+                  >
+                    Add item
+                  </v-btn>
                 </v-expansion-panel-content>
               </v-expansion-panel>
 
               <v-expansion-panel>
                 <v-expansion-panel-header>
-                  <v-row no-gutters>
-                    <v-col cols="4">Vaccination</v-col>
+                  <v-row no-gutters align="center">
+                    <v-col cols="4"><v-icon>mdi-needle</v-icon> Vaccination</v-col>
                   </v-row>
                 </v-expansion-panel-header>
                 <v-expansion-panel-content>
-                  <v-row no-gutters>
-                    <v-col cols="8">
-                      <v-data-table
-                        disable-sort
-                        hide-default-footer
-                        no-data-text="No vaccination recorded."
-                        :headers="vaccinationHeaders"
-                        :items="production.vaccinations"
-                      ></v-data-table>
-                      <v-btn
-                        outlined
-                        class="float-right"
-                        color="primary"
-                        tile
-                        @click="addItem('Vaccination')"
-                      >
-                        Add item
-                      </v-btn>
-                    </v-col>
+                  <v-data-table
+                    disable-sort
+                    hide-default-footer
+                    no-data-text="No vaccination recorded."
+                    :headers="vaccinationHeaders"
+                    :items="production.vaccinations"
+                  >
+                    <template v-slot:item.actions="{ item }">
+                      <TableAction id="Vaccination"
+                                   :item="item"
+                                   :edit-item="editItem"
+                                   :delete-item="deleteItem"
+                      />
+                    </template>
+                  </v-data-table>
 
-                    <v-divider
-                      vertical
-                      class="mx-4"
-                    ></v-divider>
-
-                    <v-col cols="3" class="subtitle-2">
-                      <ul>
-                        <li>Add an egg collection record by clicking on "Add item".</li>
-                        <li>You can add multiple records for this batch/flock, for the selected date.
-                          This can be the different grades of eggs or eggs collected at different times of the day.</li>
-                      </ul>
-                    </v-col>
-                  </v-row>
+                  <v-btn
+                    outlined
+                    class="float-right mt-6"
+                    color="primary"
+                    tile
+                    @click="addItem('Vaccination')"
+                  >
+                    Add item
+                  </v-btn>
                 </v-expansion-panel-content>
               </v-expansion-panel>
 
               <v-expansion-panel>
                 <v-expansion-panel-header>
-                  <v-row no-gutters>
-                    <v-col cols="4">Note</v-col>
+                  <v-row no-gutters align="center">
+                    <v-col cols="4"><v-icon>mdi-note-text</v-icon> Note</v-col>
                   </v-row>
                 </v-expansion-panel-header>
                 <v-expansion-panel-content>
@@ -460,7 +478,7 @@ export default {
           title: 'Vaccination'
         },
         Medication: {
-          id: 'Medications',
+          id: 'medications',
           key: 'medicamentBatchNo',
           title: 'Medication'
         }
@@ -479,24 +497,25 @@ export default {
         { text: 'Crates', value: 'crates' },
         { text: 'Pieces', value: 'pieces' },
         { text: 'Total', value: 'total' },
-        { text: 'Actions', value: 'actions' }
+        { text: '', value: 'actions' }
       ],
       feedConsumedHeaders: [
         { text: 'Type', align: 'start', value: 'type' },
         { text: 'Bags (25kg)', value: 'bags' },
         { text: 'Quantity', value: 'quantity' },
-        { text: 'Feed / bird', value: 'feedPerBird' }
+        { text: 'Feed / bird', value: 'feedPerBird' },
+        { text: '', value: 'actions' }
       ],
       waterConsumedHeaders: [
         { text: 'Quantity (ltr)', value: 'quantity' },
         { text: 'Water / Bird (ml)', value: 'waterPerBird' },
-        { text: '', value: '' },
+        { text: '', value: 'actions', width: '160px' }
       ],
       mortalityHeaders: [
         { text: 'Number of birds', align: 'start', value: 'count' },
         { text: 'Time', value: 'time' },
         { text: 'Reason', value: 'reason' },
-        { text: '', value: '' },
+        { text: '', value: 'actions' }
       ],
       vaccinationHeaders: [
         { text: 'Vaccine', value: 'vaccine' },
@@ -506,6 +525,7 @@ export default {
         { text: 'Method', value: 'vaccinationMethod' },
         { text: 'Administered by', value: 'administeredBy' },
         { text: 'Reason', value: 'reason' },
+        { text: '', value: 'actions', width: '160px' }
       ],
       medicationHeaders: [
         { text: 'Medicament', value: 'medicament' },
@@ -515,6 +535,7 @@ export default {
         { text: 'Method', value: 'medicamentMethod' },
         { text: 'Administered by', value: 'administeredBy' },
         { text: 'Reason', value: 'reason' },
+        { text: '', value: 'actions', width: '160px' }
       ]
     };
   },

@@ -63,7 +63,7 @@
               </v-col>
 
               <v-col cols="12">
-                <v-autocompletex
+                <v-autocomplete
                   v-model="batch.supplier"
                   label="Supplier"
                   hint="Supplier of the flock."
@@ -85,7 +85,7 @@
                       <v-list-item-subtitle>{{ item.address }}</v-list-item-subtitle>
                     </v-list-item-content>
                   </template>
-                </v-autocompletex>
+                </v-autocomplete>
               </v-col>
 
               <v-col cols="12">
@@ -172,19 +172,6 @@
                   :rules="[v => !!v || 'Please enter initial stock count.']"
                   required
                   v-model="batch.initialStock"
-                  type="number"
-                ></v-text-field>
-              </v-col>
-
-              <v-col cols="12">
-                <v-text-field
-                  label="Current stock"
-                  hint="Initial stock minus moralities."
-                  persistent-hint
-                  required
-                  :rules="[v => !!v || 'Please enter current stock count.']"
-                  v-model="batch.currentStock"
-                  min-value="0"
                   type="number"
                 ></v-text-field>
               </v-col>

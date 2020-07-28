@@ -37,6 +37,11 @@ const routes = [{
   component: () => import(/* webpackChunkName: "expenses" */ '../views/Expenses.vue'),
 },
 {
+  path: '/feeds',
+  name: ROUTES.FEEDS,
+  component: () => import(/* webpackChunkName: "expenses" */ '../views/Feeds.vue'),
+},
+{
   path: '/income',
   name: ROUTES.INCOME,
   component: () => import(/* webpackChunkName: "income" */ '../views/Income.vue'),

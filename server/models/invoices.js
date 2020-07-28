@@ -1,10 +1,9 @@
-'use strict';
 
 const { Model, DataTypes } = require('sequelize');
 
 class Invoices extends Model {
   static get tblName() {
-    return 'Invoices';
+    return 'invoices';
   }
 
   static get modelName() {
@@ -51,10 +50,12 @@ class Invoices extends Model {
     };
   }
 
-  static associate({ InvoiceItem, Item, Customer, Location }) {
-    Invoices.items =  Invoices.belongsToMany(Item, { through: InvoiceItem, foreignKey: 'invoice_id' });
-    Invoices.customer =  Invoices.belongsTo(Customer, { through: InvoiceItem, foreignKey: 'customer_id' });
-    Invoices.location =  Invoices.belongsTo(Location, { foreignKey: 'location_id' });
+  static associate({
+    InvoiceItem, Item, Customer, Location
+  }) {
+    Invoices.items = Invoices.belongsToMany(Item, { through: InvoiceItem, foreignKey: 'invoice_id' });
+    Invoices.customer = Invoices.belongsTo(Customer, { through: InvoiceItem, foreignKey: 'customer_id' });
+    Invoices.location = Invoices.belongsTo(Location, { foreignKey: 'location_id' });
   }
 }
 

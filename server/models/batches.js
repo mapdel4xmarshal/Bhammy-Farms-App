@@ -37,10 +37,6 @@ class Batches extends Model {
         type: DataTypes.INTEGER,
         allowNull: false
       },
-      mortality_count: {
-        type: DataTypes.INTEGER,
-        allowNull: false
-      },
       cost_per_unit: {
         type: DataTypes.INTEGER,
         allowNull: false

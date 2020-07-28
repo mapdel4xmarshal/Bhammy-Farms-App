@@ -87,10 +87,11 @@ export default {
     items: [
       { title: ROUTES.DASHBOARD, icon: 'mdi-monitor', to: ROUTES.DASHBOARD },
       { title: ROUTES.PRODUCTION, icon: 'mdi-chart-timeline', to: ROUTES.PRODUCTION },
-      { title: ROUTES.ACTIVITIES, icon: 'mdi-chart-line-variant', to: ROUTES.ACTIVITIES },
-      { title: ROUTES.BATCHES, icon: 'mdi-factory', to: ROUTES.BATCHES },
+      { title: ROUTES.FEEDS, icon: 'mdi-sack', to: ROUTES.FEEDS },
       { title: ROUTES.EXPENSES, icon: 'mdi-trending-down', to: ROUTES.EXPENSES },
       { title: ROUTES.INCOME, icon: 'mdi-currency-ngn', to: ROUTES.INCOME },
+      { title: ROUTES.ACTIVITIES, icon: 'mdi-chart-line-variant', to: ROUTES.ACTIVITIES },
+      { title: ROUTES.BATCHES, icon: 'mdi-factory', to: ROUTES.BATCHES },
       { title: ROUTES.CUSTOMERS, icon: 'mdi-account-multiple-outline', to: ROUTES.CUSTOMERS },
       { title: ROUTES.STORE, icon: 'mdi-silo', to: ROUTES.STORE },
       { title: ROUTES.SCHEDULES, icon: 'mdi-calendar-check-outline', to: ROUTES.SCHEDULES }

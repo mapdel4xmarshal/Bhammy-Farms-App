@@ -3,7 +3,7 @@ const { Model, DataTypes } = require('sequelize');
 
 class Items extends Model {
   static get tblName() {
-    return 'Items';
+    return 'items';
   }
 
   static get modelName() {
@@ -48,8 +48,9 @@ class Items extends Model {
     };
   }
 
-  static associate({ InvoiceItem, Invoice }) {
-    Items.items =  Items.belongsToMany(Invoice, { through: InvoiceItem, foreignKey: 'item_id' });
+  static associate({ InvoiceItem, Invoice, Production }) {
+    Items.invoices = Items.belongsToMany(Invoice, { through: InvoiceItem, foreignKey: 'item_id' });
+    Items.production = Items.belongsToMany(Production, { through: 'productionItem', foreignKey: 'item_id' });
   }
 }
 

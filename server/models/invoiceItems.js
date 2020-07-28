@@ -4,7 +4,7 @@ const { Model, DataTypes } = require('sequelize');
 
 class InvoiceItems extends Model {
   static get tblName() {
-    return 'InvoiceItems';
+    return 'invoice_items';
   }
 
   static get modelName() {

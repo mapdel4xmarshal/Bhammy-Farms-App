@@ -3,7 +3,7 @@ const { Model, DataTypes } = require('sequelize');
 
 class ExpenseTypes extends Model {
   static get tblName() {
-    return 'ExpenseTypes';
+    return 'expense_types';
   }
 
   static get modelName() {
