@@ -32,6 +32,10 @@ class Houses extends Model {
       }
     };
   }
+
+  static associate({ Location }) {
+    Houses.location = Houses.belongsTo(Location, { as: 'location', foreignKey: 'location_id' });
+  }
 }
 
 module.exports = (sequelize) => {

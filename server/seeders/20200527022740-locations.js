@@ -18,6 +18,8 @@ module.exports = {
       address: 'Km 10 Eyenkorin - Afon road behind Oloko village, Afon',
       state: 'Kwara',
       phone: '08073290177',
+      longitude: '4.53',
+      latitude: '8.32',
       created_at: new Date(),
       updated_at: new Date()
     }

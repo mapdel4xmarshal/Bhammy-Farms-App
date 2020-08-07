@@ -1,6 +1,5 @@
-
 const {
-  Batch, Breed, House, Sequelize: { Op }
+  Batch, Breed, House, Production, Mortality, Location, Sequelize: { Op, literal, fn, col }
 } = require('../../models');
 
 class Controller {
@@ -8,8 +7,53 @@ class Controller {
     let where = {};
     if (house) where = { house_id: house };
 
-    return Batch.findAll({ where, attributes: { exclude: ['createdAt', 'updatedAt'] }, include: [Breed] })
-      .then((batches) => batches.map((batch) => this._apiJSON(batch.dataValues)));
+    return Batch.findAll({
+      where,
+      attributes: [
+        'name', ['batch_id', 'batchId'], 'name', ['house_id', 'houseId'], [literal('House.name'), 'house'],
+        [col('`House->Location`.name'), 'farm'],
+        [fn('date_format', col('move_in_date'), '%Y-%m-%d'), 'moveInDate'],
+        [fn('date_format', col('move_out_date'), '%Y-%m-%d'), 'moveOutDate'],
+        ['move_in_age', 'moveInAge'], [literal('DATEDIFF(NOW(), move_in_date) + move_in_age'), 'currentAge'],
+        [literal('breed.name'), 'breed'], [literal('breed.type'), 'category'], ['initial_stock_count', 'initialStock'],
+        [literal('initial_stock_count - "Productions->Mortalities.count"'), 'currentStock'], ['supplier_id', 'supplier'],
+        ['source_id', 'source'], ['cost_per_unit', 'costPerUnit'], ['total_cost', 'totalCost'], ['description', 'batchNote'],
+        [fn('sum', fn('COALESCE',col('Productions->Mortalities.count'), 0)), 'totalMortality'],
+        [literal('CASE WHEN is_active = 1 THEN "Active" ELSE "Retired" END'), 'status']],
+      include: [
+        {
+          model: Breed,
+          attributes: []
+        },
+        {
+          model: House,
+          attributes: [],
+          include: [
+            {
+              model: Location,
+              as: 'location',
+              attributes: []
+            }
+          ]
+        },
+        {
+          model: Production,
+          attributes: [],
+          include: [
+            {
+              model: Mortality,
+              attributes: []
+            }
+          ]
+        },
+      ],
+      group: ['batch.batch_id'],
+      raw: true
+    })
+      .then((batches) => batches.map((batch) => {
+        batch.currentStock = batch.initialStock - batch.totalMortality;
+        return batch;
+      } ));
   }
 
   async getBreeds() {
@@ -88,33 +132,6 @@ class Controller {
       attributes: { exclude: ['createdAt', 'updatedAt'] }
     })
       .then((Batch) => Batch);
-  }
-
-  _snakeToCamel(str) {
-    return str.replace(/([-_]\w)/g, (g) => g[1].toUpperCase());
-  }
-
-  _apiJSON(batch) {
-    return {
-      id: batch.batch_id,
-      name: batch.name,
-      moveInDate: this._normalizeDateString(batch.move_in_date),
-      moveOutDate: this._normalizeDateString(batch.move_out_date),
-      moveInAge: batch.move_in_age,
-      currentAge: batch.move_in_age + this._weekDiff(batch.move_in_date, Date.now()),
-      category: batch.Breed.type,
-      breed: batch.Breed.name,
-      initialStock: batch.initial_stock_count,
-      currentStock: batch.initial_stock_count - batch.mortality_count,
-      mortality: batch.mortality_count,
-      supplier: batch.supplier_id,
-      source: batch.source_id,
-      costPerUnit: batch.cost_per_unit,
-      totalCost: batch.total_cost,
-      batchNote: batch.description,
-      state: batch.is_active ? 'Active' : 'Retired'
-
-    };
   }
 
   _weekDiff(date1, date2) {

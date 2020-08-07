@@ -63,7 +63,7 @@ class Vaccinations extends Model {
   }
 
   static associate({ Item }) {
-    Vaccinations.vaccines = Vaccinations.hasMany(Item, { foreignKey: 'vaccine_id' });
+    Vaccinations.vaccines = Vaccinations.belongsTo(Item, { foreignKey: 'vaccine_id' });
   }
 }
 

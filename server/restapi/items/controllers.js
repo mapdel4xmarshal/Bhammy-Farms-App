@@ -2,8 +2,12 @@ const { Item } = require('../../models');
 
 class Controller {
   // eslint-disable-next-line class-methods-use-this
-  async getItems({ groupBy }) {
+  async getItems({ groupBy, category }) {
+    const where = {};
+    if (category) where.category = category;
+
     return Item.findAll({
+      where,
       attributes: [
         ['item_id', 'id'], ['item_name', 'name'], 'category', 'quantity', 'size', 'unit', 'price', 'description'
       ],

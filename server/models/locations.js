@@ -39,6 +39,14 @@ class Locations extends Model {
       alt_phone: {
         type: DataTypes.STRING,
         allowNull: true
+      },
+      longitude: {
+        type: DataTypes.STRING,
+        allowNull: true
+      },
+      latitude: {
+        type: DataTypes.STRING,
+        allowNull: true
       }
     };
   }

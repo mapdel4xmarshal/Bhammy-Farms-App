@@ -23,7 +23,6 @@ class Controller {
 
 
   async addInvoice(invoice) {
-    console.log(invoice);
     const validCustomer = await Customer.count({
       where: {
         customer_id: invoice.customerId
@@ -45,7 +44,7 @@ class Controller {
       };
     }
 
-    const normalizedInvoice = new Invoice(invoice); console.log("normalizedInvoice.toDBFormat()",normalizedInvoice.toDBFormat());
+    const normalizedInvoice = new Invoice(invoice);
 
     return InvoiceModel.create({
       ...normalizedInvoice.toDBFormat()

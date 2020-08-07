@@ -81,7 +81,7 @@
                 <v-expansion-panel-header>
                   <v-row no-gutters align="center">
                     <v-col cols="12"><div :class="{'error-state': sectionErrors['eggs']}">
-                      <v-icon>mdi-egg</v-icon> Eggs collected</div></v-col>
+                      <v-icon :color="iconColor">mdi-egg</v-icon> Eggs collected</div></v-col>
                   </v-row>
                 </v-expansion-panel-header>
                 <v-expansion-panel-content>
@@ -137,7 +137,7 @@
                 <v-expansion-panel-header>
                   <v-row no-gutters align="center">
                     <v-col cols="4"><div :class="{'error-state': sectionErrors['feeds']}">
-                      <v-icon>mdi-barley</v-icon>
+                      <v-icon :color="iconColor">mdi-barley</v-icon>
                       Feed consumed</div></v-col>
                   </v-row>
                 </v-expansion-panel-header>
@@ -199,7 +199,7 @@
                 <v-expansion-panel-header>
                   <v-row no-gutters align="center">
                     <v-col cols="12"><div :class="{'error-state': sectionErrors['mortality']}">
-                      <v-icon>mdi-skull-crossbones</v-icon> Mortality</div></v-col>
+                      <v-icon :color="iconColor">mdi-skull-crossbones</v-icon> Mortality</div></v-col>
                   </v-row>
                 </v-expansion-panel-header>
                 <v-expansion-panel-content>
@@ -252,7 +252,7 @@
                 <v-expansion-panel-header>
                   <v-row no-gutters align="center">
                     <v-col cols="12"><div :class="{'error-state': sectionErrors['water']}">
-                      <v-icon>mdi-water</v-icon> Water consumed</div>
+                      <v-icon :color="iconColor">mdi-water</v-icon> Water consumed</div>
                     </v-col>
                   </v-row>
                 </v-expansion-panel-header>
@@ -267,7 +267,7 @@
                         :items="production.water"
                       >
                         <template v-slot:item.waterPerBird="{ item }">
-                          {{ (item.quantity / production.batch.currentStock) * 1000 | formatNumber }}ml
+                          {{ (item.quantity * 1000) / production.batch.currentStock | formatNumber }}ml
                         </template>
 
                         <template v-slot:item.actions="{ item }">
@@ -385,6 +385,7 @@
                       <v-textarea
                         clearable
                         label="Attendant notes"
+                        v-model="production.note"
                         :rows="3"
                       ></v-textarea>
                     </v-col>
@@ -420,6 +421,21 @@
       </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <v-snackbar
+      v-model="snackbar"
+      :timeout="3000"
+      absolute
+    >
+      {{ message }}
+      <v-btn
+        :color="!validProduction? 'red' : 'blue'"
+        text
+        @click="snackbar = false"
+      >
+        Close
+      </v-btn>
+    </v-snackbar>
   </section>
 </template>
 
@@ -439,6 +455,10 @@ export default {
   name: 'ProductionDetail',
   data() {
     return {
+      message: '',
+      snackbar: false,
+      batchList: [],
+      iconColor: '',
       validProduction: false,
       sectionErrors: {},
       production: {
@@ -454,7 +474,7 @@ export default {
       sectionNames: {
         EggCollection: {
           id: 'eggs',
-          key: 'size',
+          key: 'name',
           title: 'Eggs collected'
         },
         FeedConsumed: {
@@ -483,7 +503,6 @@ export default {
           title: 'Medication'
         }
       },
-      batches: [],
       sectionData: {},
       dateMenu: false,
       activeSection: 'EggCollection',
@@ -492,7 +511,7 @@ export default {
         {
           text: 'Size',
           align: 'start',
-          value: 'size',
+          value: 'name',
         },
         { text: 'Crates', value: 'crates' },
         { text: 'Pieces', value: 'pieces' },
@@ -551,13 +570,17 @@ export default {
   computed: {
     ...mapGetters({
       farmLocations: GETTER_TYPES.FARM_LOCATIONS
-    })
+    }),
+    batches() {
+      return this.batchList.filter((batch) => batch.farm === this.production.farm.name);
+    }
   },
   methods: {
     updateBatchList() {
+      this.batchList = [];
       axios.get('/batches?status=active')
         .then(({ data }) => {
-          this.batches = data;
+          this.batchList = data;
         });
     },
     addItem(section) {
@@ -578,8 +601,46 @@ export default {
     },
     saveProduction() {
       if (this.validProduction) {
-        if (this.validateSections()) axios.post();
-      } else this.validProduction = this.$refs.form.validate();
+        if (this.validateSections()) {
+          axios.post('production', this.formatProduction())
+            .then(({ data }) => {
+              console.log(data);
+            });
+        }
+      } else if (this.$refs.form.validate()) {
+        this.validateProductionDay();
+      }
+    },
+    formatProduction() {
+      return {
+        date: this.production.date,
+        note: this.production.note,
+        batchId: this.production.batch.batchId,
+        eggs: this.production.eggs.map((egg) => ({ id: egg.id, quantity: egg.quantity })),
+        feeds: this.production.feeds.map((feed) => ({ id: feed.id, quantity: feed.quantity })),
+        water: this.production.water.reduce((totalWater, water) => water.quantity + totalWater, 0),
+        mortality: this.production.mortality.map((mortality) => ({
+          time: mortality.time,
+          reason: mortality.reason,
+          count: mortality.count,
+          comment: mortality.comment
+        })),
+        vaccinations: this.production.vaccinations,
+        medications: this.production.medications
+      };
+    },
+    validateProductionDay() {
+      axios.get(`production?date=${this.production.date}&batch=${this.production.batch.batchId}`)
+        .then(({ data }) => {
+          this.validProduction = data.length === 0;
+          if (!this.validProduction) {
+            this.message = 'Production record for the selected date and batch already exists.';
+            this.snackbar = true;
+          }
+        })
+        .catch(() => {
+          this.validProduction = false;
+        });
     },
     updateSectionData() {
       if (this.$refs[this.activeSection].validate()) {
@@ -594,6 +655,7 @@ export default {
 
         this.production[sectionInfo.id] = [...this.production[sectionInfo.id]];
         this.$refs[this.activeSection].reset();
+        this.sectionData.quantity = '';
         this.dialog = false;
       }
     },
@@ -607,12 +669,14 @@ export default {
     },
     validateSections() {
       let isValid = true;
+      this.iconColor = '';
       this.sectionErrors = {};
 
-      ['eggs', 'feeds', 'water', 'mortality'].forEach((section) => {
+      ['eggs', 'feeds', 'water'].forEach((section) => {
         if (this.production[section].length === 0) {
           this.sectionErrors[section] = true;
           isValid = false;
+          this.iconColor = '#ff5252';
         }
       });
 

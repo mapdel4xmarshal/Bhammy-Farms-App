@@ -9,6 +9,7 @@ const expenses = require('./restapi/expenses/routes');
 const items = require('./restapi/items/routes');
 const invoices = require('./restapi/invoices/routes');
 const activities = require('./restapi/activities/routes');
+const production = require('./restapi/production/routes');
 
 const app = express();
 const port = process.env.PORT || 8888;
@@ -32,6 +33,7 @@ app.use('/api/v1/parties', parties);
 app.use('/api/v1/items', items);
 app.use('/api/v1/invoices', invoices);
 app.use('/api/v1/activities', activities);
+app.use('/api/v1/production', production);
 
 app.listen(port, () => {
   console.log(`Bhammy Farms App running on port ${port}`);

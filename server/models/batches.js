@@ -56,12 +56,13 @@ class Batches extends Model {
   }
 
   static associate({
-    House, Supplier, Source, Breed
+    House, Supplier, Source, Breed, Production
   }) {
     Batches.house = Batches.belongsTo(House, { foreignKey: 'house_id' });
     Batches.supplier = Batches.belongsTo(Supplier, { foreignKey: 'supplier_id' });
     Batches.source = Batches.belongsTo(Source, { foreignKey: 'source_id' });
     Batches.bread = Batches.belongsTo(Breed, { foreignKey: 'breed_id' });
+    Batches.production = Batches.hasMany(Production, { foreignKey: 'batch_id' });
   }
 }
 

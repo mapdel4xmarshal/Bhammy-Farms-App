@@ -104,8 +104,8 @@ export default {
           value: 'currentAge'
         },
         {
-          text: 'State',
-          value: 'state'
+          text: 'Status',
+          value: 'status'
         },
       ]
     };

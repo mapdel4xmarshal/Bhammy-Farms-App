@@ -22,8 +22,12 @@ class Items extends Model {
         allowNull: false
       },
       category: {
-        type: DataTypes.STRING, // ENUM('Broiler', 'Cockerel', 'Egg', 'Manure', 'Old layer'),
+        type: DataTypes.STRING,
         allowNull: false
+      },
+      brand: {
+        type: DataTypes.STRING,
+        allowNull: true
       },
       size: {
         type: DataTypes.STRING,
@@ -41,6 +45,10 @@ class Items extends Model {
         type: DataTypes.INTEGER,
         allowNull: true
       },
+      image: {
+        type: DataTypes.STRING,
+        allowNull: true
+      },
       description: {
         type: DataTypes.STRING,
         allowNull: true
@@ -48,9 +56,9 @@ class Items extends Model {
     };
   }
 
-  static associate({ InvoiceItem, Invoice, Production }) {
+  static associate({ InvoiceItem, Invoice, ProductionItem }) {
     Items.invoices = Items.belongsToMany(Invoice, { through: InvoiceItem, foreignKey: 'item_id' });
-    Items.production = Items.belongsToMany(Production, { through: 'productionItem', foreignKey: 'item_id' });
+    Items.production = Items.hasMany(ProductionItem, { foreignKey: 'item_id' });
   }
 }
 

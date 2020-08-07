@@ -3,10 +3,13 @@
       <v-row>
         <v-col cols="12">
           <v-select
-            :items="['Big', 'Medium', 'Small', 'Crack']"
+            :items="eggTypes"
             label="Size*"
             :rules="[v => !!v || 'Select egg size/type.']"
-            v-model="value.size"
+            item-text="name"
+            item-value="id"
+            v-model="value.id"
+            @change="updateName"
             required
           ></v-select>
         </v-col>
@@ -36,11 +39,13 @@
 </template>
 
 <script>
+import axios from '../plugins/axios';
 
 export default {
   name: 'EggCollection',
   data() {
     return {
+      eggTypes: [],
       crateRules: [
         (v) => !!v || 'Please enter total crate of eggs collected.',
         (v) => v >= 0 || 'Crate should be zero (0) or more.'
@@ -54,6 +59,9 @@ export default {
   },
   props: ['value'],
   methods: {
+    updateName() {
+      this.value.name = this.eggTypes.filter((egg) => egg.id === this.value.id)[0].name;
+    },
     update() {
       this.value.quantity = +this.value.pieces + (this.value.crates * 30);
       this.$emit('input', this.value);
@@ -63,7 +71,16 @@ export default {
     },
     reset() {
       this.$refs.form.reset();
+    },
+    getEggTypes() {
+      axios.get('/items?category=egg')
+        .then(({ data }) => {
+          this.eggTypes = data;
+        });
     }
+  },
+  created() {
+    this.getEggTypes();
   }
 };
 </script>

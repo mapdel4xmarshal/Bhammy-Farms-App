@@ -20,7 +20,7 @@
 
         <v-col cols="12">
           <v-select
-            :items="['Peaking', 'Prolapse', 'Suffocation', 'Crushed', 'Predator', 'Disease', 'Dead']"
+            :items="['Pecking', 'Prolapse', 'Suffocation', 'Crushed', 'Predator', 'Disease', 'Dead']"
             label="Reason / Cause of Death*"
             :rules="[v => !!v || 'Select a reason.']"
             v-model="value.reason"
