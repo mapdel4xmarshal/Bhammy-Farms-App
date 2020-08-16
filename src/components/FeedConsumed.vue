@@ -49,7 +49,6 @@ export default {
     },
     updateId() {
       this.value.id = this.feedTypes.filter((feed) => feed.name === this.value.name)[0].id;
-      console.log(this.value.id);
     },
     validate() {
       return this.$refs.form.validate();

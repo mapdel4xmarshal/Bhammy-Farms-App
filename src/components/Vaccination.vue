@@ -8,10 +8,28 @@
             clearable
             no-data-text="No vaccines found."
             label="Vaccine*"
+            return-object
+            item-text="name"
             :rules="[v => !!v || 'Select a Vaccine.']"
             v-model="value.vaccine"
             required
-          ></v-autocomplete>
+          >
+            <template v-slot:item="{ item, on }">
+              <v-list-item v-on="on" dense color="primary">
+                <v-list-item-content>
+                  <v-list-item-title>{{ item.name }}</v-list-item-title>
+                  <v-list-item-subtitle>{{ item.brand }} | {{ item.description }}</v-list-item-subtitle>
+                </v-list-item-content>
+              </v-list-item>
+            </template>
+          </v-autocomplete>
+        </v-col>
+
+        <v-col cols="12">
+          <v-text-field
+            label="Vaccine Batch No."
+            v-model="value.vaccineBatchNo"
+          ></v-text-field>
         </v-col>
 
         <v-col cols="12" md="8">
@@ -89,14 +107,16 @@
 </template>
 
 <script>
+import axios from '../plugins/axios';
+
 export default {
   name: 'Vaccination',
   data() {
     return {
+      vaccines: [],
       dosageRules: this.commonRules('Dosage'),
       noOfBirdsRules: this.commonRules('No of birds'),
       totalDosageRules: this.commonRules('Total dosage'),
-      vaccines: ['Lasota', 'Gumboro', 'Neodox'],
       vaccinationMethods: [
         'Intraocular (Eye Drop)',
         'Beak Dipping',
@@ -123,7 +143,6 @@ export default {
       this.$emit('input', this.value);
     },
     validate() {
-      this.value.vaccineBatchNo = new Date().getTime();
       return this.$refs.form.validate();
     },
     reset() {
@@ -135,7 +154,16 @@ export default {
         (v) => !!v || `Please enter ${name.toLowerCase()}.`,
         (v) => v >= 0 || `${name} should be zero (0) or more.`
       ];
-    }
+    },
+    getVaccines() {
+      axios.get('/items?category=vaccine')
+        .then(({ data }) => {
+          this.vaccines = data;
+        });
+    },
+  },
+  created() {
+    this.getVaccines();
   }
 };
 </script>

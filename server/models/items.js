@@ -56,9 +56,11 @@ class Items extends Model {
     };
   }
 
-  static associate({ InvoiceItem, Invoice, ProductionItem }) {
+  static associate({
+    InvoiceItem, Invoice, ProductionItem, Production
+  }) {
     Items.invoices = Items.belongsToMany(Invoice, { through: InvoiceItem, foreignKey: 'item_id' });
-    Items.production = Items.hasMany(ProductionItem, { foreignKey: 'item_id' });
+    Items.production = Items.belongsToMany(Production, { through: ProductionItem, foreignKey: 'item_id' });
   }
 }
 

@@ -1,5 +1,7 @@
 const {
-  Batch, Breed, House, Production, Mortality, Location, Sequelize: { Op, literal, fn, col }
+  Batch, Breed, House, Production, Mortality, Location, Sequelize: {
+    Op, literal, fn, col
+  }
 } = require('../../models');
 
 class Controller {
@@ -11,14 +13,14 @@ class Controller {
       where,
       attributes: [
         'name', ['batch_id', 'batchId'], 'name', ['house_id', 'houseId'], [literal('House.name'), 'house'],
-        [col('`House->Location`.name'), 'farm'],
+        [col('`House->location`.name'), 'farm'],
         [fn('date_format', col('move_in_date'), '%Y-%m-%d'), 'moveInDate'],
         [fn('date_format', col('move_out_date'), '%Y-%m-%d'), 'moveOutDate'],
         ['move_in_age', 'moveInAge'], [literal('DATEDIFF(NOW(), move_in_date) + move_in_age'), 'currentAge'],
-        [literal('breed.name'), 'breed'], [literal('breed.type'), 'category'], ['initial_stock_count', 'initialStock'],
+        [literal('Breed.name'), 'breed'], [literal('Breed.type'), 'category'], ['initial_stock_count', 'initialStock'],
         [literal('initial_stock_count - "Productions->Mortalities.count"'), 'currentStock'], ['supplier_id', 'supplier'],
         ['source_id', 'source'], ['cost_per_unit', 'costPerUnit'], ['total_cost', 'totalCost'], ['description', 'batchNote'],
-        [fn('sum', fn('COALESCE',col('Productions->Mortalities.count'), 0)), 'totalMortality'],
+        [fn('sum', fn('COALESCE', col('Productions->Mortalities.count'), 0)), 'totalMortality'],
         [literal('CASE WHEN is_active = 1 THEN "Active" ELSE "Retired" END'), 'status']],
       include: [
         {
@@ -47,13 +49,13 @@ class Controller {
           ]
         },
       ],
-      group: ['batch.batch_id'],
+      group: ['Batch.batch_id'],
       raw: true
     })
       .then((batches) => batches.map((batch) => {
         batch.currentStock = batch.initialStock - batch.totalMortality;
         return batch;
-      } ));
+      }));
   }
 
   async getBreeds() {

@@ -1,4 +1,4 @@
-'strict'
+'strict';
 
 const uuid = require('uuid');
 const {
@@ -7,12 +7,12 @@ const {
 
 class Controller {
   constructor() {
-    this._commonFields = [[Sequelize.literal('party.name'), 'name'],
-      [Sequelize.literal('party.email'), 'email'],
-      [Sequelize.literal('party.address'), 'address'],
-      [Sequelize.literal('party.phone'), 'phone'],
-      [Sequelize.literal('party.alt_phone'), 'altPhone'],
-      [Sequelize.literal('party.state'), 'state']];
+    this._commonFields = [[Sequelize.literal('Party.name'), 'name'],
+      [Sequelize.literal('Party.email'), 'email'],
+      [Sequelize.literal('Party.address'), 'address'],
+      [Sequelize.literal('Party.phone'), 'phone'],
+      [Sequelize.literal('Party.alt_phone'), 'altPhone'],
+      [Sequelize.literal('Party.state'), 'state']];
   }
 
   async getSuppliers() {

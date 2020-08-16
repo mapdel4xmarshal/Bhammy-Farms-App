@@ -1,27 +1,95 @@
-const request = require("request");
+const request = require('request');
 
 const {
-  Production, Vaccination, Batch, Sequelize: { Op }, sequelize, Location, House, ProductionItem, Mortality
+  Production, Vaccination, Batch, Sequelize: { Op }, sequelize, Location, House, ProductionItem, Mortality, Medication,
+  Item, Breed
 } = require('../../models');
 
+const ProductionSummary = require('./productionSummary');
+
 class Controller {
-  async getProductions({ batchId, before, after, date }) {
-    let where = {};
-    if (batchId) where.batch_id = batchId;
-    if (before) where.date[Op.lt] = new Date(before);
-    if (after) where.date[Op.gt] = new Date(after);
+  async getProductions({
+    batchId, before, after, date
+  }) {
+    const where = [];
+    if (batchId) where.push(`batches.batch_id = ${batchId}`);
+    if (before) where.push(`productions.date < ${new Date(before)}`);
+    if (after) where.push(`productions.date > ${new Date(after)}`);
+    if (date) where.push(`productions.date = ${new Date(date)}`);
 
-    if (date) where.date = new Date(date);
-
-    return Production.findAll({
+    /* return Production.findAll({
       where,
       attributes: { exclude: ['createdAt', 'updatedAt'] },
-      include: [Vaccination]
+      include: [{
+        model: Batch,
+        include: Breed
+      }, {
+        model: Vaccination,
+        include: Item
+      }, Medication, Mortality, {
+        model: Item,
+        through: ProductionItem
+      }],
+      group: ['Production.production_id', 'Vaccinations.vaccination_id', 'Medications.medication_id', 'Mortalities.id', 'Items.item_id']
     })
-      .then((productions) => productions.map((production) => production));
+      .then((productions) => productions.map((production) => new ProductionSummary(production))); */
+
+    return sequelize.query(`
+    SELECT productions.production_id AS id, productions.water, mortality.id AS mortalityId, mortality.count AS mortalityCount, productions.date,
+      production_items.quantity AS itemQuantity, production_items.price AS itemPrice, 
+      batches.name AS batch, batches.initial_stock_count AS flockCount, batches.is_active AS isActive, breeds.type AS batchType,
+      items.item_id AS itemId, items.item_name AS itemName, items.category AS itemCategory, items.size AS itemSize, items.unit AS itemUnit,
+      production_items.id AS productionItemsId,
+      vaccinations.*
+    FROM productions 
+    JOIN batches ON productions.batch_id = batches.batch_id
+    JOIN breeds ON batches.breed_id = breeds.breed_id
+    LEFT JOIN mortality ON productions.production_id = mortality.production_id
+    LEFT JOIN production_items ON productions.production_id = production_items.production_id
+    LEFT JOIN items ON production_items.item_id = items.item_id
+    LEFT JOIN vaccinations ON productions.production_id = vaccinations.production_id
+    ${where.length > 0 ? where.join(' AND ') : ''};
+
+`)
+      .then(([productions, metadata]) => {
+        const productionMap = new Map();
+
+        productions.forEach((production) => {
+          console.log(productions, production);
+          if (!productionMap.has(production.id)) {
+            productionMap.set(production.id, {
+              id: production.id,
+              date: production.date,
+              batch: production.batch,
+              batchType: production.batchType,
+              isActive: production.isActive,
+              flockCount: production.flockCount,
+              water: production.water,
+              mortality: new Set(),
+              items: new Set()
+            });
+          } else {
+            const productionGroup = productionMap.get(production.id);
+            productionGroup.mortality.set(production.mortalityId, { count: production.mortalityCount });
+            productionGroup.mortality.set(production.productionItemsId, {
+              id: production.itemId,
+              name: production.itemName,
+              quantity: production.itemQuantity,
+              price: production.price,
+              category: production.itemCategory,
+              size: production.itemSize,
+              unit: production.itemUnit
+            });
+          }
+        });
+
+        console.log(productionMap);
+        return Array.from(productionMap);
+      });
   }
 
-  async addProduction(production) {  console.log(production)
+  async addProduction(production) {
+    console.log(production);
     const activeBatch = await Batch.findOne({
       where: {
         batch_id: production.batchId,
@@ -60,7 +128,7 @@ class Controller {
     }
 
     const { longitude, latitude } = activeBatch.House.location;
-    let weather = await this.getWeatherInfo(`${longitude},${latitude}`, production.date);     console.log("weather",weather);
+    const weather = await this.getWeatherInfo(`${longitude},${latitude}`, production.date);
 
     if (!weather.error) {
       production.humidity = weather.forecast.forecastday[0].day.avghumidity;
@@ -79,36 +147,33 @@ class Controller {
         water: production.water,
         note: production.note,
         batch_id: production.batchId
-      }, { transaction });                  console.log(production.feeds[0].id)
+      }, { transaction });
 
-      await ProductionItem.bulkCreate([...production.eggs, ...production.feeds].map(item => ({
+      const productionId = newProduction.production_id;
+
+      await ProductionItem.bulkCreate([...production.eggs, ...production.feeds].map((item) => ({
         quantity: item.quantity,
         item_id: item.id,
-        production_id: newProduction.production_id
+        production_id: productionId
       })), { transaction });
 
-      console.log(production.mortality.map(mortality => ({
+      await Mortality.bulkCreate(production.mortality.map((mortality) => ({
         time: mortality.time,
+        reason: mortality.reason,
         count: mortality.count,
-        cause_of_death: mortality.reason,
         description: mortality.comment,
-        production_id: newProduction.production_id
-      })));
-
-      await Mortality.bulkCreate(production.mortality.map(mortality => ({
-        time: mortality.time,
-        count: mortality.count,
-        cause_of_death: mortality.reason,
-        description: mortality.comment || mortality.reason,
-        production_id: newProduction.production_id
+        production_id: productionId
       })), { transaction });
+
+
+      await this.processTreatment('vaccination', production.vaccinations, productionId, transaction);
+      await this.processTreatment('medication', production.medications, productionId, transaction);
 
       // If the execution reaches this line, no errors were thrown.
       // We commit the transaction.
       await transaction.commit();
 
       return newProduction;
-
     } catch (error) {
       console.log(error);
       await transaction.rollback();
@@ -119,23 +184,56 @@ class Controller {
     }
   }
 
+  processTreatment(type, treatments, productionId, transaction) {
+    const medType = type === 'vaccination' ? 'vaccine' : 'medicament';
+    const modelType = type === 'vaccination' ? 'Vaccination' : 'Medication';
+
+    treatments = treatments.map((treatment) => ({
+      production_id: productionId,
+      [`${medType}_id`]: treatment[medType].id,
+      [`${medType}_batch_no`]: treatment[`${medType}BatchNo`],
+      dosage: treatment.dosage,
+      dosage_unit: treatment.dosageUnit,
+      total_dosage: treatment.totalDosage,
+      no_of_birds: treatment.noOfBirds,
+      method: treatment[`${type}Method`],
+      administered_by: treatment.administeredBy,
+      notes: treatment.reason
+    }));
+
+    return eval(modelType)
+      .bulkCreate(treatments, { transaction });
+  }
+
   async getWeatherInfo(coordinate, date) {
-     return new Promise((resolve, reject) => {   console.log(`http://api.weatherapi.com/v1/history.json?
-        key=aa5f3c747bb140be95f230031202507&q=${coordinate}&dt=${date}`);
-       request.get(`http://api.weatherapi.com/v1/history.json?key=aa5f3c747bb140be95f230031202507&q=${
-         coordinate}&dt=${date}`, (error, resp, data) => {
-         if (error) reject(error);
-         else resolve(JSON.parse(data));
-       });
-     });
+    return new Promise((resolve, reject) => {
+      request.get(`http://api.weatherapi.com/v1/history.json?key=aa5f3c747bb140be95f230031202507&q=${
+        coordinate}&dt=${date}`, (error, resp, data) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve(JSON.parse(data));
+        }
+      });
+    });
   }
 
   async getProductionById(BatchId) {
-    return Batch.findOne({
-      where: { id: BatchId },
-      attributes: { exclude: ['createdAt', 'updatedAt'] }
+    return Production.findAll({
+      where,
+      attributes: { exclude: ['createdAt', 'updatedAt'] },
+      include: [{
+        model: Batch,
+        include: Breed
+      }, {
+        model: Vaccination,
+        include: Item
+      }, Medication, Mortality, {
+        model: Item,
+        through: ProductionItem
+      }]
     })
-      .then((Batch) => Batch);
+      .then((productions) => productions.map((production) => new ProductionSummary(production)));
   }
 
   async updateProduction(BatchId) {

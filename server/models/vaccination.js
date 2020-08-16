@@ -34,7 +34,7 @@ class Vaccinations extends Model {
         allowNull: false
       },
       no_of_birds: {
-        type: DataTypes.INTEGER, // http://api.weatherapi.com/v1/history.json?key=aa5f3c747bb140be95f230031202507&q=afon, kwara state&dt=2020-07-25
+        type: DataTypes.INTEGER,
         allowNull: false
       },
       method: {

@@ -1,5 +1,5 @@
 
-const { Model, DataTypes } = require('sequelize');
+const { Model, DataTypes, Sequelize } = require('sequelize');
 
 class Productions extends Model {
   static get tblName() {
@@ -45,10 +45,10 @@ class Productions extends Model {
   }
 
   static associate({
-    Batch, Mortality, Vaccination, Medication, ProductionItem
+    Batch, Mortality, Vaccination, Medication, ProductionItem, Item
   }) {
     Productions.batch = Productions.belongsTo(Batch, { foreignKey: 'batch_id' });
-    Productions.items = Productions.hasMany(ProductionItem, { foreignKey: 'production_id' });
+    Productions.items = Productions.belongsToMany(Item, { through: ProductionItem, foreignKey: 'production_id' });
     Productions.mortality = Productions.hasMany(Mortality, { foreignKey: 'production_id' });
     Productions.vaccinations = Productions.hasMany(Vaccination, { foreignKey: 'production_id' });
     Productions.medication = Productions.hasMany(Medication, { foreignKey: 'production_id' });

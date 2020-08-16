@@ -199,7 +199,7 @@
                 <v-expansion-panel-header>
                   <v-row no-gutters align="center">
                     <v-col cols="12"><div :class="{'error-state': sectionErrors['mortality']}">
-                      <v-icon :color="iconColor">mdi-skull-crossbones</v-icon> Mortality</div></v-col>
+                      <v-icon>mdi-skull-crossbones</v-icon> Mortality</div></v-col>
                   </v-row>
                 </v-expansion-panel-header>
                 <v-expansion-panel-content>
@@ -519,7 +519,7 @@ export default {
         { text: '', value: 'actions' }
       ],
       feedConsumedHeaders: [
-        { text: 'Type', align: 'start', value: 'type' },
+        { text: 'Type', align: 'start', value: 'name' },
         { text: 'Bags (25kg)', value: 'bags' },
         { text: 'Quantity', value: 'quantity' },
         { text: 'Feed / bird', value: 'feedPerBird' },
@@ -537,7 +537,7 @@ export default {
         { text: '', value: 'actions' }
       ],
       vaccinationHeaders: [
-        { text: 'Vaccine', value: 'vaccine' },
+        { text: 'Vaccine', value: 'vaccine.name' },
         { text: 'Vaccine batch no.', value: 'vaccineBatchNo' },
         { text: 'Dosage/bird', value: 'dosage' },
         { text: 'Total dosage', value: 'totalDosage' },
@@ -547,7 +547,7 @@ export default {
         { text: '', value: 'actions', width: '160px' }
       ],
       medicationHeaders: [
-        { text: 'Medicament', value: 'medicament' },
+        { text: 'Medicament', value: 'medicament.name' },
         { text: 'Medicament batch no.', value: 'medicamentBatchNo' },
         { text: 'Dosage/bird', value: 'dosage' },
         { text: 'Total dosage', value: 'totalDosage' },
@@ -602,9 +602,13 @@ export default {
     saveProduction() {
       if (this.validProduction) {
         if (this.validateSections()) {
-          axios.post('production', this.formatProduction())
-            .then(({ data }) => {
-              console.log(data);
+          axios.post('productions', this.formatProduction())
+            .then(() => {
+              this.$router.push('/production');
+            })
+            .catch(({ response: data }) => {
+              this.message = data.error;
+              this.snackbar = true;
             });
         }
       } else if (this.$refs.form.validate()) {
@@ -618,7 +622,7 @@ export default {
         batchId: this.production.batch.batchId,
         eggs: this.production.eggs.map((egg) => ({ id: egg.id, quantity: egg.quantity })),
         feeds: this.production.feeds.map((feed) => ({ id: feed.id, quantity: feed.quantity })),
-        water: this.production.water.reduce((totalWater, water) => water.quantity + totalWater, 0),
+        water: this.production.water.reduce((totalWater, water) => Number.parseInt(water.quantity, 10) + totalWater, 0),
         mortality: this.production.mortality.map((mortality) => ({
           time: mortality.time,
           reason: mortality.reason,
@@ -630,7 +634,7 @@ export default {
       };
     },
     validateProductionDay() {
-      axios.get(`production?date=${this.production.date}&batch=${this.production.batch.batchId}`)
+      axios.get(`productions?date=${this.production.date}&batch=${this.production.batch.batchId}`)
         .then(({ data }) => {
           this.validProduction = data.length === 0;
           if (!this.validProduction) {

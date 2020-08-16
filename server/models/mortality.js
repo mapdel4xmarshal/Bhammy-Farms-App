@@ -25,7 +25,7 @@ class Mortality extends Model {
         type: DataTypes.STRING,
         allowNull: false
       },
-      causeOfDeath: {
+      reason: {
         type: DataTypes
           .ENUM('Crushed', 'Disease', 'Pecking', 'Predator',
             'Prolapse', 'Sick', 'Suffocation', 'Unknown', 'Other'),

@@ -69,9 +69,8 @@
       </v-row>
     <v-data-table
     :headers="headers"
-    :items="items"
-    :sort-by="['calories', 'fat']"
-    :sort-desc="[false, true]"
+    :items="productions"
+    no-data-text="No production available."
     multi-sort
     :search="search"
     class="elevation-1"
@@ -80,6 +79,7 @@
 </template>
 
 <script>
+import axios from '../plugins/axios';
 import ROUTES from '../router/routeNames';
 import MetricCard from '../components/MetricCard.vue';
 
@@ -87,6 +87,7 @@ export default {
   name: 'Production',
   data() {
     return {
+      productions: [],
       dateMenu: false,
       date: [],
       search: '',
@@ -103,15 +104,15 @@ export default {
           sortable: true,
           value: 'date',
         },
-        { text: 'Batch', value: 'batch' },
-        { text: 'Type', value: 'type' },
+        { text: 'Batch', value: 'batch.name' },
+        { text: 'Type', value: 'batch.type' },
         { text: 'Total', value: 'total' },
-        { text: 'Feed (kg)', value: 'feed' },
+        { text: 'Production rate', value: 'productionRate' },
+        { text: 'Feed (kg)', value: 'feeds' },
+        { text: 'Feed/animal (g)', value: 'feedPerAnimal' },
         { text: 'Mortality', value: 'mortalities' },
-        { text: 'Age (days)', value: 'age' },
         { text: 'Mortality ratio', value: 'mortalityRatio' },
-        { text: 'Feed per animal (g)', value: 'feedPerAnimal' },
-        { text: 'State', value: 'state' },
+        { text: 'State', value: 'batch.status' },
       ],
       items: [
         {
@@ -176,7 +177,16 @@ export default {
   methods: {
     createNew() {
       this.$router.push({ name: ROUTES.NEW_PRODUCTION });
+    },
+    getProduction() {
+      axios.get('/productions')
+        .then(({ data }) => {
+          this.productions = data;
+        });
     }
+  },
+  created() {
+    this.getProduction();
   }
 };
 </script>

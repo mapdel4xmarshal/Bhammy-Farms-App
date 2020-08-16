@@ -9,7 +9,8 @@ class Controller {
     return Item.findAll({
       where,
       attributes: [
-        ['item_id', 'id'], ['item_name', 'name'], 'category', 'quantity', 'size', 'unit', 'price', 'description'
+        ['item_id', 'id'], ['item_name', 'name'], 'category', 'quantity', 'size', 'unit', 'price', 'brand',
+        'description'
       ],
       order: [
         ['category', 'ASC'],

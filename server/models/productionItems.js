@@ -22,6 +22,10 @@ class ProductionItems extends Model {
       quantity: {
         type: DataTypes.INTEGER,
         allowNull: false
+      },
+      price: {
+        type: DataTypes.INTEGER,
+        allowNull: true
       }
     };
   }

@@ -8,10 +8,28 @@
             clearable
             no-data-text="No medicaments found."
             label="Medicament*"
+            return-object
+            item-text="name"
             :rules="[v => !!v || 'Select a Medicament.']"
             v-model="value.medicament"
             required
-          ></v-autocomplete>
+          >
+            <template v-slot:item="{ item, on }">
+              <v-list-item v-on="on" dense color="primary">
+                <v-list-item-content>
+                  <v-list-item-title>{{ item.name }}</v-list-item-title>
+                  <v-list-item-subtitle>{{ item.brand }} | {{ item.description }}</v-list-item-subtitle>
+                </v-list-item-content>
+              </v-list-item>
+            </template>
+          </v-autocomplete>
+        </v-col>
+
+        <v-col cols="12">
+          <v-text-field
+            label="Medicament Batch No."
+            v-model="value.medicamentBatchNo"
+          ></v-text-field>
         </v-col>
 
         <v-col cols="12" md="8">
@@ -89,14 +107,16 @@
 </template>
 
 <script>
+import axios from '../plugins/axios';
+
 export default {
-  name: 'Vaccination',
+  name: 'Medication',
   data() {
     return {
+      medicaments: [],
       dosageRules: this.commonRules('Dosage'),
       noOfBirdsRules: this.commonRules('No of birds'),
       totalDosageRules: this.commonRules('Total dosage'),
-      medicaments: ['Lasota', 'Gumboro', 'Neodox'],
       medicationMethods: [
         'Intraocular (Eye Drop)',
         'Beak Dipping',
@@ -123,7 +143,6 @@ export default {
       this.$emit('input', this.value);
     },
     validate() {
-      this.value.medicamentBatchNo = new Date().getTime();
       return this.$refs.form.validate();
     },
     reset() {
@@ -135,7 +154,17 @@ export default {
         (v) => !!v || `Please enter ${name.toLowerCase()}.`,
         (v) => v >= 0 || `${name} should be zero (0) or more.`
       ];
+    },
+    getMedicaments() {
+      axios.get('/items?category=medicament')
+        .then(({ data }) => {
+          console.log(data);
+          this.medicaments = data;
+        });
     }
+  },
+  created() {
+    this.getMedicaments();
   }
 };
 </script>

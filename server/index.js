@@ -33,7 +33,11 @@ app.use('/api/v1/parties', parties);
 app.use('/api/v1/items', items);
 app.use('/api/v1/invoices', invoices);
 app.use('/api/v1/activities', activities);
-app.use('/api/v1/production', production);
+app.use('/api/v1/productions', production);
+
+app.get('*', (req, res) => {
+  res.sendFile(path.resolve('../dist/index.html'));
+});
 
 app.listen(port, () => {
   console.log(`Bhammy Farms App running on port ${port}`);
