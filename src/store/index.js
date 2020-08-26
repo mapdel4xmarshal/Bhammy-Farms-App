@@ -12,7 +12,7 @@ export default new Vuex.Store({
     houses: {},
     suppliers: [],
     sources: [],
-    user: {}
+    user: { }
   },
   mutations: {
     [MUTATION_TYPES.SET_FARM_LOCATIONS](state, locations) {
@@ -34,7 +34,9 @@ export default new Vuex.Store({
       });
     },
     [MUTATION_TYPES.SET_USER](state, user) {
-      state.user = user;
+      const newUser = { ...user };
+      newUser.email = user.emails ? user.emails[0].value : null;
+      state.user = newUser;
     }
   },
   actions: {

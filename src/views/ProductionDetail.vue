@@ -4,8 +4,8 @@
       <v-toolbar-title>New Production</v-toolbar-title>
       <v-spacer></v-spacer>
       <v-btn text color="primary" class="spacer--right" to="/production">cancel</v-btn>
-      <v-btn color="primary" tile @click="saveProduction" :disabled="!validProduction">
-        Save production
+      <v-btn color="primary" tile @click="saveProduction" v-if="validProduction">
+        {{ actionButtonTitle }}
       </v-btn>
     </v-toolbar>
 
@@ -401,7 +401,7 @@
                  class="float-right"
                  @click="saveProduction"
                  tile>
-            {{ validProduction? 'Save production' : 'Continue' }}
+            {{ actionButtonTitle }}
           </v-btn>
         </v-col>
       </v-row>
@@ -571,6 +571,11 @@ export default {
     ...mapGetters({
       farmLocations: GETTER_TYPES.FARM_LOCATIONS
     }),
+    actionButtonTitle() {
+      let title = 'Save production';
+      if (this.$mq.phone) title = 'Save';
+      return this.validProduction ? title : 'Continue';
+    },
     batches() {
       return this.batchList.filter((batch) => batch.farm === this.production.farm.name);
     }

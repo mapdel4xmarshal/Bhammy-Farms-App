@@ -9,7 +9,7 @@ const ROUTES = {
   INCOME: 'Income',
   INCOME_DETAIL: 'IncomeDetail',
   NEW_PRODUCTION: 'NewProduction',
-  PRODUCTION: 'Production',
+  PRODUCTIONS: 'Productions',
   REPORT: 'Report',
   REPORTS: 'Reports',
   SETTINGS: 'Settings',

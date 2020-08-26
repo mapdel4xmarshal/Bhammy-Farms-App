@@ -14,24 +14,35 @@
       <div class="header__container">
         <img src="img/Logofull.png" width="100"/>
 
-        <v-menu :offset-y="true" bottom rounded="0">
+        <v-menu offset-y bottom :width="300" nudge-bottom="5">
           <template v-slot:activator="{ on, attrs }">
             <div class="justify-end">
-              <v-list-item v-bind="attrs" v-on="on">
-                <v-list-item-avatar>
+              <v-list-item v-bind="attrs" v-on="on" class="pa-2 ml-2">
+                <v-list-item-avatar class="ma-0">
                   <v-img :src="user.picture"></v-img>
                 </v-list-item-avatar>
-                <v-list-item-title v-if="!$mq.phone">{{ user.displayName || user.name }}</v-list-item-title>
-              <v-icon small class="ml-1">mdi-chevron-down</v-icon>
-            </v-list-item>
+                <v-icon small class="ml-1">mdi-chevron-down</v-icon>
+              </v-list-item>
             </div>
           </template>
 
-          <v-list>
-            <v-list-item :href="logoutUrl">
-              <v-list-item-title>Logout</v-list-item-title>
-            </v-list-item>
-          </v-list>
+          <v-card class="justify-center" width="300">
+            <v-card-title class="justify-center pb-0">
+              <v-avatar color="blue" size="60">
+                <v-img :src="user.picture"></v-img>
+              </v-avatar>
+            </v-card-title>
+            <v-card-title class="justify-center pa-2" no-gutter>{{ user.displayName || user.name }}</v-card-title>
+            <v-card-subtitle class="justify-center center pt-1">{{ user.email }}</v-card-subtitle>
+            <v-divider/>
+            <v-card-actions>
+              <v-list-item>
+                <v-list-item-content>
+                  <v-btn rounded outlined color="primary" block :href="logoutUrl">Logout</v-btn>
+                </v-list-item-content>
+              </v-list-item>
+            </v-card-actions>
+          </v-card>
         </v-menu>
       </div>
     </v-app-bar>
@@ -99,7 +110,7 @@ export default {
     drawer: true,
     items: [
       { title: ROUTES.DASHBOARD, icon: 'mdi-monitor', to: ROUTES.DASHBOARD },
-      { title: ROUTES.PRODUCTION, icon: 'mdi-chart-timeline', to: ROUTES.PRODUCTION },
+      { title: ROUTES.PRODUCTIONS, icon: 'mdi-chart-timeline', to: ROUTES.PRODUCTIONS },
       { title: ROUTES.FEEDS, icon: 'mdi-sack', to: ROUTES.FEEDS },
       { title: ROUTES.EXPENSES, icon: 'mdi-trending-down', to: ROUTES.EXPENSES },
       { title: ROUTES.INCOME, icon: 'mdi-currency-ngn', to: ROUTES.INCOME },
@@ -165,6 +176,10 @@ export default {
   .justify-end {
     justify-self: end;
     border-left: 1px solid #E0E0E0;
+  }
+
+  .center {
+    text-align: center;
   }
 
   .slide-fade-enter-active {
