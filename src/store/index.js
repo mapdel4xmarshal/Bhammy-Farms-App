@@ -11,7 +11,8 @@ export default new Vuex.Store({
     farmLocations: [],
     houses: {},
     suppliers: [],
-    sources: []
+    sources: [],
+    user: {}
   },
   mutations: {
     [MUTATION_TYPES.SET_FARM_LOCATIONS](state, locations) {
@@ -31,6 +32,9 @@ export default new Vuex.Store({
         newSource.initials = newSource.name.match(/\b(\w)/g).join('').toUpperCase();
         return newSource;
       });
+    },
+    [MUTATION_TYPES.SET_USER](state, user) {
+      state.user = user;
     }
   },
   actions: {
@@ -51,6 +55,14 @@ export default new Vuex.Store({
         .then(({ data }) => {
           commit(MUTATION_TYPES.SET_SOURCES, data);
         });
+    },
+    [ACTION_TYPES.GET_USER]({ commit }) {
+      return axios.get('/user')
+        .then(({ data }) => {
+          commit(MUTATION_TYPES.SET_USER, data);
+          return data;
+        })
+        .catch(() => null);
     }
   },
   getters: {
@@ -65,6 +77,9 @@ export default new Vuex.Store({
     },
     [GETTER_TYPES.SOURCES](state) {
       return state.sources;
+    },
+    [GETTER_TYPES.USER](state) {
+      return state.user;
     }
   },
   modules: {

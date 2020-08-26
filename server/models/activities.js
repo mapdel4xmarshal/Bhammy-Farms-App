@@ -27,7 +27,7 @@ class Activities extends Model {
       },
       description: {
         type: DataTypes.TEXT,
-        allowNull: false
+        allowNull: true
       }
     };
   }

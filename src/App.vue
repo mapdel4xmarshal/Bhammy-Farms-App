@@ -5,16 +5,35 @@
       scroll-off-screen
       :elevation="1"
       color="#fff"
-      dense
     >
       <v-app-bar-nav-icon
         v-if="$mq.phone"
-        @click="drawer = !drawer"/>
-        <farm-selector :locations="farmLocations"/>
-        <v-spacer></v-spacer>
-        <v-btn icon>
-          <v-icon>mdi-bell</v-icon>
-        </v-btn>
+        @click="drawer = !drawer"
+      />
+      <v-divider v-if="$mq.phone" vertical class="mr-2"></v-divider>
+      <div class="header__container">
+        <img src="img/Logofull.png" width="100"/>
+
+        <v-menu :offset-y="true" bottom rounded="0">
+          <template v-slot:activator="{ on, attrs }">
+            <div class="justify-end">
+              <v-list-item v-bind="attrs" v-on="on">
+                <v-list-item-avatar>
+                  <v-img :src="user.picture"></v-img>
+                </v-list-item-avatar>
+                <v-list-item-title v-if="!$mq.phone">{{ user.displayName || user.name }}</v-list-item-title>
+              <v-icon small class="ml-1">mdi-chevron-down</v-icon>
+            </v-list-item>
+            </div>
+          </template>
+
+          <v-list>
+            <v-list-item :href="logoutUrl">
+              <v-list-item-title>Logout</v-list-item-title>
+            </v-list-item>
+          </v-list>
+        </v-menu>
+      </div>
     </v-app-bar>
 
     <v-navigation-drawer
@@ -25,24 +44,19 @@
       :permanent="!$mq.phone"
       :mini-variant-width="70"
       >
-        <v-list-item class="px-2">
-          <v-list-item-avatar>
-            <v-img src="https://randomuser.me/api/portraits/men/85.jpg"></v-img>
-          </v-list-item-avatar>
-
-          <v-list-item-title>Bamidele Mapayi</v-list-item-title>
-
-          <v-btn
-            icon
-            @click.stop="mini = !mini"
-          >
-            <v-icon>mdi-chevron-left</v-icon>
-          </v-btn>
-        </v-list-item>
-
-        <v-divider></v-divider>
-
         <v-list dense nav light>
+          <v-list-item class="px-2">
+            <v-btn
+              icon
+              @click.stop="mini = !mini"
+            >
+              <v-icon v-if="!mini">mdi-chevron-left</v-icon>
+              <v-icon v-else>mdi-chevron-right</v-icon>
+            </v-btn>
+          </v-list-item>
+
+          <v-divider class="mb-2"/>
+
           <v-list-item
             v-for="item in items"
             :key="item.title"
@@ -61,26 +75,25 @@
         </v-list>
       </v-navigation-drawer>
 
-      <v-content>
+      <v-main>
         <v-container fluid class="overflow-y-auto main__content">
           <transition name="slide-fade" appear mode="out-in">
             <router-view/>
         </transition>
       </v-container>
-    </v-content>
+    </v-main>
 
   </v-app>
 </template>
 
 <script>
 import { mapGetters } from 'vuex';
+import axios from './plugins/axios';
 import ROUTES from './router/routeNames';
-import FarmSelector from './components/FarmSelector.vue';
 import { ACTION_TYPES, GETTER_TYPES } from './store/types';
 
 export default {
   name: 'App',
-  components: { FarmSelector },
   data: () => ({
     smallScreen: false,
     drawer: true,
@@ -93,18 +106,36 @@ export default {
       { title: ROUTES.ACTIVITIES, icon: 'mdi-chart-line-variant', to: ROUTES.ACTIVITIES },
       { title: ROUTES.BATCHES, icon: 'mdi-factory', to: ROUTES.BATCHES },
       { title: ROUTES.CUSTOMERS, icon: 'mdi-account-multiple-outline', to: ROUTES.CUSTOMERS },
-      { title: ROUTES.STORE, icon: 'mdi-silo', to: ROUTES.STORE },
-      { title: ROUTES.SCHEDULES, icon: 'mdi-calendar-check-outline', to: ROUTES.SCHEDULES }
+      { title: ROUTES.STORE, icon: 'mdi-silo', to: ROUTES.STORE }
     ],
     mini: true,
   }),
   computed: {
     ...mapGetters({
-      farmLocations: GETTER_TYPES.FARM_LOCATIONS
-    })
+      farmLocations: GETTER_TYPES.FARM_LOCATIONS,
+      user: GETTER_TYPES.USER
+    }),
+    logoutUrl() {
+      return `/api/v1/logout?returnTo=${window.location.href}`;
+    }
+  },
+  methods: {
+    checkAuth() {
+      return axios.get('user')
+        .then(({ data }) => {
+          console.log(data);
+          this.user = data;
+        })
+        .catch(() => {
+          window.location.href = `/api/v1/login?returnTo=${window.location.href}`;
+        });
+    }
   },
   mounted() {
     this.$store.dispatch(ACTION_TYPES.GET_FARM_LOCATIONS);
+  },
+  beforeRouteEnter(to, from, next) {
+    this.checkAuth().then(next);
   }
 };
 </script>
@@ -122,6 +153,18 @@ export default {
   .main__content {
     width: 100%;
     height: calc(100vh - 60px);
+  }
+
+  .header__container {
+    display: grid;
+    align-items: center;
+    width: 100%;
+    grid-template-columns: 150px auto;
+  }
+
+  .justify-end {
+    justify-self: end;
+    border-left: 1px solid #E0E0E0;
   }
 
   .slide-fade-enter-active {

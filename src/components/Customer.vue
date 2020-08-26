@@ -4,7 +4,7 @@
       <v-card-title>New Customer</v-card-title>
       <v-divider></v-divider>
       <v-card-text>
-        <v-form ref="form" v-model="valid" lazy-validation>
+        <v-form ref="form" v-model="valid" lazy-validation autocomplete="off">
           <v-container>
             <v-row>
               <v-col>
@@ -33,23 +33,13 @@
 
               <v-col>
                 <v-text-field
-                  label="Firstname"
-                  hint="Customer's Firstname."
+                  label="Name"
+                  hint="Customer's Fullname."
                   persistent-hint
-                  :rules="[v => !!v || 'Please enter Firstname.']"
+                  :rules="[v => !!v || 'Please enter Fullname.']"
                   required
-                  v-model="customer.firstName"
-                ></v-text-field>
-              </v-col>
-
-              <v-col cols="12">
-                <v-text-field
-                  label="Lastname"
-                  hint="Customer's Lastname."
-                  persistent-hint
-                  :rules="[v => !!v || 'Please enter Lastname.']"
-                  required
-                  v-model="customer.lastName"
+                  autocomplete="off"
+                  v-model="customer.fullName"
                 ></v-text-field>
               </v-col>
 
@@ -60,6 +50,7 @@
                   v-model="customer.address"
                   :rules="[v => !!v || 'Please enter customer\'s address.']"
                   hint="Customer's address excluding the state."
+                  autocomplete="off"
                   persistent-hint
                   required
                 ></v-text-field>
@@ -70,6 +61,7 @@
                   v-model="customer.state"
                   label="State"
                   hint="Customer's state."
+                  autocomplete="off"
                   persistent-hint
                   required
                   :rules="[v => !!v || 'Please select a state.']"
@@ -85,6 +77,7 @@
                 <v-text-field
                   label="Phone"
                   hint="Customer's phone number.."
+                  autocomplete="off"
                   :rules="[v => !!v || 'Please enter a valid phone number.']"
                   persistent-hint
                   required
@@ -96,6 +89,7 @@
                 <v-text-field
                   label="Alt Phone"
                   hint="Customer's alternative phone."
+                  autocomplete="off"
                   persistent-hint
                   required
                   v-model="customer.altPhone"
@@ -107,6 +101,7 @@
                 <v-text-field
                   label="Email"
                   hint="Customer's email address."
+                  autocomplete="off"
                   persistent-hint
                   required
                   v-model="customer.email"

@@ -20,11 +20,11 @@ class ProductionItems extends Model {
         primaryKey: true
       },
       quantity: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.DECIMAL,
         allowNull: false
       },
       price: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.DECIMAL,
         allowNull: true
       }
     };

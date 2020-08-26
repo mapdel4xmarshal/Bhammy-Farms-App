@@ -12,31 +12,14 @@ class Controller {
     batchId, before, after, date
   }) {
     const where = [];
-    if (batchId) where.push(`batches.batch_id = ${batchId}`);
-    if (before) where.push(`productions.date < ${new Date(before)}`);
-    if (after) where.push(`productions.date > ${new Date(after)}`);
-    if (date) where.push(`productions.date = ${new Date(date)}`);
-
-    /* return Production.findAll({
-      where,
-      attributes: { exclude: ['createdAt', 'updatedAt'] },
-      include: [{
-        model: Batch,
-        include: Breed
-      }, {
-        model: Vaccination,
-        include: Item
-      }, Medication, Mortality, {
-        model: Item,
-        through: ProductionItem
-      }],
-      group: ['Production.production_id', 'Vaccinations.vaccination_id', 'Medications.medication_id', 'Mortalities.id', 'Items.item_id']
-    })
-      .then((productions) => productions.map((production) => new ProductionSummary(production))); */
+    if (batchId) where.push(`batches.batch_id = '${batchId}'`);
+    if (before) where.push(`productions.date <= ${new Date(before).toISOString().split('T')[0]}`);
+    if (after) where.push(`productions.date >= ${new Date(after).toISOString().split('T')[0]}`);
+    if (date) where.push(`productions.date = '${new Date(date).toISOString().split('T')[0]}'`);
 
     return sequelize.query(`
     SELECT productions.production_id AS id, productions.water, mortality.id AS mortalityId, mortality.count AS mortalityCount, productions.date,
-      production_items.quantity AS itemQuantity, production_items.price AS itemPrice, 
+      production_items.quantity AS itemQuantity, production_items.price AS itemPrice, batches.initial_stock_count AS initialFlockCount,
       batches.name AS batch, batches.initial_stock_count AS flockCount, batches.is_active AS isActive, breeds.type AS batchType,
       items.item_id AS itemId, items.item_name AS itemName, items.category AS itemCategory, items.size AS itemSize, items.unit AS itemUnit,
       production_items.id AS productionItemsId,
@@ -48,43 +31,13 @@ class Controller {
     LEFT JOIN production_items ON productions.production_id = production_items.production_id
     LEFT JOIN items ON production_items.item_id = items.item_id
     LEFT JOIN vaccinations ON productions.production_id = vaccinations.production_id
-    ${where.length > 0 ? where.join(' AND ') : ''};
+    ${where.length > 0 ? ` WHERE ${where.join(' AND ')}` : ''}
+    ORDER BY productions.date DESC;
 
 `)
-      .then(([productions, metadata]) => {
-        const productionMap = new Map();
-
-        productions.forEach((production) => {
-          console.log(productions, production);
-          if (!productionMap.has(production.id)) {
-            productionMap.set(production.id, {
-              id: production.id,
-              date: production.date,
-              batch: production.batch,
-              batchType: production.batchType,
-              isActive: production.isActive,
-              flockCount: production.flockCount,
-              water: production.water,
-              mortality: new Set(),
-              items: new Set()
-            });
-          } else {
-            const productionGroup = productionMap.get(production.id);
-            productionGroup.mortality.set(production.mortalityId, { count: production.mortalityCount });
-            productionGroup.mortality.set(production.productionItemsId, {
-              id: production.itemId,
-              name: production.itemName,
-              quantity: production.itemQuantity,
-              price: production.price,
-              category: production.itemCategory,
-              size: production.itemSize,
-              unit: production.itemUnit
-            });
-          }
-        });
-
-        console.log(productionMap);
-        return Array.from(productionMap);
+      .then(async ([productions, ]) => {
+        productions = await this.processProduction(productions);
+        return productions.map((production) => new ProductionSummary(production));
       });
   }
 
@@ -244,36 +197,42 @@ class Controller {
       .then((Batch) => Batch);
   }
 
-  _apiJSON(batch) {
-    return {
-      id: batch.batch_id,
-      name: batch.name,
-      moveInDate: this._normalizeDateString(batch.move_in_date),
-      moveOutDate: this._normalizeDateString(batch.move_out_date),
-      moveInAge: batch.move_in_age,
-      currentAge: batch.move_in_age + this._weekDiff(batch.move_in_date, Date.now()),
-      category: batch.Breed.type,
-      breed: batch.Breed.name,
-      initialStock: batch.initial_stock_count,
-      currentStock: batch.initial_stock_count - batch.mortality_count,
-      mortality: batch.mortality_count,
-      supplier: batch.supplier_id,
-      source: batch.source_id,
-      costPerUnit: batch.cost_per_unit,
-      totalCost: batch.total_cost,
-      batchNote: batch.description,
-      state: batch.is_active ? 'Active' : 'Retired'
+  async processProduction(productions) {
+    const productionMap = new Map();
 
-    };
-  }
+    productions.forEach((production) => {
+      console.log(productions, production);
+      if (!productionMap.has(production.id)) {
+        productionMap.set(production.id, {
+          id: production.id,
+          date: production.date,
+          batch: production.batch,
+          batchType: production.batchType,
+          isActive: production.isActive,
+          flockCount: production.flockCount,
+          initialFlockCount: production.initialFlockCount,
+          water: production.water,
+          mortality: new Map(),
+          items: new Map(),
+          vaccinations: [],
+          medications: []
+        });
+      }
 
-  _weekDiff(date1, date2) {
-    return Math.round((date2 - date1) / (7 * 24 * 60 * 60 * 1000));
-  }
+      const productionGroup = productionMap.get(production.id);
+      productionGroup.mortality.set(production.mortalityId, { count: production.mortalityCount });
+      productionGroup.items.set(production.productionItemsId, {
+        id: production.itemId,
+        name: production.itemName,
+        quantity: production.itemQuantity,
+        price: production.price,
+        category: production.itemCategory,
+        size: production.itemSize,
+        unit: production.itemUnit
+      });
+    });
 
-  _normalizeDateString(date) {
-    return date.toISOString()
-      .split('T')[0];
+    return Array.from(productionMap.values());
   }
 }
 

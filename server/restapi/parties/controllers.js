@@ -81,7 +81,7 @@ class Controller {
     return Customer.create({
       Party: {
         party_id: uuid.v4(),
-        name: `${customer.firstName} ${customer.lastName}`,
+        name: customer.fullName || `${customer.firstName} ${customer.lastName}`,
         address: customer.address,
         state: customer.state,
         email: customer.email,

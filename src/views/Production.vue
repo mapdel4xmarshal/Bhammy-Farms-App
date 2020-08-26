@@ -1,81 +1,109 @@
 <template>
-    <section>
-      <v-toolbar flat dense color="transparent">
-        <v-toolbar-title>Production</v-toolbar-title>
+  <section>
+    <v-toolbar flat dense color="transparent">
+      <v-toolbar-title>Production</v-toolbar-title>
 
-        <v-spacer></v-spacer>
-        <v-btn tile color="primary" @click="createNew">
-          New Production
-        </v-btn>
-      </v-toolbar>
+      <v-spacer></v-spacer>
+      <v-btn tile color="primary" @click="createNew">
+        New Production
+      </v-btn>
+    </v-toolbar>
 
-      <v-divider></v-divider>
+    <v-divider></v-divider>
 
-      <v-row>
-        <v-col cols="12" md="2">
-          <v-select
-            :items="productionTypes"
-            label="Production type"
-            dense
-          ></v-select>
-        </v-col>
-        <v-col cols="12" md="2">
-          <v-menu
-            :close-on-content-click="false"
-            transition="scale-transition"
-            offset-y
-            min-width="290px"
-          >
-            <template v-slot:activator="{ on }">
-              <v-text-field
-                v-model="dateRangeText"
-                dense
-                label="Date"
-                autocomplete="false"
-                v-on="on"
-              ></v-text-field>
-            </template>
-            <v-date-picker v-model="date" @input="menu2 = false" range landscape></v-date-picker>
-          </v-menu>
-        </v-col>
-        <v-spacer></v-spacer>
-        <v-col cols="12" md="2">
-          <v-text-field
-            append-icon="mdi-magnify"
-            label="Search"
-            dense
-            v-model="search"
-            width='100'
-          ></v-text-field>
-        </v-col>
-      </v-row>
+    <v-row>
+      <v-col cols="12" md="3">
+        <v-autocomplete
+          v-model="batch"
+          label="Batch"
+          persistent-hint
+          required
+          dense
+          clearable
+          return-object
+          :items="batches"
+          item-text="name"
+          item-value="name"
+          @change="getProduction"
+        >
+          <template v-slot:item="{ item }">
+            <v-list-item-content>
+              <v-list-item-title>{{ item.name }}</v-list-item-title>
+              <v-list-item-subtitle>{{ item.farm }} Farm | {{ item.house }}</v-list-item-subtitle>
+            </v-list-item-content>
+          </template>
+        </v-autocomplete>
+      </v-col>
+      <v-col cols="12" md="3">
+        <v-menu
+          ref="menu"
+          :close-on-content-click="false"
+          transition="scale-transition"
+          offset-y
+          min-width="290px"
+          v-model="menu"
+          :return-value.sync="date"
+        >
+          <template v-slot:activator="{ on }">
+            <v-text-field
+              v-model="dateRangeText"
+              dense
+              label="Date"
+              autocomplete="false"
+              clearable
+              @click:clear="date = null && getProduction"
+              v-on="on"
+            ></v-text-field>
+          </template>
+          <v-date-picker v-model="date" range landscape>
+            <v-spacer></v-spacer>
+            <v-btn text color="primary" @click="menu = false">Cancel</v-btn>
+            <v-btn text color="primary" @click="updateDate">OK</v-btn>
+          </v-date-picker>
+        </v-menu>
+      </v-col>
+      <v-spacer></v-spacer>
+      <v-col cols="12" md="3">
+        <v-text-field
+          append-icon="mdi-magnify"
+          label="Search"
+          dense
+          v-model="search"
+          width='100'
+        ></v-text-field>
+      </v-col>
+    </v-row>
 
-      <v-row>
-        <v-col cols="12" md="3">
-          <metric-card title="Total Eggs Produced" value="12,898 crates" img="https://ya-webdesign.com/transparent250_/whiter-egg.png"/>
-        </v-col>
+    <v-row>
+      <v-col cols="12" md="3">
+        <metric-card title="Eggs Produced" :value="`${totalEggs} crates`" img="img/egg.png"/>
+      </v-col>
 
-        <v-col cols="12" md="3">
-          <metric-card title="Total Flocks" value="12,898 birds" img="https://i.ya-webdesign.com/images/hen-vector-drawing-16.png"/>
-        </v-col>
+      <v-col cols="12" md="3">
+        <metric-card title="Birds" :value="`${totalBirds} birds`" img="img/hen.png"/>
+      </v-col>
 
-        <v-col cols="12" md="3">
-          <metric-card title="Feeds Consumed" value="324,223 tonnes" img="https://cdn5.vectorstock.com/i/1000x1000/54/99/bag-of-wheat-thin-line-icon-farming-agriculture-vector-20105499.jpg"/>
-        </v-col>
+      <v-col cols="12" md="3">
+        <metric-card title="Feeds Consumed" :value="`${totalFeeds} kg`" img="img/feed.png"/>
+      </v-col>
 
-        <v-col cols="12" md="3">
-          <metric-card title="Moralities" value="120 birds" img="https://thumbs.dreamstime.com/b/dead-bones-line-illustration-icon-white-background-signs-symbols-can-be-used-web-logo-mobile-app-ui-ux-172929843.jpg"/>
-        </v-col>
-      </v-row>
+      <v-col cols="12" md="3">
+        <metric-card title="Morality" :value="`${totalMortality} bird(s)`" img="img/dead.png"/>
+      </v-col>
+    </v-row>
     <v-data-table
-    :headers="headers"
-    :items="productions"
-    no-data-text="No production available."
-    multi-sort
-    :search="search"
-    class="elevation-1"
-  ></v-data-table>
-    </section>
+      :headers="headers"
+      :items="productions"
+      no-data-text="No production available."
+      multi-sort
+      :search="search"
+      class="elevation-1"
+    >
+      <template v-slot:item.eggs="{ item }">
+        {{ Number.parseInt(item.eggs / 30) }}
+      </template>
+    </v-data-table>
+  </section>
 </template>
 
 <script>
@@ -88,15 +116,16 @@ export default {
   data() {
     return {
       productions: [],
+      totalFeeds: 0,
+      totalEggs: 0,
+      totalMortality: 0,
+      totalBirds: 0,
+      batches: [],
       dateMenu: false,
       date: [],
+      menu: false,
       search: '',
-      productionTypes: [
-        'Eggs',
-        'Fish',
-        'Chicks',
-        'Hatchery'
-      ],
+      batch: '',
       headers: [
         {
           text: 'Date',
@@ -104,65 +133,16 @@ export default {
           sortable: true,
           value: 'date',
         },
-        { text: 'Batch', value: 'batch.name' },
-        { text: 'Type', value: 'batch.type' },
-        { text: 'Total', value: 'total' },
-        { text: 'Production rate', value: 'productionRate' },
+        { text: 'Batch', value: 'batch' },
+        { text: 'Type', value: 'type' },
+        { text: 'Population', value: 'flockCount' },
+        { text: 'Eggs (crates)', value: 'eggs' },
+        { text: 'Production %', value: 'productionPercent' },
         { text: 'Feed (kg)', value: 'feeds' },
         { text: 'Feed/animal (g)', value: 'feedPerAnimal' },
-        { text: 'Mortality', value: 'mortalities' },
-        { text: 'Mortality ratio', value: 'mortalityRatio' },
-        { text: 'State', value: 'batch.status' },
-      ],
-      items: [
-        {
-          date: '2020-02-02',
-          batch: 'AJG-P001-B01',
-          type: 'Chicks',
-          total: 5780,
-          feed: 240,
-          mortalities: 4,
-          age: 168,
-          mortalityRatio: '0.2%',
-          feedPerAnimal: 24,
-          state: 'Active'
-        },
-        {
-          date: '2020-02-02',
-          batch: 'OLO-P001-B01',
-          total: 5780,
-          type: 'Broiler',
-          feed: 240,
-          mortalities: 4,
-          age: 168,
-          mortalityRatio: '0.2%',
-          feedPerAnimal: 24,
-          state: 'Active'
-        },
-        {
-          date: '2020-02-02',
-          batch: 'AJG-P001-B01',
-          total: 5780,
-          feed: 240,
-          type: 'Layers',
-          mortalities: 4,
-          age: 168,
-          mortalityRatio: '0.2%',
-          feedPerAnimal: 24,
-          state: 'Active'
-        },
-        {
-          date: '2020-02-02',
-          batch: 'AJG-P001-B01',
-          total: 5780,
-          type: 'Layers',
-          feed: 240,
-          mortalities: 4,
-          age: 168,
-          mortalityRatio: '0.2%',
-          feedPerAnimal: 24,
-          state: 'Completed'
-        },
+        { text: 'Mortality', value: 'mortality' },
+        { text: 'Mortality %', value: 'mortalityRate' },
+        { text: 'Remark', value: 'status' },
       ]
     };
   },
@@ -171,7 +151,7 @@ export default {
   },
   computed: {
     dateRangeText() {
-      return this.date.join(' ~ ');
+      return this.date && this.date.length > 0 ? this.date.join(' ~ ') : [];
     }
   },
   methods: {
@@ -179,14 +159,52 @@ export default {
       this.$router.push({ name: ROUTES.NEW_PRODUCTION });
     },
     getProduction() {
-      axios.get('/productions')
+      const filters = [];
+      if (this.batch) filters.push(`batchId=${this.batch.batchId}`);
+      if (this.date.length === 1) filters.push(`date=${this.date[0]}`);
+      if (this.date.length === 2) filters.push(`after=${this.date[0]}&before=${this.date[1]}`);
+      axios.get(`/productions?${filters.join('&')}`)
         .then(({ data }) => {
           this.productions = data;
+          this.computeSummary(data);
         });
+    },
+    getBatches() {
+      axios.get('/batches')
+        .then(({ data }) => {
+          this.batches = data;
+        });
+    },
+    computeSummary(productions) {
+      this.totalFeeds = 0;
+      this.totalEggs = 0;
+      this.totalMortality = 0;
+      this.totalBirds = 0;
+      const flockMap = new Map();
+      productions.forEach((production) => {
+        this.totalFeeds += production.feeds;
+        this.totalEggs += Number.parseInt(production.eggs / 30, 10);
+        this.totalMortality += production.mortality;
+        flockMap.set(production.batch, production.initialPopulation);
+      });
+
+      this.totalFeeds = this.formatNumber(this.totalFeeds, 0);
+      this.totalEggs = this.formatNumber(this.totalEggs, 0);
+      this.totalMortality = this.formatNumber(this.totalMortality, 0);
+      this.totalBirds = this.formatNumber(Array.from(flockMap.values())
+        .reduce((totalFlock, flock) => totalFlock + flock, 0) - this.totalMortality, 0);
+    },
+    updateDate() {
+      this.$refs.menu.save(this.date);
+      this.getProduction();
+    },
+    formatNumber(value, digits = 2) {
+      return new Intl.NumberFormat('en-US', { minimumFractionDigits: digits }).format(value);
     }
   },
   created() {
     this.getProduction();
+    this.getBatches();
   }
 };
 </script>

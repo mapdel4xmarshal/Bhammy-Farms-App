@@ -1,25 +1,5 @@
 <template>
   <v-row>
-    <v-col cols="12">
-      <v-card class="mx-auto">
-        <v-sparkline
-          :value="value"
-          color="#404040"
-          height="80"
-          padding="5"
-          line-width="1"
-          stroke-linecap="round"
-          smooth
-          auto-line-width
-          type="bars"
-        >
-          <template v-slot:label="item">
-            ${{ item.value }}
-          </template>
-        </v-sparkline>
-      </v-card>
-    </v-col>
-
     <v-col cols="12" md="4">
       <v-card
         class="mx-auto text-center"
@@ -48,7 +28,16 @@
         <v-divider></v-divider>
 
         <v-card-actions class="justify-center">
-          <v-btn block text>Go to Report</v-btn>
+          <v-chip-group
+            active-class="primary text--accent-4"
+            mandatory
+          >
+            <v-chip>Today</v-chip>
+            <v-chip>Yesterday</v-chip>
+            <v-chip>7 days</v-chip>
+            <v-chip>1 month</v-chip>
+            <v-chip>3 months</v-chip>
+          </v-chip-group>
         </v-card-actions>
       </v-card>
     </v-col>
@@ -80,7 +69,16 @@
         <v-divider></v-divider>
 
         <v-card-actions class="justify-center">
-          <v-btn block text>Go to Report</v-btn>
+          <v-chip-group
+            active-class="primary text--accent-4"
+            mandatory
+          >
+            <v-chip>Today</v-chip>
+            <v-chip>Yesterday</v-chip>
+            <v-chip>7 days</v-chip>
+            <v-chip>1 month</v-chip>
+            <v-chip>3 months</v-chip>
+          </v-chip-group>
         </v-card-actions>
       </v-card>
     </v-col>
@@ -112,7 +110,16 @@
         <v-divider></v-divider>
 
         <v-card-actions class="justify-center">
-          <v-btn block text>Go to Report</v-btn>
+          <v-chip-group
+            active-class="primary text--accent-4"
+            mandatory
+          >
+            <v-chip>Today</v-chip>
+            <v-chip>Yesterday</v-chip>
+            <v-chip>7 days</v-chip>
+            <v-chip>1 month</v-chip>
+            <v-chip>3 months</v-chip>
+          </v-chip-group>
         </v-card-actions>
       </v-card>
     </v-col>

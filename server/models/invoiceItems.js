@@ -14,15 +14,15 @@ class InvoiceItems extends Model {
   static get schema() {
     return {
       quantity: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.DECIMAL,
         allowNull: false
       },
       item_price: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.DECIMAL,
         allowNull: false
       },
       discount: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.DECIMAL,
         allowNull: true
       }
     };

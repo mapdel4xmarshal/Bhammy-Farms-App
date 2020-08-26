@@ -61,7 +61,8 @@
               <v-card
                 :loading="loading"
                 class="mx-auto"
-                max-width="374"
+                max-width="350"
+                min-width="250"
                 hover
               >
                 <v-img

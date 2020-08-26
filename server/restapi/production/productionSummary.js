@@ -1,38 +1,34 @@
 class ProductionSummary {
   constructor(properties) {
-    console.log(properties);
     this._production = {};
-    this._production.id = properties.production_id;
-    this._production.batchId = properties.batch_id;
+    this._production.id = properties.id;
+    this._production.batch = properties.batch;
     this._production.date = properties.date;
     this._production.humidity = properties.humidity;
     this._production.temperature = properties.temperature;
     this._production.weatherCondition = properties.weatherCondition;
     this._production.water = properties.water;
     this._production.note = properties.note;
-    this._production.batch_id = properties.batchId;
-    this.batch = properties.Batch;
+    this._production.batch = properties.batch;
+    this._production.type = properties.batchType;
+    this._production.status = properties.isActive === 1 ? 'Active' : 'Retired';
+    this._production.flockCount = properties.flockCount;
+    this._production.initialPopulation = properties.initialFlockCount;
 
-    this.vaccinations = properties.Vaccinations;
-    this.medications = properties.Medications;
-    this.mortalities = properties.Mortalities;
-    this.eggs = properties.Items.filter((item) => item.category.toLowerCase() === 'egg');
-    this.feeds = properties.Items.filter((item) => item.category.toLowerCase() === 'feed');
+    properties.items = Array.from(properties.items.values());
+    properties.mortality = Array.from(properties.mortality.values());
+
+    this.vaccinations = properties.vaccinations;
+    this.medications = properties.medications;
+    this.mortality = properties.mortality; console.log('items', properties.items);
+
+    this.eggs = properties.items.filter((item) => item.category.toLowerCase() === 'egg');
+    this.feeds = properties.items.filter((item) => item.category.toLowerCase() === 'feed');
+    this.feedPerAnimal = this.feeds;
+    this.productionPercent = this.eggs;
+    this.mortalityRate = this.mortality;
 
     return this._production;
-  }
-
-  get batch() {
-    return this._production.batch;
-  }
-
-  set batch(batch) {
-    this._production.batch = {
-      id: batch.batchId,
-      batch: batch.batch,
-      status: batch.isActive === 1 ? 'Active' : 'Retired',
-      type: batch.batchType
-    };
   }
 
   get vaccinations() {
@@ -73,12 +69,21 @@ class ProductionSummary {
     }));
   }
 
-  get mortalities() {
-    return this._production.mortalities;
+  get mortality() {
+    return this._production.mortality;
   }
 
-  set mortalities(mortalities) {
-    this._production.mortalities = mortalities.reduce((totalMortality, mortality) => totalMortality + Number.parseInt(mortality.count), 0);
+  set mortality(mortality) {
+    this._production.mortality = mortality
+      .reduce((totalMortality, mortality) => totalMortality + Number.parseInt(mortality.count), 0) || 0;
+  }
+
+  get mortalityRate() {
+    return this._production.mortalityRate;
+  }
+
+  set mortalityRate(mortality) {
+    this._production.mortalityRate = Number(((mortality * 100) / this._production.flockCount).toFixed(2));
   }
 
 
@@ -87,7 +92,7 @@ class ProductionSummary {
   }
 
   set feeds(feeds) {
-    this._production.feeds = feeds.reduce((totalFeed, feed) => totalFeed + Number.parseInt(feed.ProductionItem.quantity), 0);
+    this._production.feeds = feeds.reduce((totalFeed, feed) => totalFeed + Number.parseInt(feed.quantity), 0);
   }
 
   get eggs() {
@@ -95,7 +100,24 @@ class ProductionSummary {
   }
 
   set eggs(eggs) {
-    this._production.eggs = eggs.reduce((totalEggs, egg) => totalEggs + Number.parseInt(egg.ProductionItem.quantity), 0);
+    console.log(eggs);
+    this._production.eggs = eggs.reduce((totalEggs, egg) => totalEggs + Number.parseInt(egg.quantity), 0);
+  }
+
+  get feedPerAnimal() {
+    return this._production.feedPerAnimal;
+  }
+
+  set feedPerAnimal(feeds) {
+    this._production.feedPerAnimal = Number(((feeds / this._production.flockCount) * 1000).toFixed(2));
+  }
+
+  get productionPercent() {
+    return this._production.productionPercent;
+  }
+
+  set productionPercent(eggs) {
+    this._production.productionPercent = Number(((eggs * 100) / this._production.flockCount).toFixed(2));
   }
 }
 

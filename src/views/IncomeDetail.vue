@@ -167,11 +167,11 @@
       <v-col cols="12" md="4">
         <div class="income__summary">
           <span>Total</span>
-          <span>₦{{totalAmount | toMoney}}</span>
+          <span>₦{{(totalAmount + discount) | toMoney}}</span>
           <span>Discount</span>
           <span>₦{{discount | toMoney}}</span>
           <strong>Total</strong>
-          <strong>₦{{ (totalAmount - discount) | toMoney}}</strong>
+          <strong>₦{{ totalAmount | toMoney}}</strong>
         </div>
       </v-col>
     </v-row>

@@ -81,8 +81,8 @@ export default {
           sortable: true,
           value: 'id',
         },
-        { text: 'Name', value: 'name', width: '40%' },
-        { text: 'Address', value: 'address' },
+        { text: 'Name', value: 'name', width: '20%' },
+        { text: 'Address', value: 'address', width: '20%' },
         { text: 'State', value: 'state' },
         { text: 'Phone', value: 'phone' },
         { text: 'Total orders', value: 'orderTotal' },
@@ -99,9 +99,9 @@ export default {
           this.customers = data;
         });
     },
-    customerCreated() {
+    customerCreated(state) {
       this.newCustomer = false;
-      this.snackbar = true;
+      this.snackbar = state;
       this.getCustomers();
     }
   },

@@ -27,7 +27,7 @@ class Expenses extends Model {
         allowNull: false
       },
       quantity: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.DECIMAL,
         allowNull: true
       },
       invoice_number: {
@@ -35,7 +35,7 @@ class Expenses extends Model {
         allowNull: true
       },
       amount: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.DECIMAL,
         allowNull: true
       },
       proof_of_payment: {
@@ -53,8 +53,8 @@ class Expenses extends Model {
     ExpenseType, Supplier, Location, House, Batch
   }) {
     Expenses.location = Expenses.belongsTo(Location, { foreignKey: 'location_id' });
-    Expenses.house = Expenses.belongsTo(House, { foreignKey: 'house_id' });
-    Expenses.batch = Expenses.belongsTo(Batch, { foreignKey: 'batch_id' });
+    Expenses.house = Expenses.belongsTo(House, { foreignKey: { name: 'house_id', allowNull: true }, constraints: false });
+    Expenses.batch = Expenses.belongsTo(Batch, { foreignKey: { name: 'batch_id', allowNull: true }, constraints: false });
     Expenses.type = Expenses.belongsTo(ExpenseType, { foreignKey: 'expense_type_id' });
     Expenses.supplier = Expenses.belongsTo(Supplier, { foreignKey: 'supplier_id' });
   }

@@ -117,7 +117,11 @@ export default {
     getBatches() {
       axios.get('batches')
         .then(({ data }) => {
-          this.batches = data;
+          this.batches = data.map((batch) => {
+            const moveInAge = Number.parseInt(batch.moveInAge / 7, 10);
+            const currentAge = Number.parseInt(batch.currentAge / 7, 10);
+            return { ...batch, moveInAge, currentAge };
+          });
         });
     },
     handleBatchEvent(state) {

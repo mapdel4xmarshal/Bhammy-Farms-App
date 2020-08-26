@@ -22,7 +22,7 @@ class Vaccinations extends Model {
         allowNull: true
       },
       dosage: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.DECIMAL,
         allowNull: false
       },
       dosage_unit: {
@@ -30,7 +30,7 @@ class Vaccinations extends Model {
         allowNull: false
       },
       total_dosage: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.DECIMAL,
         allowNull: false
       },
       no_of_birds: {

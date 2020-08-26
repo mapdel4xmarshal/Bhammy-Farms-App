@@ -34,7 +34,7 @@ class Items extends Model {
         allowNull: true
       },
       quantity: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.DECIMAL,
         allowNull: true
       },
       unit: {
@@ -42,7 +42,7 @@ class Items extends Model {
         allowNull: true
       },
       price: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.DECIMAL,
         allowNull: true
       },
       image: {

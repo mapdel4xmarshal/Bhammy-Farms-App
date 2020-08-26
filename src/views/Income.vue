@@ -4,7 +4,7 @@
       <v-toolbar-title class="grey--text">Income</v-toolbar-title>
       <v-spacer></v-spacer>
       <v-btn tile color="primary" @click="createNew">
-        Add new
+        Add Income
       </v-btn>
     </v-toolbar>
     <v-divider></v-divider>

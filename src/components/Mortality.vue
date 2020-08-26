@@ -20,7 +20,7 @@
 
         <v-col cols="12">
           <v-select
-            :items="['Pecking', 'Prolapse', 'Suffocation', 'Crushed', 'Predator', 'Disease', 'Dead']"
+            :items="reasons"
             label="Reason / Cause of Death*"
             :rules="[v => !!v || 'Select a reason.']"
             v-model="value.reason"
@@ -39,6 +39,7 @@ export default {
   name: 'Mortality',
   data() {
     return {
+      reasons: ['Pecking', 'Prolapse', 'Suffocation', 'Crushed', 'Predator', 'Disease', 'Sick', 'Unknown', 'Other'],
       deadBirdRules: [
         (v) => !!v || 'Please enter no of dead birds.',
         (v) => v >= 0 || 'Mortality should be zero (0) or more.'

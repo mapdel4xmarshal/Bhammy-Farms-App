@@ -1,4 +1,6 @@
-const { Invoice: InvoiceModel, Customer, InvoiceItem, Party, Sequelize, Location } = require('../../models');
+const {
+  Invoice: InvoiceModel, Customer, InvoiceItem, Party, Sequelize, Location
+} = require('../../models');
 const Invoice = require('./invoice');
 
 class Controller {
@@ -9,7 +11,7 @@ class Controller {
         [Sequelize.fn('date_format', Sequelize.col('payment_date'), '%Y-%m-%d'), 'paymentDate'],
         [Sequelize.col('Location.name'), 'farmLocation'],
         ['customer_id', 'customerId'], ['payment_status', 'paymentStatus'], ['fulfilment_status', 'fulfilmentStatus'],
-        [Sequelize.literal('CONCAT(Customer.title, " ", `Customer->Party`.name)'), 'customerName'], 'amount', 'discount', 'notes'],
+        [Sequelize.literal('`Customer->Party`.name'), 'customerName'], 'amount', 'discount', 'notes'],
       order: [['invoice_id', 'DESC'], ['created_at', 'DESC']],
       raw: true,
       include: [{

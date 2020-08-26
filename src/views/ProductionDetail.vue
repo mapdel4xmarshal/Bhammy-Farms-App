@@ -634,7 +634,7 @@ export default {
       };
     },
     validateProductionDay() {
-      axios.get(`productions?date=${this.production.date}&batch=${this.production.batch.batchId}`)
+      axios.get(`productions?date=${this.production.date}&batchId=${this.production.batch.batchId}`)
         .then(({ data }) => {
           this.validProduction = data.length === 0;
           if (!this.validProduction) {
@@ -668,7 +668,7 @@ export default {
     },
     today() {
       const date = new Date();
-      return `${date.getFullYear()}-${date.getMonth().toString().padStart(2, '0')}-${date.getDate()
+      return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate()
         .toString().padStart(2, '0')}`;
     },
     validateSections() {

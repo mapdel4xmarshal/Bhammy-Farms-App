@@ -34,11 +34,11 @@ class Invoices extends Model {
         allowNull: false
       },
       amount: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.DECIMAL,
         allowNull: false
       },
       discount: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.DECIMAL,
         allowNull: true,
         defaultValue: 0
       },

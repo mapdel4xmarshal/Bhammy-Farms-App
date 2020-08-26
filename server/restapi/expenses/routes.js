@@ -4,7 +4,7 @@ const controllers = require('./controllers');
 const router = express.Router();
 
 router.get('/', async (req, res) => {
-  const expenses = await controllers.getExpenses();
+  const expenses = await controllers.getExpenses(req.query);
   res.json(expenses);
 });
 
