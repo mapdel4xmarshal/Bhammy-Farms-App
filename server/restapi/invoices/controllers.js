@@ -1,19 +1,24 @@
 const {
-  Invoice: InvoiceModel, Customer, InvoiceItem, Party, Sequelize, Location
+  Invoice: InvoiceModel, Customer, InvoiceItem, Party, Sequelize: { Op, col, fn, literal }, Location
 } = require('../../models');
 const Invoice = require('./invoice');
 
 class Controller {
-  async getInvoices() {
+  async getInvoices({ before, after }) {  console.log(before, Op.lt)
+    const where = { invoice_date: {} };
+    if (before) where.invoice_date[Op.lte] = before;
+    if (after) where.invoice_date[Op.gte] = after;
+
     return InvoiceModel.findAll({
       attributes: [['invoice_id', 'id'],
-        [Sequelize.fn('date_format', Sequelize.col('invoice_date'), '%Y-%m-%d'), 'invoiceDate'],
-        [Sequelize.fn('date_format', Sequelize.col('payment_date'), '%Y-%m-%d'), 'paymentDate'],
-        [Sequelize.col('Location.name'), 'farmLocation'],
+        [fn('date_format', col('invoice_date'), '%Y-%m-%d'), 'invoiceDate'],
+        [fn('date_format', col('payment_date'), '%Y-%m-%d'), 'paymentDate'],
+        [col('Location.name'), 'farmLocation'],
         ['customer_id', 'customerId'], ['payment_status', 'paymentStatus'], ['fulfilment_status', 'fulfilmentStatus'],
-        [Sequelize.literal('`Customer->Party`.name'), 'customerName'], 'amount', 'discount', 'notes'],
+        [literal('`Customer->Party`.name'), 'customerName'], 'amount', 'discount', 'notes'],
       order: [['invoice_id', 'DESC'], ['created_at', 'DESC']],
       raw: true,
+      where,
       include: [{
         model: Customer,
         include: [{ model: Party, attributes: [] }],

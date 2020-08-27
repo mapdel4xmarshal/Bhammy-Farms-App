@@ -9,8 +9,35 @@
     </v-toolbar>
     <v-divider></v-divider>
     <v-row>
+      <v-col cols="12" md="3">
+        <v-menu
+          ref="menu"
+          :close-on-content-click="false"
+          transition="scale-transition"
+          offset-y
+          min-width="290px"
+          v-model="menu"
+          :return-value.sync="date"
+        >
+          <template v-slot:activator="{ on }">
+            <v-text-field
+              v-model="dateRangeText"
+              label="Date"
+              autocomplete="false"
+              clearable
+              @click:clear="date = null && getInvoices()"
+              v-on="on"
+            ></v-text-field>
+          </template>
+          <v-date-picker v-model="date" range landscape>
+            <v-spacer></v-spacer>
+            <v-btn text color="primary" @click="menu = false">Cancel</v-btn>
+            <v-btn text color="primary" @click="updateDate">OK</v-btn>
+          </v-date-picker>
+        </v-menu>
+      </v-col>
       <v-spacer></v-spacer>
-      <v-col cols="12" md="2">
+      <v-col cols="12" md="3">
         <v-text-field
           append-icon="mdi-magnify"
           label="Search"
@@ -79,16 +106,29 @@ export default {
       ]
     };
   },
+  computed: {
+    dateRangeText() {
+      return this.date && this.date.length > 0 ? this.date.join(' ~ ') : [];
+    }
+  },
   methods: {
     createNew() {
       this.$router.push({ name: ROUTES.INCOME_DETAIL, params: { id: 'new' } });
     },
     getInvoices() {
-      axios.get('/invoices')
+      const filters = [];
+      if (this.date.length === 1) filters.push(`date=${this.date[0]}`);
+      if (this.date.length === 2) filters.push(`after=${this.date[0]}&before=${this.date[1]}`);
+
+      axios.get(`/invoices?${filters.join('&')}`)
         .then(({ data }) => {
           this.invoices = data;
         });
-    }
+    },
+    updateDate() {
+      this.$refs.menu.save(this.date);
+      this.getInvoices();
+    },
   },
   filters: {
     formatNumber(value) {

@@ -609,7 +609,7 @@ export default {
         if (this.validateSections()) {
           axios.post('productions', this.formatProduction())
             .then(() => {
-              this.$router.push('/production');
+              this.$router.push('/productions');
             })
             .catch(({ response: data }) => {
               this.message = data.error;

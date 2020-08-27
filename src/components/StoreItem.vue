@@ -1,118 +1,116 @@
 <template>
-  <v-dialog v-model="active" persistent max-width="800px" scrollable>
+  <v-dialog v-model="active" persistent max-width="800px" scrollable :fullscreen="$mq.phone">
     <v-card>
-      <v-card-title>New Store Item</v-card-title>
+      <v-card-title>New Item</v-card-title>
       <v-divider></v-divider>
       <v-card-text>
-        <v-form>
+        <v-form ref="form" v-model="valid" lazy-validation>
           <v-container>
             <v-row>
               <v-col cols="12">
                 <v-text-field
-                  label="Item name"
-                  hint="Item name"
+                  label="Name"
+                  hint="Item name."
                   persistent-hint
+                  v-model="item.name"
+                  :rules="[v => !!v || 'Please enter item name.']"
                   required
                 ></v-text-field>
               </v-col>
 
               <v-col cols="12">
-                <v-text-field
-                  label="Farm"
-                  hint="Farm house where the item is located."
-                  persistent-hint
-                  required
-                ></v-text-field>
-              </v-col>
-
-              <v-col cols="12">
-                <v-text-field
-                  label="Quantity"
-                  hint="Quantity."
-                  persistent-hint
-                  required
-                ></v-text-field>
-              </v-col>
-
-              <v-col cols="12">
-                <v-text-field
-                  label="Category"
+                <v-autocomplete
+                  label="Category*"
                   hint="Item category."
                   persistent-hint
+                  :items="categories"
+                  return-object
+                  v-model="item.category"
+                  :rules="[v => !!v || 'Please select a category.']"
+                  required
+                >
+                </v-autocomplete>
+              </v-col>
+
+              <v-col cols="12">  {{ itemBrands }} - {{ search }}
+                <v-autocomplete
+                  label="Brand*"
+                  hint="Item brand."
+                  persistent-hint
+                  v-model="item.brand"
+                  :search-input.sync="search"
+                  :items="itemBrands"
+                  :rules="[v => !!v || 'Please select item brand.']"
+                  required
+                >
+                  <template v-slot:no-data>
+                    <v-list-item
+                      ripple
+                      @click="itemBrands.push(search)"
+                    >
+                      <v-list-item-content>
+                        <v-list-item-title>{{ search }}</v-list-item-title>
+                      </v-list-item-content>
+                    </v-list-item>
+                  </template>
+                </v-autocomplete>
+              </v-col>
+
+              <v-col cols="12">
+                <v-text-field
+                  label="Size"
+                  hint="Item size."
+                  persistent-hint
+                  v-model="item.size"
+                  :rules="[v => !!v || 'Please enter item size.']"
                   required
                 ></v-text-field>
               </v-col>
 
               <v-col cols="12">
                 <v-text-field
-                  label="Brand"
-                  hint="Item Brand."
+                  type="number"
+                  label="Quantity"
+                  hint="Item quantity."
+                  :rules="[v => !!v || 'Please enter item quantity.']"
                   persistent-hint
+                  v-model="item.quantity"
                   required
                 ></v-text-field>
               </v-col>
 
               <v-col cols="12">
                 <v-text-field
-                  label="Price"
-                  hint="Price of the item."
+                  label="Unit / Metric"
+                  hint="Item measurement metric. i.e kg, ml etc"
+                  :rules="[v => !!v || 'Please enter item unit.']"
+                  v-model="item.unit"
                   persistent-hint
-                  required
-                ></v-text-field>
-              </v-col>
-
-              <v-col cols="12">
-                <v-text-field
-                  label="Total"
-                  hint="Item total."
-                  persistent-hint
-                  required
-                ></v-text-field>
-              </v-col>
-
-              <v-col cols="12">
-                <v-text-field
-                  label="Supplier"
-                  hint="Item supplier."
-                  persistent-hint
-                  required
-                ></v-text-field>
-              </v-col>
-
-              <v-col cols="12">
-                <v-text-field
-                  label="Expiry date"
-                  hint="Item expiry date or shelf life."
-                  persistent-hint
-                  required
-                ></v-text-field>
-              </v-col>
-
-              <v-col cols="12">
-                <v-text-field
-                  label="Empty level (Threshold)"
-                  hint="No of items to be considered as low in stock."
-                  persistent-hint
-                  required
-                ></v-text-field>
-              </v-col>
-
-              <v-col cols="12">
-                <v-text-field
-                  label="Full level"
-                  hint="No of items to be considered as full stock."
-                  persistent-hint
-                  required
                 ></v-text-field>
               </v-col>
 
               <v-col cols="12">
                 <v-file-input
                   accept="image/*"
-                  label="Image"
-                  hint="Item picture"
-                  prepend-icon
+                  label="Image / Thumbnail"
+                  :rules="[v => !!v || 'Please upload item thumbnail.']"
+                  v-model="item.thumbnail"
+                  hint="Item image"
+                  prepend-icon=""
                   persistent-hint/>
+              </v-col>
+
+              <v-col cols="12">
+                <v-text-field
+                  label="Price*"
+                  hint="Cost of the item."
+                  persistent-hint
+                  prefix="₦"
+                  :rules="[v => !!v || 'Please enter item price.']"
+                  type="number"
+                  v-model="item.price"
+                  required
+                ></v-text-field>
               </v-col>
 
               <v-col cols="12">
@@ -121,7 +119,8 @@
                   clearable
                   filled
                   no-resize
-                  hint="Additional information about the item."
+                  v-model="item.description"
+                  hint="Description of the item."
                   persistent-hint
                   required
                 ></v-textarea>
@@ -132,31 +131,126 @@
       </v-card-text>
       <v-divider></v-divider>
       <v-card-actions>
-        <v-btn color="primary darken-1" text @click="update">Cancel</v-btn>
+        <v-btn color="primary darken-1" text @click="cancel">Cancel</v-btn>
         <v-spacer></v-spacer>
-        <v-btn color="primary darken-1" tile @click="update">Save</v-btn>
+        <v-btn color="primary darken-1" tile @click="save">Save</v-btn>
       </v-card-actions>
     </v-card>
+
+    <v-snackbar
+      v-model="snackbar"
+      absolute
+    >
+      An error occurred while creating item.
+      <v-btn
+        color="red"
+        text
+        @click="snackbar = false"
+      >
+        Close
+      </v-btn>
+    </v-snackbar>
   </v-dialog>
 </template>
 
 <script>
+import axios from '../plugins/axios';
+
 export default {
   name: 'StoreItem',
+  data() {
+    return {
+      dateMenu: false,
+      valid: true,
+      search: '',
+      itemBrands: [],
+      attachment: '',
+      item: {
+        category: '',
+        name: '',
+        unit: '',
+        image: null,
+      },
+      showSnackbar: false
+    };
+  },
   props: {
+    errored: {
+      type: Boolean,
+      default: false
+    },
     active: {
       type: Boolean,
       required: true
     }
   },
-  methods: {
-    update() {
-      this.$emit('update', false);
+  computed: {
+    snackbar: {
+      get() {
+        return this.errored;
+      },
+      set(state) {
+        this.$emit('update:errored', state);
+      }
+    },
+    type: {
+      get() {
+        return this.expense.type.expense_type_id;
+      },
+      set(type) {
+        this.expense.type = type.expense_type_id;
+      }
+    },
+    farm: {
+      get() {
+        return this.selectedFarm;
+      },
+      set(farm) {
+        this.selectedFarm = farm;
+        this.expense.farm = farm.id;
+      }
+    },
+    pen: {
+      get() {
+        return this.selectedPen;
+      },
+      set(pen) {
+        this.selectedPen = pen;
+        this.expense.pen = pen.id;
+      }
+    },
+    batch: {
+      get() {
+        return this.expense.batch;
+      },
+      set(batch) {
+        this.expense.batch = batch.id;
+      }
     }
+  },
+  methods: {
+    cancel() {
+      this.$emit('cancel', true);
+    },
+    getItemBrands() {
+      axios.get('/items/brands')
+        .then(({ data }) => {
+          console.log(data);
+          this.itemBrands = data.map((item) => item.brand);
+        });
+    },
+    save() {
+      if (this.$refs.form.validate()) {
+        const formData = new FormData();
+        Object.entries(this.expense).forEach((data) => {
+          formData.append(data[0], data[1]);
+        });
+        this.$emit('save', formData);
+      }
+    }
+  },
+  created() {
+    this.getItemBrands();
   }
 };
 </script>
-
-<style scoped>
-
-</style>
