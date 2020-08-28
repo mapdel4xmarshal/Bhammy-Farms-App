@@ -23,22 +23,32 @@
                   label="Category*"
                   hint="Item category."
                   persistent-hint
-                  :items="categories"
-                  return-object
                   v-model="item.category"
+                  :search-input.sync="categorySearch"
+                  :items="itemCategories"
                   :rules="[v => !!v || 'Please select a category.']"
                   required
                 >
+                  <template v-slot:no-data>
+                    <v-list-item
+                      ripple
+                      @click="addNewCategory"
+                    >
+                      <v-list-item-content>
+                        <v-list-item-title>{{ categorySearch }}</v-list-item-title>
+                      </v-list-item-content>
+                    </v-list-item>
+                  </template>
                 </v-autocomplete>
               </v-col>
 
-              <v-col cols="12">  {{ itemBrands }} - {{ search }}
+              <v-col cols="12">
                 <v-autocomplete
                   label="Brand*"
                   hint="Item brand."
                   persistent-hint
                   v-model="item.brand"
-                  :search-input.sync="search"
+                  :search-input.sync="brandSearch"
                   :items="itemBrands"
                   :rules="[v => !!v || 'Please select item brand.']"
                   required
@@ -46,10 +56,10 @@
                   <template v-slot:no-data>
                     <v-list-item
                       ripple
-                      @click="itemBrands.push(search)"
+                      @click="addNewBrand"
                     >
                       <v-list-item-content>
-                        <v-list-item-title>{{ search }}</v-list-item-title>
+                        <v-list-item-title>{{ brandSearch }}</v-list-item-title>
                       </v-list-item-content>
                     </v-list-item>
                   </template>
@@ -80,13 +90,27 @@
               </v-col>
 
               <v-col cols="12">
-                <v-text-field
+                <v-autocomplete
                   label="Unit / Metric"
                   hint="Item measurement metric. i.e kg, ml etc"
                   :rules="[v => !!v || 'Please enter item unit.']"
                   v-model="item.unit"
                   persistent-hint
-                ></v-text-field>
+                  :search-input.sync="unitSearch"
+                  :items="itemUnits"
+                  required
+                >
+                  <template v-slot:no-data>
+                    <v-list-item
+                      ripple
+                      @click="addNewUnit"
+                    >
+                      <v-list-item-content>
+                        <v-list-item-title>{{ unitSearch }}</v-list-item-title>
+                      </v-list-item-content>
+                    </v-list-item>
+                  </template>
+                </v-autocomplete>
               </v-col>
 
               <v-col cols="12">
@@ -162,8 +186,12 @@ export default {
     return {
       dateMenu: false,
       valid: true,
-      search: '',
+      brandSearch: '',
+      categorySearch: '',
+      unitSearch: '',
       itemBrands: [],
+      itemCategories: [],
+      itemUnits: [],
       attachment: '',
       item: {
         category: '',
@@ -229,20 +257,43 @@ export default {
     }
   },
   methods: {
+    addNewBrand() {
+      this.itemBrands.push(this.brandSearch);
+      this.item.brand = this.brandSearch;
+    },
+    addNewUnit() {
+      this.itemUnits.push(this.unitSearch);
+      this.item.unit = this.unitSearch;
+    },
+    addNewCategory() {
+      this.itemCategories.push(this.categorySearch);
+      this.item.category = this.categorySearch;
+    },
     cancel() {
       this.$emit('cancel', true);
     },
     getItemBrands() {
       axios.get('/items/brands')
         .then(({ data }) => {
-          console.log(data);
           this.itemBrands = data.map((item) => item.brand);
+        });
+    },
+    getItemCategories() {
+      axios.get('/items/categories')
+        .then(({ data }) => {
+          this.itemCategories = data;
+        });
+    },
+    getItemUnits() {
+      axios.get('/items/units')
+        .then(({ data }) => {
+          this.itemUnits = data;
         });
     },
     save() {
       if (this.$refs.form.validate()) {
         const formData = new FormData();
-        Object.entries(this.expense).forEach((data) => {
+        Object.entries(this.item).forEach((data) => {
           formData.append(data[0], data[1]);
         });
         this.$emit('save', formData);
@@ -251,6 +302,8 @@ export default {
   },
   created() {
     this.getItemBrands();
+    this.getItemCategories();
+    this.getItemUnits();
   }
 };
 </script>

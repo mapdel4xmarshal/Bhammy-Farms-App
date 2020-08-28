@@ -18,4 +18,14 @@ router.get('/brands', async (req, res) => {
   res.json(brands);
 });
 
+router.get('/categories', async (req, res) => {
+  const categories = await controllers.getItemCategories(req.query);
+  res.json(categories);
+});
+
+router.get('/units', async (req, res) => {
+  const categories = await controllers.getItemUnits(req.query);
+  res.json(categories);
+});
+
 module.exports = router;

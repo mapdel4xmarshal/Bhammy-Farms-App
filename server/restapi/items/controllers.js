@@ -43,11 +43,11 @@ class Controller {
     });
 
     return new Promise((resolve, reject) => {
-      form.parse(req, async (err, expense, files) => {
+      form.parse(req, async (err, item, files) => {
         if (err) reject(err);
 
-        const attachment = files.thumbnail ? files.attachment.path.replace(`${fileUploadPath}${path.sep}`, '') : null;
-
+        const attachment = files.thumbnail ? files.thumbnail.path.replace(`${fileUploadPath}${path.sep}`, '') : null;
+        console.log(item, attachment);
         Item.create({
           item_name: item.name,
           category: item.category,
@@ -73,7 +73,7 @@ class Controller {
 
   async getItemBrands() {
     return Item.findAll({
-      attributes: [ 'brand' ],
+      attributes: ['brand'],
       order: [
         ['brand', 'ASC']
       ],
@@ -85,6 +85,38 @@ class Controller {
       }
     })
       .then((brands) => brands);
+  }
+
+  async getItemCategories() {
+    return Item.findAll({
+      attributes: ['category'],
+      order: [
+        ['category', 'ASC']
+      ],
+      group: ['category'],
+      where: {
+        category: {
+          [Sequelize.Op.ne]: null
+        }
+      }
+    })
+      .then((items) => items.map((item) => item.category.replace(/\b[a-z]/g, (match) => match.toUpperCase())));
+  }
+
+  async getItemUnits() {
+    return Item.findAll({
+      attributes: ['unit'],
+      order: [
+        ['unit', 'ASC']
+      ],
+      group: ['unit'],
+      where: {
+        unit: {
+          [Sequelize.Op.ne]: null
+        }
+      }
+    })
+      .then((items) => items.map((item) => item.unit.replace(/\b[a-z]/g, (match) => match.toUpperCase())));
   }
 }
 

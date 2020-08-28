@@ -1,6 +1,9 @@
 <template>
   <section>
-    <store-item :active="newItem" @update="newItem = false"/>
+    <store-item :active="newItem"
+                :errored.sync="errored"
+                @cancel="newItem = false"
+                @save="addItem"/>
     <v-toolbar flat dense color="transparent">
       <v-toolbar-title>Inventory</v-toolbar-title>
 
@@ -15,7 +18,6 @@
     <v-container fluid>
       <v-data-iterator
         :items="items"
-        :sort-desc="sortDesc"
         :items-per-page.sync="itemsPerPage"
         hide-default-header
       >
@@ -25,15 +27,6 @@
             color="primary"
             class="mb-1"
           >
-            <v-col cols="12" sm="4" md="3">
-              <v-select
-              v-model="sortBy"
-              hide-details
-              :items="keys"
-              prepend-inner-icon="mdi-magnify"
-              label="Sort by"
-            ></v-select>
-            </v-col>
             <v-spacer/>
             <v-col cols="12" sm="4" md="3">
               <v-text-field
@@ -59,7 +52,6 @@
               lg="3"
             >
               <v-card
-                :loading="loading"
                 class="mx-auto"
                 max-width="350"
                 min-width="250"
@@ -67,7 +59,7 @@
               >
                 <v-img
                   height="250"
-                  :src="item.img"
+                  :src="item.image"
                 ></v-img>
 
                 <v-card-title>{{ item.name }}</v-card-title>
@@ -80,21 +72,12 @@
                     </v-col>
 
                     <v-col>
-                      <strong class="item__prop">₦12,000</strong>
+                      <strong class="item__prop">₦{{ item.price }}</strong>
                       <small>Price</small>
                     </v-col>
 
                     <v-col>
-                      <v-progress-linear
-                        :value="((item.total * 100)/item.fillLevel).toFixed(2)"
-                        :color="item.total? 'green' : '#e50f1b'"
-                        :background-opacity="item.total? 0.35 : 1"
-                        height="20"
-                      >
-                        <template>
-                          <small><strong>{{ item.total }}/{{ item.fillLevel }}({{ item.unit }})</strong></small>
-                        </template>
-                      </v-progress-linear>
+                      <strong>{{ item.total }}</strong>
                       <small>Remaining</small>
                     </v-col>
                   </v-row>
@@ -107,7 +90,6 @@
                   <v-btn
                     color="primary"
                     text
-                    @click="reserve"
                   >
                     Restock
                   </v-btn>
@@ -118,10 +100,26 @@
         </template>
       </v-data-iterator>
     </v-container>
+
+    <v-snackbar
+      v-model="snackbar"
+      absolute
+    >
+      An error occurred while adding item.
+      <v-btn
+        color="red"
+        text
+        @click="snackbar = false"
+      >
+        Close
+      </v-btn>
+    </v-snackbar>
+
   </section>
 </template>
 
 <script>
+import axios from '../plugins/axios';
 import StoreItem from '../components/StoreItem.vue';
 
 export default {
@@ -129,81 +127,40 @@ export default {
   data: () => ({
     newItem: false,
     itemsPerPage: 20,
-    items: [
-      {
-        name: 'Finished feed',
-        img: 'https://avianaquamiser.com/images/img/20120514chickenfeed.jpg',
-        total: 20,
-        fillLevel: 100,
-        supplier: 'In house',
-        brand: 'Bhammy Farms',
-        unit: 'kg'
-      },
-      {
-        name: 'Lasota',
-        img: 'https://vetvaco.com.vn/uploaded/san-pham/LASOTA/La_new.jpg',
-        total: 1,
-        fillLevel: 3,
-        supplier: 'Aromokeye',
-        brand: 'NHC',
-        unit: 'ml'
-      },
-      {
-        name: 'Corn',
-        img: 'https://img1.goodfon.com/wallpaper/big/9/3e/bag-beans-corn.jpg',
-        total: 4.5,
-        fillLevel: 13.5,
-        supplier: 'In house',
-        brand: 'Alhaji Corn',
-        unit: 'tns'
-      },
-      {
-        name: 'Layer concentrate (Hybrid)',
-        img: 'https://hybridfeeds.com/wp-content/uploads/2018/09/12.jpg',
-        total: 20,
-        fillLevel: 100,
-        supplier: 'In house',
-        brand: 'Bhammy Farms'
-      },
-      {
-        name: 'Grower concentrate (Hybrid)',
-        img: 'https://www.afrimash.com/wp-content/uploads/2019/02/Grower-concentrate.jpg',
-        total: 20,
-        fillLevel: 100,
-        supplier: 'In house',
-        brand: 'Bhammy Farms'
-      },
-      {
-        name: 'Chick Mash Feed',
-        img: 'https://www.afrimash.com/wp-content/uploads/2019/05/New-Project-1-6.jpg',
-        total: 20,
-        fillLevel: 100,
-        supplier: 'In house',
-        brand: 'Bhammy Farms'
-      },
-      {
-        name: 'Plastic crates',
-        img: 'https://images.yaoota.com/NVWQ4T76kydBUKxc0J35f2D8Jng=/trim/yaootaweb-production-ng/media/crawledproductimages/ca53a6deb861381aa93323f2e97e2f6b43da489b.jpg',
-        total: 20,
-        fillLevel: 100,
-        supplier: 'In house',
-        brand: 'Bhammy Farms'
-      },
-      {
-        name: 'Paper crates',
-        img: 'https://www.theroachcafe.com/wp-content/uploads/2015/12/eggcrate.jpg',
-        total: 20,
-        fillLevel: 100,
-        supplier: 'In house',
-        brand: 'Bhammy Farms'
-      }
-    ]
+    snackbar: false,
+    errored: false,
+    search: '',
+    items: []
   }),
   methods: {
+    addItem(item) {
+      axios.post('items', item)
+        .then(({ data }) => {
+          if (data) {
+            this.snackbar = true;
+            this.newItem = false;
+            this.errored = false;
+          }
+        })
+        .catch(() => {
+          this.errored = true;
+        })
+        .finally(() => {
+          this.getItems();
+        });
+    },
+    getItems() {
+      axios.get('items')
+        .then(({ data }) => {
+          this.items = data;
+        });
+    },
     createNew() {
       this.newItem = true;
-      console.log(this.$vuetify.breakpoint);
     }
+  },
+  created() {
+    this.getItems();
   }
 };
 </script>
