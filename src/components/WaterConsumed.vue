@@ -2,6 +2,7 @@
   <v-form ref="form">
       <v-row>
         <v-col cols="12">
+          <input hidden/>
           <v-text-field
             label="Quantity*"
             type="number"
@@ -9,6 +10,7 @@
             :rules="quantityRules"
             v-model="value.quantity"
             suffix="liters"
+            @keyup.enter="$emit('enter', true)"
           ></v-text-field>
         </v-col>
       </v-row>

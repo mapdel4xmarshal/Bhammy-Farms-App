@@ -1,5 +1,5 @@
 <template>
-  <v-dialog v-model="active" persistent max-width="800px" scrollable>
+  <v-dialog v-model="active" persistent max-width="800px" scrollable :fullscreen="$mq.phone">
     <v-card>
       <v-card-title>Add Item</v-card-title>
       <v-divider></v-divider>
@@ -75,7 +75,7 @@
                   :value="item.discountType"
                   v-model="item.discountType"
                   :disabled="!item.discount"
-                  :rules="[v => !!v && item.discount >= 0 ||  !item.discount || 'Please select discount type.']"
+                  :rules="[v => !!v && item.discount > 0 ||  !item.discount || 'Please select discount type.']"
                   hint="Discount type"
                   persistent-hint
                 ></v-select>

@@ -100,6 +100,7 @@
             rows="3"
             required
             v-model="value.reason"
+            @keyup.enter.native="$emit('enter', true)"
           ></v-textarea>
         </v-col>
       </v-row>
@@ -158,7 +159,6 @@ export default {
     getMedicaments() {
       axios.get('/items?category=medicament')
         .then(({ data }) => {
-          console.log(data);
           this.medicaments = data;
         });
     }

@@ -3,7 +3,7 @@
     <store-item :active="newItem"
                 :errored.sync="errored"
                 @cancel="newItem = false"
-                @save="addItem"/>
+                @save="getItems"/>
     <v-toolbar flat dense color="transparent">
       <v-toolbar-title>Inventory</v-toolbar-title>
 
@@ -67,8 +67,9 @@
                 <v-card-text>
                   <v-row no-gutters>
                     <v-col>
-                      <strong class="item__prop">Bhammy</strong>
-                      <small>Supplier</small>
+                      <strong class="item__prop" v-if="item.brand">{{ item.brand }}</strong>
+                      <strong class="item__prop" v-else>―</strong>
+                      <small>Brand / Supplier</small>
                     </v-col>
 
                     <v-col>
@@ -77,7 +78,7 @@
                     </v-col>
 
                     <v-col>
-                      <strong>{{ item.total }}</strong>
+                      <strong class="item__prop">{{ item.quantity }} {{ item.unit }}</strong>
                       <small>Remaining</small>
                     </v-col>
                   </v-row>
@@ -105,7 +106,7 @@
       v-model="snackbar"
       absolute
     >
-      An error occurred while adding item.
+      Item added successfully
       <v-btn
         color="red"
         text
@@ -126,29 +127,13 @@ export default {
   components: { StoreItem },
   data: () => ({
     newItem: false,
-    itemsPerPage: 20,
+    itemsPerPage: 15,
     snackbar: false,
     errored: false,
     search: '',
     items: []
   }),
   methods: {
-    addItem(item) {
-      axios.post('items', item)
-        .then(({ data }) => {
-          if (data) {
-            this.snackbar = true;
-            this.newItem = false;
-            this.errored = false;
-          }
-        })
-        .catch(() => {
-          this.errored = true;
-        })
-        .finally(() => {
-          this.getItems();
-        });
-    },
     getItems() {
       axios.get('items')
         .then(({ data }) => {

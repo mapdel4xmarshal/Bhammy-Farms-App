@@ -7,12 +7,13 @@ const { fileUploadPath } = require('../../configs');
 
 class Controller {
   async getExpenses({ type: name, category }) {
-    const where = {};
+    const where = {}, expenseTypeWhere = {};
     if (category) where.category = category;
+    if (name) expenseTypeWhere.name = name;
 
     return Expense.findAll({
       attributes: [
-        [Sequelize.literal('supplier.supplier_id'), 'supplier_id'],
+        [Sequelize.literal('Supplier.supplier_id'), 'supplier_id'],
         [Sequelize.literal('ExpenseType.name'), 'type'],
         [Sequelize.literal('Batch.name'), 'batch'],
         [Sequelize.literal('House.name'), 'house'],
@@ -31,7 +32,7 @@ class Controller {
       {
         model: ExpenseType,
         attributes: [],
-        where: { name }
+        where: expenseTypeWhere
       },
       {
         model: Batch,

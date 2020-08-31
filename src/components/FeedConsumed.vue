@@ -21,6 +21,7 @@
             v-model="value.bags"
             type="number"
             @change="update"
+            @keyup.enter.native="$emit('enter', true)"
             required></v-text-field>
         </v-col>
       </v-row>

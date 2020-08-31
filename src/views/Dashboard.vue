@@ -1,176 +1,73 @@
 <template>
   <v-row>
     <v-col cols="12" md="4">
-      <v-card
-        class="mx-auto text-center"
-      >
-        <div>
-          <v-sheet color="#7f277510">
-            <v-sparkline
-              :value="value"
-              color="#7f2775"
-              height="100"
-              padding="24"
-              stroke-linecap="round"
-              smooth
-            >
-              <template v-slot:label="item">
-                ${{ item.value }}
-              </template>
-            </v-sparkline>
-          </v-sheet>
-        </div>
-
-        <v-card-text>
-          <div class="display-1 font-weight-thin">Feed Last 7 days</div>
-        </v-card-text>
-
-        <v-divider></v-divider>
-
-        <v-card-actions class="justify-center">
-          <v-chip-group
-            active-class="primary text--accent-4"
-            mandatory
-          >
-            <v-chip>Today</v-chip>
-            <v-chip>Yesterday</v-chip>
-            <v-chip>7 days</v-chip>
-            <v-chip>1 month</v-chip>
-            <v-chip>3 months</v-chip>
-          </v-chip-group>
-        </v-card-actions>
-      </v-card>
+      <dashboard-tile :value="eggsRecord"
+                      @update="getEggs"
+                      title="Production"
+      />
     </v-col>
     <v-col cols="12" md="4">
-      <v-card
-        class="mx-auto text-center"
-      >
-        <div>
-          <v-sheet color="#7f277510">
-            <v-sparkline
-              :value="value"
-              color="#7f2775"
-              height="100"
-              padding="24"
-              stroke-linecap="round"
-              smooth
-            >
-              <template v-slot:label="item">
-                ${{ item.value }}
-              </template>
-            </v-sparkline>
-          </v-sheet>
-        </div>
-
-        <v-card-text>
-          <div class="display-1 font-weight-thin">Sales Last 7 days</div>
-        </v-card-text>
-
-        <v-divider></v-divider>
-
-        <v-card-actions class="justify-center">
-          <v-chip-group
-            active-class="primary text--accent-4"
-            mandatory
-          >
-            <v-chip>Today</v-chip>
-            <v-chip>Yesterday</v-chip>
-            <v-chip>7 days</v-chip>
-            <v-chip>1 month</v-chip>
-            <v-chip>3 months</v-chip>
-          </v-chip-group>
-        </v-card-actions>
-      </v-card>
+      <dashboard-tile :value="feedsRecord"
+                      @update="getFeeds"
+                      title="Feeds"
+      />
     </v-col>
     <v-col cols="12" md="4">
-      <v-card
-        class="mx-auto text-center"
-      >
-        <div>
-          <v-sheet color="#7f277510">
-            <v-sparkline
-              :value="value"
-              color="#7f2775"
-              height="100"
-              padding="24"
-              stroke-linecap="round"
-              smooth
-            >
-              <template v-slot:label="item">
-                ${{ item.value }}
-              </template>
-            </v-sparkline>
-          </v-sheet>
-        </div>
-
-        <v-card-text>
-          <div class="display-1 font-weight-thin">Production Last 7 days</div>
-        </v-card-text>
-
-        <v-divider></v-divider>
-
-        <v-card-actions class="justify-center">
-          <v-chip-group
-            active-class="primary text--accent-4"
-            mandatory
-          >
-            <v-chip>Today</v-chip>
-            <v-chip>Yesterday</v-chip>
-            <v-chip>7 days</v-chip>
-            <v-chip>1 month</v-chip>
-            <v-chip>3 months</v-chip>
-          </v-chip-group>
-        </v-card-actions>
-      </v-card>
+      <dashboard-tile :value="mortalityRecord"
+                      @update="getMortality"
+                      title="Mortality"
+      />
     </v-col>
   </v-row>
 </template>
 
 <script>
-const exhale = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+import axios from '../plugins/axios';
+import DashboardTile from '../components/DashboardTile.vue';
 
 export default {
   name: 'Dashboard',
   data: () => ({
-    checking: false,
-    labels: [
-      '12am',
-      '3am',
-      '6am',
-      '9am',
-      '12pm',
-      '3pm',
-      '6pm',
-      '9pm',
-    ],
-    value: [
-      200,
-      675,
-      410,
-      390,
-      310,
-      460,
-      250,
-      240,
-    ],
+    eggsRecord: [],
+    feedsRecord: [],
+    mortalityRecord: []
   }),
+  components: {
+    DashboardTile
+  },
   created() {
-    this.takePulse(false);
+    this.getEggs();
+    this.getFeeds();
+    this.getMortality();
   },
-
   methods: {
-    heartbeat() {
-      return Math.ceil(Math.random() * (120 - 80) + 80);
+    getEggs(day) {
+      this.getProduction('eggs', day);
     },
-    async takePulse(inhale = true) {
-      this.checking = true;
-
-      // eslint-disable-next-line no-unused-expressions
-      inhale && await exhale(1000);
-
-      this.checking = false;
+    getFeeds(day) {
+      this.getProduction('feeds', day);
     },
-  },
+    getMortality(day) {
+      this.getProduction('mortality', day);
+    },
+    getProduction(type, day = 7) {
+      const filters = [];
+      const after = new Date(new Date().setDate(new Date().getDate() - day)).toISOString().split('T')[0];
+      filters.push(`after=${after}`);
+
+      axios.get(`/productions?${filters.join('&')}`)
+        .then(({ data }) => {
+          const normalizedData = {};
+          data.forEach((d) => {
+            if (!normalizedData[d.date]) normalizedData[d.date] = 0;
+            normalizedData[d.date] += d[type];
+          });
+
+          const values = Object.values(normalizedData).reverse();
+          this[`${type}Record`] = [...Array(day - values.length).fill(0), ...values];
+        });
+    }
+  }
 };
 </script>
 

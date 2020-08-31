@@ -87,7 +87,7 @@
       </v-navigation-drawer>
 
       <v-main>
-        <v-container fluid class="overflow-y-auto main__content">
+        <v-container fluid class="overflow-y-auto main__content pa-5">
           <transition name="slide-fade" appear mode="out-in">
             <router-view/>
         </transition>

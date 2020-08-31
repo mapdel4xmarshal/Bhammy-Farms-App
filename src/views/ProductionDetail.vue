@@ -3,7 +3,7 @@
     <v-toolbar flat dense color="transparent">
       <v-toolbar-title>New Production</v-toolbar-title>
       <v-spacer></v-spacer>
-      <v-btn text color="primary" class="spacer--right" to="/production">cancel</v-btn>
+      <v-btn text color="primary" class="spacer--right" to="/productions">cancel</v-btn>
       <v-btn color="primary" tile @click="saveProduction" v-if="validProduction">
         {{ actionButtonTitle }}
       </v-btn>
@@ -411,7 +411,7 @@
         <v-card-title>{{ sectionNames[activeSection].title }}</v-card-title>
         <v-divider></v-divider>
         <v-card-text>
-          <component :is="activeSection" v-model="sectionData" :ref="activeSection"/>
+          <component :is="activeSection" v-model="sectionData" :ref="activeSection" @enter="updateSectionData"/>
         </v-card-text>
         <v-divider></v-divider>
       <v-card-actions>

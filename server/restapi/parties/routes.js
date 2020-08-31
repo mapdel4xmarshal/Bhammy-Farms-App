@@ -34,7 +34,12 @@ router.post('/customers', async (req, res) => {
 });
 
 router.get('/customers/:customerId', async (req, res) => {
-  const customer = await controllers.getCustomerById();
+  const customer = await controllers.getCustomers(req.params.customerId);
+  res.json(customer);
+});
+
+router.patch('/customers/:customerId', async (req, res) => {
+  const customer = await controllers.updateCustomer(req.body);
   res.json(customer);
 });
 

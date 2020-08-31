@@ -28,7 +28,9 @@
           ></v-select>
         </v-col>
         <v-col cols="12">
-          <v-textarea label="Comment" v-model="value.comment"></v-textarea>
+          <v-textarea label="Comment"
+                      v-model="value.comment"
+                      @keyup.enter.native="$emit('enter', true)"></v-textarea>
         </v-col>
       </v-row>
     </v-form>

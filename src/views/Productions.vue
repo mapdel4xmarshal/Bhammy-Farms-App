@@ -55,7 +55,7 @@
               v-on="on"
             ></v-text-field>
           </template>
-          <v-date-picker v-model="date" range landscape>
+          <v-date-picker v-model="date" range>
             <v-spacer></v-spacer>
             <v-btn text color="primary" @click="menu = false">Cancel</v-btn>
             <v-btn text color="primary" @click="updateDate">OK</v-btn>
@@ -97,7 +97,8 @@
       no-data-text="No production available."
       multi-sort
       :search="search"
-      class="elevation-1"
+      class="elevation-1 table-cursor"
+      @click:row="selectProduction"
     >
       <template v-slot:item.eggs="{ item }">
         {{ Number.parseInt(item.eggs / 30) }}
@@ -155,6 +156,9 @@ export default {
     }
   },
   methods: {
+    selectProduction(data) {
+      this.$router.push({ name: ROUTES.PRODUCTION, params: { id: data.id } });
+    },
     createNew() {
       this.$router.push({ name: ROUTES.NEW_PRODUCTION });
     },
@@ -208,3 +212,9 @@ export default {
   }
 };
 </script>
+
+<style lang="css">
+  .table-cursor tbody tr:hover {
+    cursor: pointer;
+  }
+</style>

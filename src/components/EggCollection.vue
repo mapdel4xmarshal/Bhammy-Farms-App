@@ -31,6 +31,7 @@
             v-model="value.pieces"
             suffix="pieces"
             required
+            @keyup.enter.native="$emit('enter', true)"
             @change="update">
           </v-text-field>
         </v-col>

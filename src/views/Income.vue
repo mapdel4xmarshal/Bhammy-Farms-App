@@ -82,6 +82,7 @@ export default {
       dateMenu: false,
       date: null,
       search: '',
+      menu: false,
       headers: [
         {
           text: 'ID',
@@ -117,8 +118,8 @@ export default {
     },
     getInvoices() {
       const filters = [];
-      if (this.date.length === 1) filters.push(`date=${this.date[0]}`);
-      if (this.date.length === 2) filters.push(`after=${this.date[0]}&before=${this.date[1]}`);
+      if (this.date && this.date.length === 1) filters.push(`date=${this.date[0]}`);
+      if (this.date && this.date.length === 2) filters.push(`after=${this.date[0]}&before=${this.date[1]}`);
 
       axios.get(`/invoices?${filters.join('&')}`)
         .then(({ data }) => {

@@ -100,6 +100,7 @@
             rows="3"
             required
             v-model="value.reason"
+            @keyup.enter.native="$emit('enter', true)"
           ></v-textarea>
         </v-col>
       </v-row>

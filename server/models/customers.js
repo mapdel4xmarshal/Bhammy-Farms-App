@@ -36,7 +36,8 @@ class Customers extends Model {
 
   static associate({ Party, Invoice }) {
     Customers.party = Customers.belongsTo(Party, { foreignKey: 'party_id' });
-    Customers.invoices = Customers.hasMany(Invoice, { foreignKey: 'customer_id' });
+    Customers.invoices = Customers.hasMany(Invoice, { as: 'invoices', foreignKey: 'customer_id' });
+
   }
 }
 

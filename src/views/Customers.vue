@@ -11,7 +11,7 @@
     <v-divider></v-divider>
     <v-row>
       <v-spacer></v-spacer>
-      <v-col cols="12" md="2">
+      <v-col cols="12" md="3">
         <v-text-field
           append-icon="mdi-magnify"
           label="Search"
@@ -26,8 +26,13 @@
       no-data-text="No customers available."
       multi-sort
       :search="search"
-      class="elevation-1"
+      class="elevation-1 table-cursor"
+      @click:row="selectCustomer"
     >
+      <template v-slot:item.orderTotal="{ item }">
+        {{ item.invoices.length }}
+      </template>
+
       <template v-slot:item.rating="{ item }">
         <v-rating
           :value="item.rating + 1"
@@ -103,10 +108,18 @@ export default {
       this.newCustomer = false;
       this.snackbar = state;
       this.getCustomers();
-    }
+    },
+    selectCustomer(customer) {
+      this.$router.push({ name: ROUTES.CUSTOMER_DETAIL, params: { id: customer.id } });
+    },
   },
   created() {
     this.getCustomers();
   }
 };
 </script>
+<style lang="css">
+  .table-cursor tbody tr:hover {
+    cursor: pointer;
+  }
+</style>

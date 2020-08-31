@@ -128,7 +128,7 @@ module.exports = {
       size: 'All sizes',
       unit: 'Bird',
       quantity: 0,
-      image: 'uploads/spent_layer.jpg',
+      image: 'uploads/spent-layer.jpg',
       description: 'Spent layers.',
       created_at: new Date(),
       updated_at: new Date()

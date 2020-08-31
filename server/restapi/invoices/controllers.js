@@ -4,8 +4,9 @@ const {
 const Invoice = require('./invoice');
 
 class Controller {
-  async getInvoices({ before, after }) {  console.log(before, Op.lt)
-    const where = { invoice_date: {} };
+  async getInvoices({ before, after }) {
+    const where = {};
+    if (before || after) where.invoice_date = {};
     if (before) where.invoice_date[Op.lte] = before;
     if (after) where.invoice_date[Op.gte] = after;
 

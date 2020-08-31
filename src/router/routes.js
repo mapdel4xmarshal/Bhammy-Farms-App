@@ -24,7 +24,12 @@ const routes = [{
 {
   path: '/customers',
   name: ROUTES.CUSTOMERS,
-  component: () => import(/* webpackChunkName: "batches" */ '../views/Customers.vue'),
+  component: () => import(/* webpackChunkName: "customers" */ '../views/Customers.vue'),
+},
+{
+  path: '/customers/:id',
+  name: ROUTES.CUSTOMER_DETAIL,
+  component: () => import(/* webpackChunkName: "customers" */ '../views/CustomerDetail.vue'),
 },
 {
   path: '/employees',
@@ -59,6 +64,11 @@ const routes = [{
 {
   path: '/production/new',
   name: ROUTES.NEW_PRODUCTION,
+  component: () => import(/* webpackChunkName: "production" */ '../views/ProductionDetail.vue'),
+},
+{
+  path: '/productions/:id',
+  name: ROUTES.PRODUCTION,
   component: () => import(/* webpackChunkName: "production" */ '../views/ProductionDetail.vue'),
 },
 {

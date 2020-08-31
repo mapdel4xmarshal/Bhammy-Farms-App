@@ -13,9 +13,9 @@ class Controller {
   }) {
     const where = [];
     if (batchId) where.push(`batches.batch_id = '${batchId}'`);
-    if (before) where.push(`productions.date <= ${new Date(before).toISOString().split('T')[0]}`);
-    if (after) where.push(`productions.date >= ${new Date(after).toISOString().split('T')[0]}`);
-    if (date) where.push(`productions.date = '${new Date(date).toISOString().split('T')[0]}'`);
+    if (before) where.push(`productions.date <= '${before}'`);
+    if (after) where.push(`productions.date >= '${after}'`);
+    if (date) where.push(`productions.date = '${date}'`);
 
     return sequelize.query(`
     SELECT productions.production_id AS id, productions.water, mortality.id AS mortalityId, mortality.count AS mortalityCount, productions.date,
@@ -42,7 +42,6 @@ class Controller {
   }
 
   async addProduction(production) {
-    console.log(production);
     const activeBatch = await Batch.findOne({
       where: {
         batch_id: production.batchId,
@@ -201,7 +200,6 @@ class Controller {
     const productionMap = new Map();
 
     productions.forEach((production) => {
-      console.log(productions, production);
       if (!productionMap.has(production.id)) {
         productionMap.set(production.id, {
           id: production.id,

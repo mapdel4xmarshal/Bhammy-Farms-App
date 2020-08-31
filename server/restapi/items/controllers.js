@@ -47,7 +47,20 @@ class Controller {
         if (err) reject(err);
 
         const attachment = files.thumbnail ? files.thumbnail.path.replace(`${fileUploadPath}${path.sep}`, '') : null;
-        console.log(item, attachment);
+
+        const conflict = await Item.count({
+          where: {
+            item_name: item.name
+          }
+        });
+
+        if (conflict) {
+          return resolve({
+            error: 'Item name already exists',
+            status: 409
+          });
+        }
+
         Item.create({
           item_name: item.name,
           category: item.category,

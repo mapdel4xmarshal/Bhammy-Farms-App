@@ -14,7 +14,7 @@
                   persistent-hint
                   required
                   :rules="[v => !!v || 'Please select a title.']"
-                  v-model="customer.title"
+                  v-model="value.title"
                   :items="['Mr.', 'Mrs.', 'Miss', 'Alhaji', 'Alhaja', 'Not applicable']"
                 ></v-select>
               </v-col>
@@ -25,7 +25,7 @@
                   hint="Customer's gender."
                   persistent-hint
                   required
-                  v-model="customer.gender"
+                  v-model="value.gender"
                   :rules="[v => !!v || 'Please select a gender.']"
                   :items="['Male', 'Female', 'Unknown']"
                 ></v-select>
@@ -39,7 +39,7 @@
                   :rules="[v => !!v || 'Please enter Fullname.']"
                   required
                   autocomplete="off"
-                  v-model="customer.fullName"
+                  v-model="value.name"
                 ></v-text-field>
               </v-col>
 
@@ -47,7 +47,7 @@
                 <v-text-field
                   label="Address"
                   clearable
-                  v-model="customer.address"
+                  v-model="value.address"
                   :rules="[v => !!v || 'Please enter customer\'s address.']"
                   hint="Customer's address excluding the state."
                   autocomplete="off"
@@ -58,7 +58,7 @@
 
               <v-col cols="12">
                 <v-autocomplete
-                  v-model="customer.state"
+                  v-model="value.state"
                   label="State"
                   hint="Customer's state."
                   autocomplete="off"
@@ -81,7 +81,7 @@
                   :rules="[v => !!v || 'Please enter a valid phone number.']"
                   persistent-hint
                   required
-                  v-model="customer.phone"
+                  v-model="value.phone"
                 ></v-text-field>
               </v-col>
 
@@ -92,7 +92,7 @@
                   autocomplete="off"
                   persistent-hint
                   required
-                  v-model="customer.altPhone"
+                  v-model="value.altPhone"
                   type="phone"
                 ></v-text-field>
               </v-col>
@@ -104,7 +104,7 @@
                   autocomplete="off"
                   persistent-hint
                   required
-                  v-model="customer.email"
+                  v-model="value.email"
                   type="email"
                 ></v-text-field>
               </v-col>
@@ -112,7 +112,7 @@
               <v-col cols="12">
                 <v-slider
                   :tick-labels="['Bad', 'Fair', 'Good', 'V.Good', 'Excellent']"
-                  v-model="customer.rating"
+                  v-model="value.rating"
                   dense
                   hide-details
                   min="0"
@@ -132,7 +132,7 @@
                   clearable
                   filled
                   no-resize
-                  v-model="customer.remark"
+                  v-model="value.comment"
                   hint="Notable information about this customer."
                   persistent-hint
                   required
@@ -175,7 +175,6 @@ export default {
       valid: true,
       snackbar: false,
       feedbackMessage: '',
-      customer: {},
       states: [
         'Abia',
         'Adamawa',
@@ -218,9 +217,16 @@ export default {
     };
   },
   props: {
+    value: {
+      type: Object
+    },
     active: {
       type: Boolean,
       required: true
+    },
+    editMode: {
+      type: Boolean,
+      default: false
     }
   },
   computed: {
@@ -231,7 +237,8 @@ export default {
     },
     createCustomer() {
       if (this.$refs.form.validate()) {
-        axios.post('/parties/customers', this.customer)
+        const id = this.editMode ? this.value.id : '';
+        axios[this.editMode ? 'patch' : 'post'](`/parties/customers/${id}`, this.value)
           .then(() => {
             this.update(true);
             this.$refs.form.reset();

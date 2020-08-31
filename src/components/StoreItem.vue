@@ -9,7 +9,7 @@
             <v-row>
               <v-col cols="12">
                 <v-text-field
-                  label="Name"
+                  label="Name*"
                   hint="Item name."
                   persistent-hint
                   v-model="item.name"
@@ -68,7 +68,7 @@
 
               <v-col cols="12">
                 <v-text-field
-                  label="Size"
+                  label="Size*"
                   hint="Item size."
                   persistent-hint
                   v-model="item.size"
@@ -80,7 +80,7 @@
               <v-col cols="12">
                 <v-text-field
                   type="number"
-                  label="Quantity"
+                  label="Quantity*"
                   hint="Item quantity."
                   :rules="[v => !!v || 'Please enter item quantity.']"
                   persistent-hint
@@ -91,7 +91,7 @@
 
               <v-col cols="12">
                 <v-autocomplete
-                  label="Unit / Metric"
+                  label="Unit / Metric*"
                   hint="Item measurement metric. i.e kg, ml etc"
                   :rules="[v => !!v || 'Please enter item unit.']"
                   v-model="item.unit"
@@ -116,7 +116,7 @@
               <v-col cols="12">
                 <v-file-input
                   accept="image/*"
-                  label="Image / Thumbnail"
+                  label="Image / Thumbnail*"
                   :rules="[v => !!v || 'Please upload item thumbnail.']"
                   v-model="item.thumbnail"
                   hint="Item image"
@@ -165,7 +165,7 @@
       v-model="snackbar"
       absolute
     >
-      An error occurred while creating item.
+      {{ message }}
       <v-btn
         color="red"
         text
@@ -190,6 +190,7 @@ export default {
       categorySearch: '',
       unitSearch: '',
       itemBrands: [],
+      message: '',
       itemCategories: [],
       itemUnits: [],
       attachment: '',
@@ -296,9 +297,22 @@ export default {
         Object.entries(this.item).forEach((data) => {
           formData.append(data[0], data[1]);
         });
-        this.$emit('save', formData);
+        this.addItem(formData);
       }
-    }
+    },
+    addItem(item) {
+      axios.post('items', item)
+        .then(({ data }) => {
+          if (data) {
+            this.$refs.form.reset();
+            this.$emit('save', item);
+          }
+        })
+        .catch(({ response: { data: { error } } }) => {
+          this.snackbar = true;
+          this.message = error;
+        });
+    },
   },
   created() {
     this.getItemBrands();
