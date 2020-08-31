@@ -1,6 +1,6 @@
 <template>
   <section>
-    <customer :active="newCustomer" @update="customerCreated"/>
+    <customer :active="newCustomer" @update="customerCreated" v-model="customer"/>
     <v-toolbar flat dense color="transparent">
       <v-toolbar-title class="grey--text">Customers</v-toolbar-title>
       <v-spacer></v-spacer>
@@ -24,7 +24,6 @@
       :headers="headers"
       :items="customers"
       no-data-text="No customers available."
-      multi-sort
       :search="search"
       class="elevation-1 table-cursor"
       @click:row="selectCustomer"
@@ -74,6 +73,7 @@ export default {
   data() {
     return {
       dateMenu: false,
+      customer: {},
       snackbar: false,
       newCustomer: false,
       customers: [],
