@@ -111,7 +111,7 @@ export default {
     },
     selectCustomer(customer) {
       this.$router.push({ name: ROUTES.CUSTOMER_DETAIL, params: { id: customer.id } });
-    },
+    }
   },
   created() {
     this.getCustomers();

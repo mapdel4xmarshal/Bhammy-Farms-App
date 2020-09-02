@@ -41,6 +41,7 @@ class Controller {
       keepExtensions: true,
       uploadDir: `${fileUploadPath}${path.sep}uploads`
     });
+    const { user } = req;
 
     return new Promise((resolve, reject) => {
       form.parse(req, async (err, item, files) => {
@@ -71,7 +72,7 @@ class Controller {
           price: item.price,
           image: attachment,
           description: item.description
-        })
+        }, { user, resourceId: 'item_id' })
           .then(resolve)
           .catch(reject);
       });

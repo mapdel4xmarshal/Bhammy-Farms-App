@@ -15,7 +15,7 @@ class Controller {
       .then((batch) => batch);
   }
 
-  async addActivity(activity) {
+  async addActivity(user, activity) {
     return Activity.create({
       category: activity.category,
       location_id: activity.farm,
@@ -23,7 +23,7 @@ class Controller {
       house_id: activity.pen,
       activity_date: activity.date,
       description: activity.description
-    })
+    }, { user, resourceId: 'activity_id' })
       .then((newActivity) => newActivity.activity_id)
       .catch((error) => {
         console.log(error); // todo: add proper logger

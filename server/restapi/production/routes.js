@@ -9,7 +9,7 @@ router.get('/', async (req, res) => {
 });
 
 router.post('/', async (req, res) => {
-  const production = await controllers.addProduction(req.body);
+  const production = await controllers.addProduction(req.user, req.body);
   if (production.error) res.status(production.status);
   res.json(production);
 });

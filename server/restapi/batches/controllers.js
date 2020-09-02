@@ -66,7 +66,7 @@ class Controller {
       .then((breeds) => breeds);
   }
 
-  async addBatch(batch) {
+  async addBatch(user, batch) {
     const farm = await House.findOne({
       where: { house_id: batch.houseId },
       attributes: ['name']
@@ -109,7 +109,7 @@ class Controller {
       description: batch.note,
       is_active: moveOutDate > new Date(),
       house_id: batch.houseId
-    })
+    }, { user, resourceId: 'batch_id' })
       .then((newBatch) => newBatch.batch_id)
       .catch((error) => {
         console.log(error); // todo: add proper logger
@@ -134,15 +134,6 @@ class Controller {
       attributes: { exclude: ['createdAt', 'updatedAt'] }
     })
       .then((Batch) => Batch);
-  }
-
-  _weekDiff(date1, date2) {
-    return Math.round((date2 - date1) / (7 * 24 * 60 * 60 * 1000));
-  }
-
-  _normalizeDateString(date) {
-    return date.toISOString()
-      .split('T')[0];
   }
 }
 

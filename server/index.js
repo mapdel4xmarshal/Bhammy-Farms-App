@@ -8,6 +8,7 @@ const path = require('path');
 const protect = require('./restapi/auth/protect');
 const auth = require('./restapi/auth/index');
 
+const activityLogs = require('./restapi/activityLogs/routes');
 const locations = require('./restapi/locations/routes');
 const batches = require('./restapi/batches/routes');
 const parties = require('./restapi/parties/routes');
@@ -90,6 +91,7 @@ app.use('/api/v1/items', protect(), items);
 app.use('/api/v1/invoices', protect(), invoices);
 app.use('/api/v1/activities', protect(), activities);
 app.use('/api/v1/productions', protect(), production);
+app.use('/api/v1/activity-logs', protect(), activityLogs);
 
 app.get('*', (req, res) => {
   res.sendFile(path.resolve('../dist/index.html'));

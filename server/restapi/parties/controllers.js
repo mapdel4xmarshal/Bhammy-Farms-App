@@ -77,7 +77,7 @@ class Controller {
       .then((supplier) => supplier);
   }
 
-  async addCustomer(customer) {
+  async addCustomer(user, customer) {
     return Customer.create({
       Party: {
         party_id: uuid.v4(),
@@ -92,7 +92,11 @@ class Controller {
       gender: customer.gender,
       rating: customer.rating,
       comment: customer.remark
-    }, { include: [Party] })
+    }, {
+      include: [Party],
+      user,
+      resourceId: 'customer_id'
+    })
       .then((customer) => customer.customer_id)
       .catch((error) => {
         console.log(error); // todo: add proper logger
@@ -103,7 +107,7 @@ class Controller {
       });
   }
 
-  async updateCustomer(customer) {
+  async updateCustomer(user, customer) {
     const transaction = await sequelize.transaction();
 
     try {
@@ -112,18 +116,32 @@ class Controller {
         gender: customer.gender,
         rating: customer.rating,
         comment: customer.comment
-      }, { include: [Party], where: { customer_id: customer.id }, transaction });
+      }, {
+        include: [Party],
+        where: { customer_id: customer.id },
+        transaction,
+        user,
+        resourceId: 'customer_id',
+        individualHooks: true
+      });
 
       const updatedCustomer = await Customer.findByPk(customer.id, { transaction });
 
       await Party.update({
-          name: customer.name || `${customer.firstName} ${customer.lastName}`,
-          address: customer.address,
-          state: customer.state,
-          email: customer.email,
-          phone: customer.phone,
-          alt_phone: customer.altPhone
-      }, { where: { party_id: updatedCustomer.party_id}, transaction });
+        name: customer.name || `${customer.firstName} ${customer.lastName}`,
+        address: customer.address,
+        state: customer.state,
+        email: customer.email,
+        phone: customer.phone,
+        alt_phone: customer.altPhone
+      }, {
+        where: { party_id: updatedCustomer.party_id },
+        transaction,
+        user,
+        resourceId: 'party_id',
+        individualHooks: true
+      });
+
       await transaction.commit();
 
       return await this.getCustomers(updatedCustomer.customer_id);

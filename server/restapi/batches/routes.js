@@ -14,7 +14,7 @@ router.get('/breeds', async (req, res) => {
 });
 
 router.post('/', async (req, res) => {
-  const batch = await controllers.addBatch(req.body);
+  const batch = await controllers.addBatch(req.user, req.body);
   if (batch.error) res.status(batch.status);
   res.json(batch);
 });
@@ -26,7 +26,7 @@ router.get('/:batchId', async (req, res) => {
 });
 
 router.patch('/:batchId', async (req, res) => {
-  const batch = await controllers.updateBatch(req.body);
+  const batch = await controllers.updateBatch(req.user, req.body);
   res.json(batch);
 });
 

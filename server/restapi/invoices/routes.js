@@ -19,7 +19,7 @@ router.get('/', async (req, res) => {
 
 router.post('/', async (req, res) => {
   try {
-    const response = await controllers.addInvoice(req.body);
+    const response = await controllers.addInvoice(req.user, req.body);
     if (response.error) res.status(response.status);
     res.json(response);
   } catch (e) {

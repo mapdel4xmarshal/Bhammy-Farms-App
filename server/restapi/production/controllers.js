@@ -41,7 +41,7 @@ class Controller {
       });
   }
 
-  async addProduction(production) {
+  async addProduction(user, production) {
     const activeBatch = await Batch.findOne({
       where: {
         batch_id: production.batchId,
@@ -99,7 +99,7 @@ class Controller {
         water: production.water,
         note: production.note,
         batch_id: production.batchId
-      }, { transaction });
+      }, { transaction, user, resourceId: 'production_id' });
 
       const productionId = newProduction.production_id;
 
@@ -107,7 +107,7 @@ class Controller {
         quantity: item.quantity,
         item_id: item.id,
         production_id: productionId
-      })), { transaction });
+      })), { transaction, user, resourceId: 'id' });
 
       await Mortality.bulkCreate(production.mortality.map((mortality) => ({
         time: mortality.time,
@@ -115,11 +115,11 @@ class Controller {
         count: mortality.count,
         description: mortality.comment,
         production_id: productionId
-      })), { transaction });
+      })), { transaction, user, resourceId: 'id' });
 
 
-      await this.processTreatment('vaccination', production.vaccinations, productionId, transaction);
-      await this.processTreatment('medication', production.medications, productionId, transaction);
+      await this.processTreatment('vaccination', production.vaccinations, productionId, transaction, user);
+      await this.processTreatment('medication', production.medications, productionId, transaction, user);
 
       // If the execution reaches this line, no errors were thrown.
       // We commit the transaction.
@@ -136,7 +136,7 @@ class Controller {
     }
   }
 
-  processTreatment(type, treatments, productionId, transaction) {
+  processTreatment(type, treatments, productionId, transaction, user) {
     const medType = type === 'vaccination' ? 'vaccine' : 'medicament';
     const modelType = type === 'vaccination' ? 'Vaccination' : 'Medication';
 
@@ -154,7 +154,7 @@ class Controller {
     }));
 
     return eval(modelType)
-      .bulkCreate(treatments, { transaction });
+      .bulkCreate(treatments, { transaction, user, resourceId: `${type}_id` });
   }
 
   async getWeatherInfo(coordinate, date) {
@@ -170,7 +170,7 @@ class Controller {
     });
   }
 
-  async getProductionById(BatchId) {
+  async getProductionById(productionId) {
     return Production.findAll({
       where,
       attributes: { exclude: ['createdAt', 'updatedAt'] },

@@ -6,10 +6,17 @@ const {
 const { fileUploadPath } = require('../../configs');
 
 class Controller {
-  async getExpenses({ type: name, category }) {
-    const where = {}, expenseTypeWhere = {};
+  async getExpenses({
+    type: name, category, after, before, date
+  }) {
+    const where = {}; const
+      expenseTypeWhere = {};
     if (category) where.category = category;
     if (name) expenseTypeWhere.name = name;
+    if (before || after) where.date = {};
+    if (before) where.date[Sequelize.Op.lte] = before;
+    if (after) where.date[Sequelize.Op.gte] = after;
+    if (date) where.date = date;
 
     return Expense.findAll({
       attributes: [
@@ -71,6 +78,7 @@ class Controller {
       keepExtensions: true,
       uploadDir: `${fileUploadPath}${path.sep}uploads`
     });
+    const { user } = req;
 
     return new Promise((resolve, reject) => {
       form.parse(req, async (err, expense, files) => {
@@ -91,7 +99,7 @@ class Controller {
           amount: expense.amount,
           proof_of_payment: attachment,
           description: expense.description
-        })
+        }, { user, resourceId: 'expense_id' })
           .then(resolve)
           .catch(reject);
       });

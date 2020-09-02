@@ -1,7 +1,7 @@
 <template>
   <v-dialog v-model="active" persistent max-width="800px" scrollable :fullscreen="$mq.phone">
     <v-card>
-      <v-card-title>New Expense</v-card-title>
+      <v-card-title>{{ title }}</v-card-title>
       <v-divider></v-divider>
       <v-card-text>
         <v-form ref="form" v-model="valid" lazy-validation>
@@ -244,6 +244,9 @@ export default {
     errored: {
       type: Boolean,
       default: false
+    },
+    title: {
+      type: String
     },
     types: {
       type: Array,

@@ -1,14 +1,20 @@
 const {
-  Invoice: InvoiceModel, Customer, InvoiceItem, Party, Sequelize: { Op, col, fn, literal }, Location
+  Invoice: InvoiceModel, Customer, InvoiceItem, Party, Sequelize: {
+    Op, col, fn, literal
+  }, Location
 } = require('../../models');
 const Invoice = require('./invoice');
 
 class Controller {
-  async getInvoices({ before, after }) {
+  async getInvoices({
+    before, after, paymentStatus, date
+  }) {
     const where = {};
     if (before || after) where.invoice_date = {};
+    if (date) where.invoice_date = date;
     if (before) where.invoice_date[Op.lte] = before;
     if (after) where.invoice_date[Op.gte] = after;
+    if (paymentStatus) where.payment_status = paymentStatus;
 
     return InvoiceModel.findAll({
       attributes: [['invoice_id', 'id'],
@@ -30,7 +36,7 @@ class Controller {
   }
 
 
-  async addInvoice(invoice) {
+  async addInvoice(user, invoice) {
     const validCustomer = await Customer.count({
       where: {
         customer_id: invoice.customerId
@@ -56,7 +62,7 @@ class Controller {
 
     return InvoiceModel.create({
       ...normalizedInvoice.toDBFormat()
-    })
+    }, { user, resourceId: 'invoice_id' })
       .then(async (newInvoice) => {
         await InvoiceItem.bulkCreate(normalizedInvoice.formatItems(newInvoice.invoice_id));
         return newInvoice.invoice_id;

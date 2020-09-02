@@ -14,7 +14,8 @@ sequelize = new Sequelize(config.dbName, config.dbUser, config.dbPass, {
   dialect: 'mysql',
   define: {
     underscored: true
-  }
+  },
+  logging: process.env.NODE_ENV !== 'production'
 });
 
 fs

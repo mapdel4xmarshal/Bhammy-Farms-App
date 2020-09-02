@@ -29,7 +29,7 @@ router.get('/customers', async (req, res) => {
 });
 
 router.post('/customers', async (req, res) => {
-  const customer = await controllers.addCustomer(req.body);
+  const customer = await controllers.addCustomer(req.user, req.body);
   res.json(customer);
 });
 
@@ -39,7 +39,7 @@ router.get('/customers/:customerId', async (req, res) => {
 });
 
 router.patch('/customers/:customerId', async (req, res) => {
-  const customer = await controllers.updateCustomer(req.body);
+  const customer = await controllers.updateCustomer(req.user, req.body);
   res.json(customer);
 });
 

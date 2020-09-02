@@ -5,41 +5,76 @@
              @cancel="newExpense = false"
              @save="addExpense"
              :types="expenseTypes"
+             :title="title"
              :farm-locations="farmLocations"
              :suppliers="suppliers"/>
     <v-toolbar flat dense color="transparent">
       <v-toolbar-title class="grey--text">Expenses</v-toolbar-title>
       <v-spacer></v-spacer>
-      <v-btn tile color="primary" @click="newExpense = true">
+      <v-btn tile color="primary" @click="createExpense">
         New Expense
       </v-btn>
     </v-toolbar>
     <v-divider></v-divider>
     <v-row>
-      <v-col cols="12" md="2">
+      <v-col cols="12" md="3">
+        <v-menu
+          ref="menu"
+          :close-on-content-click="false"
+          transition="scale-transition"
+          offset-y
+          min-width="290px"
+          v-model="menu"
+          :return-value.sync="date"
+        >
+          <template v-slot:activator="{ on }">
+            <v-text-field
+              :value="dateRangeText"
+              label="Date"
+              autocomplete="false"
+              clearable
+              @click:clear="resetDate"
+              v-on="on"
+            ></v-text-field>
+          </template>
+          <v-date-picker v-model="date" range>
+            <v-spacer></v-spacer>
+            <v-btn text color="primary" @click="menu = false">Cancel</v-btn>
+            <v-btn text color="primary" @click="updateDate">OK</v-btn>
+          </v-date-picker>
+        </v-menu>
+      </v-col>
+      <v-col cols="12" md="3">
         <v-select
           label="Expense category"
           hide-details
           :items="['Purchase', 'Service']"
+          v-model="category"
+          clearable
+          @change="changeCategory"
+          @click:clear="resetCategory"
           return-object
           required
         >
         </v-select>
       </v-col>
-      <v-col cols="12" md="2">
+      <v-col cols="12" md="3">
         <v-select
           label="Expense type"
           :items="expenseTypes"
           hide-details
           item-text="name"
           item-value="name"
-          return-object
+          clearable
+          v-model="type"
+          @change="getExpenses"
+          @click:clear="type = null"
           required
         >
         </v-select>
       </v-col>
       <v-spacer></v-spacer>
-      <v-col cols="12" md="2">
+      <v-col cols="12" md="3">
         <v-text-field
           append-icon="mdi-magnify"
           label="Search"
@@ -49,6 +84,29 @@
         ></v-text-field>
       </v-col>
     </v-row>
+    <v-row class="mt-0 mb-3">
+      <v-col cols="12" md="4" sm="6" lg="4">
+        <v-card class="ma-auto elevation-1" height="100">
+          <v-card-text class="pb-0">Purchase expenses</v-card-text>
+          <v-card-title class="pt-1 display-1 text-md-h5 text-lg-h5">
+            ₦ {{ purchaseExpenses | formatNumber }}</v-card-title>
+        </v-card>
+      </v-col>
+      <v-col cols="12" md="4" sm="6" lg="4">
+        <v-card class="ma-auto elevation-1" height="100">
+          <v-card-text class="pb-0">Service expenses</v-card-text>
+          <v-card-title class="pt-1 display-1 text-md-h5 text-lg-h5">
+            ₦ {{ serviceExpenses | formatNumber }}</v-card-title>
+        </v-card>
+      </v-col>
+      <v-col cols="12" md="4" sm="6" lg="4">
+        <v-card class="ma-auto elevation-1" height="100">
+          <v-card-text class="pb-0">Total expenses</v-card-text>
+          <v-card-title class="pt-1 display-1 text-md-h5 text-lg-h5">
+            ₦ {{ totalExpenses | formatNumber }}</v-card-title>
+        </v-card>
+      </v-col>
+    </v-row>
     <div class="spacer"></div>
     <v-data-table
       :headers="headers"
@@ -56,10 +114,11 @@
       multi-sort
       no-data-text="No expenses found. Please add one."
       :search="search"
-      class="elevation-1"
+      class="elevation-1 table-cursor"
+      @click:row="selectExpense"
     >
       <template v-slot:item.amount="{ item }">
-        ₦{{ item.amount }}
+        ₦{{ item.amount | formatNumber }}
       </template>
     </v-data-table>
     <v-snackbar
@@ -93,10 +152,17 @@ export default {
     return {
       dateMenu: false,
       newExpense: false,
+      menu: false,
       date: null,
       errored: false,
       search: '',
       snackbar: false,
+      category: '',
+      type: '',
+      title: '',
+      purchaseExpenses: 0,
+      serviceExpenses: 0,
+      totalExpenses: 0,
       headers: [
         {
           text: 'Date',
@@ -118,9 +184,16 @@ export default {
     ...mapGetters({
       suppliers: GETTER_TYPES.SUPPLIERS,
       farmLocations: GETTER_TYPES.FARM_LOCATIONS
-    })
+    }),
+    dateRangeText() {
+      return this.date && this.date.length > 0 ? this.date.join(' ~ ') : null;
+    }
   },
   methods: {
+    createExpense() {
+      this.newExpense = true;
+      this.title = 'New Expense';
+    },
     addExpense(expense) {
       axios.post('expenses', expense)
         .then(({ data }) => {
@@ -140,10 +213,38 @@ export default {
     createNew() {
       this.$router.push({ name: ROUTES.NEW_PRODUCTION });
     },
+    resetDate() {
+      this.date = [];
+      this.getExpenses();
+    },
+    changeCategory() {
+      this.getExpenses();
+    },
+    resetCategory() {
+      this.category = null;
+    },
     getExpenses() {
-      axios.get('expenses')
+      const filters = [];
+      if (this.date && this.date.length === 1) filters.push(`date=${this.date[0]}`);
+      if (this.date && this.date.length === 2) filters.push(`after=${this.date[0]}&before=${this.date[1]}`);
+      if (this.category) filters.push(`category=${this.category}`);
+      if (this.type) filters.push(`type=${this.type}`);
+
+      this.purchaseExpenses = 0;
+      this.serviceExpenses = 0;
+      this.totalExpenses = 0;
+
+      axios.get(`/expenses?${filters.join('&')}`)
         .then(({ data }) => {
-          this.expenses = data;
+          this.expenses = data.map((expense) => {
+            const newExpense = expense;
+            newExpense.amount = Number(newExpense.amount);
+            newExpense.house = newExpense.house || '―';
+            if (newExpense.category === 'Purchase') this.purchaseExpenses += newExpense.amount;
+            if (newExpense.category === 'Service') this.serviceExpenses += newExpense.amount;
+            this.totalExpenses += newExpense.amount;
+            return newExpense;
+          });
         });
     },
     getTypes() {
@@ -151,17 +252,33 @@ export default {
         .then(({ data }) => {
           this.expenseTypes = data;
         });
+    },
+    updateDate() {
+      this.$refs.menu.save(this.date);
+      this.getExpenses();
+    },
+    selectExpense() {
+      this.newExpense = true;
+      this.title = 'View Expense';
     }
   },
   created() {
     this.getExpenses();
     this.getTypes();
     this.$store.dispatch(ACTION_TYPES.GET_SUPPLIERS);
-  }
+  },
+  filters: {
+    formatNumber(value) {
+      return new Intl.NumberFormat('en-US', { minimumFractionDigits: 2 }).format(value);
+    }
+  },
 };
 </script>
 <style>
   .spacer {
     height: 10px;
+  }
+  .table-cursor tbody tr:hover {
+    cursor: pointer;
   }
 </style>

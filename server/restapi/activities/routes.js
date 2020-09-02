@@ -9,7 +9,7 @@ router.get('/', async (req, res) => {
 });
 
 router.post('/', async (req, res) => {
-  const activity = await controllers.addActivity(req.body);
+  const activity = await controllers.addActivity(req.user, req.body);
   if (activity.error) res.status(activity.status);
   res.json(activity);
 });
@@ -18,11 +18,6 @@ router.post('/', async (req, res) => {
 router.get('/:activityId', async (req, res) => {
   const activity = await controllers.getActivityById(req.params.activityId);
   res.json(activity);
-});
-
-router.patch('/:batchId', async (req, res) => {
-  const batch = await controllers.updateBatch(req.body);
-  res.json(batch);
 });
 
 module.exports = router;
