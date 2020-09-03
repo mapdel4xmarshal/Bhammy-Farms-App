@@ -1,4 +1,9 @@
 const request = require('request');
+const Notification = require('../../notification/notification');
+
+setTimeout(() => {
+  new Notification().send('Bhammy Farms - Production', 'teteteteteeet');
+}, 2000);
 
 const {
   Production, Vaccination, Batch, Sequelize: { Op }, sequelize, Location, House, ProductionItem, Mortality, Medication,
@@ -9,8 +14,8 @@ const ProductionSummary = require('./productionSummary');
 
 class Controller {
   async getProductions({
-    batchId, before, after, date
-  }) {
+                         batchId, before, after, date
+                       }) {
     const where = [];
     if (batchId) where.push(`batches.batch_id = '${batchId}'`);
     if (before) where.push(`productions.date <= '${before}'`);
@@ -35,7 +40,7 @@ class Controller {
     ORDER BY productions.date DESC;
 
 `)
-      .then(async ([productions, ]) => {
+      .then(async ([productions,]) => {
         productions = await this.processProduction(productions);
         return productions.map((production) => new ProductionSummary(production));
       });
@@ -99,7 +104,11 @@ class Controller {
         water: production.water,
         note: production.note,
         batch_id: production.batchId
-      }, { transaction, user, resourceId: 'production_id' });
+      }, {
+        transaction,
+        user,
+        resourceId: 'production_id'
+      });
 
       const productionId = newProduction.production_id;
 
@@ -107,7 +116,11 @@ class Controller {
         quantity: item.quantity,
         item_id: item.id,
         production_id: productionId
-      })), { transaction, user, resourceId: 'id' });
+      })), {
+        transaction,
+        user,
+        resourceId: 'id'
+      });
 
       await Mortality.bulkCreate(production.mortality.map((mortality) => ({
         time: mortality.time,
@@ -115,7 +128,11 @@ class Controller {
         count: mortality.count,
         description: mortality.comment,
         production_id: productionId
-      })), { transaction, user, resourceId: 'id' });
+      })), {
+        transaction,
+        user,
+        resourceId: 'id'
+      });
 
 
       await this.processTreatment('vaccination', production.vaccinations, productionId, transaction, user);
@@ -124,6 +141,10 @@ class Controller {
       // If the execution reaches this line, no errors were thrown.
       // We commit the transaction.
       await transaction.commit();
+
+      //Push notify
+      new Notification().send('Production',
+        `A new production record was added by ${req.user.displayName}`, `productions/${newProduction.id}`);
 
       return newProduction;
     } catch (error) {
@@ -154,7 +175,11 @@ class Controller {
     }));
 
     return eval(modelType)
-      .bulkCreate(treatments, { transaction, user, resourceId: `${type}_id` });
+      .bulkCreate(treatments, {
+        transaction,
+        user,
+        resourceId: `${type}_id`
+      });
   }
 
   async getWeatherInfo(coordinate, date) {

@@ -118,8 +118,6 @@ export default {
       chartOptions: {
         chart: {
           backgroundColor: 'transparent',
-          spacingLeft: 20,
-          spacingRight: 20,
           spacingTop: 30
         },
         title: false,
