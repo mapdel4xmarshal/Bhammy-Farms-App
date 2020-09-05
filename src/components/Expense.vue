@@ -4,7 +4,7 @@
       <v-card-title>{{ title }}</v-card-title>
       <v-divider></v-divider>
       <v-card-text>
-        <v-form ref="form" v-model="valid" lazy-validation>
+        <v-form ref="form" v-model="valid" lazy-validation :readonly="!isEditMode">
           <v-container>
             <v-row>
               <v-col cols="12">
@@ -12,22 +12,24 @@
                   v-model="dateMenu"
                   :close-on-content-click="false"
                   max-width="290"
+                  :disabled="!isEditMode"
                 >
                   <template v-slot:activator="{ on }">
                     <v-text-field
-                      v-model="expense.date"
+                      v-model="value.date"
                       clearable
                       label="Date*"
                       hint="Date incurred."
                       :rules="[v => !!v || 'Please enter a date.']"
                       readonly
                       persistent-hint
+                      @change="update"
                       v-on="on"
-                      @click:clear="expense.date = null"
+                      @click:clear="value.date = null"
                     ></v-text-field>
                   </template>
                   <v-date-picker
-                    v-model="expense.date"
+                    v-model="value.date"
                     @change="dateMenu = false"
                   ></v-date-picker>
                 </v-menu>
@@ -38,12 +40,12 @@
                   label="Farm*"
                   hint="Farm where the expense is incurred."
                   persistent-hint
-                  return-object
                   required
                   :rules="[v => !!v || 'Please select a farm.']"
-                  v-model="farm"
+                  v-model="value.farm"
+                  @change="update"
                   item-text="name"
-                  item-value="name"
+                  item-value="id"
                   :items="farmLocations"
                 ></v-select>
               </v-col>
@@ -54,13 +56,13 @@
                   hint="Pen where the expense is incurred."
                   persistent-hint
                   required
-                  return-object
-                  v-model="pen"
+                  v-model="value.house"
+                  @change="update"
                   @blur="updateBatchList"
-                  :disabled="selectedFarm === ''"
+                  :disabled="isEditMode && value.farm === ''"
                   item-text="name"
-                  item-value="name"
-                  :items="selectedFarm.houses"
+                  item-value="id"
+                  :items="houses"
                 ></v-select>
               </v-col>
 
@@ -70,12 +72,12 @@
                   hint="Flock/Batch this expense applied to."
                   persistent-hint
                   required
-                  return-object
-                  v-model="batch"
-                  :disabled="selectedPen === ''"
+                  v-model="value.batch"
+                  @change="update"
+                  :disabled="isEditMode && value.house === ''"
                   item-text="name"
                   no-data-text="No batch found."
-                  item-value="name"
+                  item-value="batchId"
                   :items="batches"
                 ></v-select>
               </v-col>
@@ -85,81 +87,146 @@
                   label="Category*"
                   hint="Expense category."
                   persistent-hint
-                  :items="['Purchase', 'Service']"
-                  return-object
-                  v-model="expense.category"
+                  @change="changeCategory"
+                  :items="['Purchase', 'Service', 'Salary']"
+                  v-model="value.category"
                   :rules="[v => !!v || 'Please select a category.']"
                   required
                 >
                 </v-select>
               </v-col>
 
-              <v-col cols="12">
+              <v-col cols="12" v-if="value.category === 'Service'">
                 <v-select
                   label="Type*"
-                  hint="Expense type."
+                  hint="Service type."
                   persistent-hint
                   :items="types"
-                  return-object
-                  v-model="type"
-                  item-value="name"
+                  v-model="value.type"
+                  @change="update"
+                  item-value="expense_type_id"
                   item-text="name"
                   :rules="[v => !!v || 'Please select an expense type.']"
                   required>
                 </v-select>
               </v-col>
-
-              <v-col>
+              <v-col cols="12" v-if="value.category === 'Service'">
                 <v-text-field
-                  type="number"
-                  label="Quantity"
-                  hint="Quantity."
+                  label="Provider*"
+                  hint="Service provider."
                   persistent-hint
-                  v-model="expense.quantity"
-                  required
-                ></v-text-field>
+                  v-model="value.provider"
+                  @change="update"
+                  :rules="[v => !!v || 'Please enter provider name']"
+                  required>
+                </v-text-field>
               </v-col>
 
-              <v-col cols="12">
-                <v-text-field
-                  label="Invoice number"
-                  hint="Invoice number."
-                  v-model="expense.invoiceNumber"
-                  persistent-hint
-                ></v-text-field>
-              </v-col>
-
-              <v-col cols="12">
+              <v-col v-if="value.category === 'Purchase'" cols="12" md="6">
                 <v-autocomplete
-                  v-model="supplier"
-                  label="Provider/supplier"
-                  hint="Product supplier or service provider information."
+                  v-if="value.updateStoreInventory"
+                  label="Item"
+                  hint="Item purchased."
+                  @change="update"
                   persistent-hint
-                  required
-                  clearable
-                  return-object
-                  :items="suppliers"
-                  no-data-text="No suppliers to choose from. Please add a new supplier."
+                  :rules="[v => !!v || 'Please select item purchased']"
+                  v-model="value.item"
+                  item-value="id"
                   item-text="name"
-                  item-value="name"
+                  @click="getItems"
+                  :items="items"
+                  required
                 >
                   <template v-slot:item="{ item }">
-                    <v-list-item-avatar color="primary" tile>
-                      <span class="white--text">{{ item.initials }}</span>
+                    <v-list-item-avatar tile>
+                      <v-img :src="`/${item.image}`"></v-img>
                     </v-list-item-avatar>
                     <v-list-item-content>
                       <v-list-item-title>{{ item.name }}</v-list-item-title>
-                      <v-list-item-subtitle>{{ item.address }}</v-list-item-subtitle>
+                      <v-list-item-subtitle>
+                        {{ item.category }} {{ item.brand ? `| ${item.brand}` : '' }}
+                      </v-list-item-subtitle>
                     </v-list-item-content>
                   </template>
                 </v-autocomplete>
+                <v-text-field v-else
+                              label="Item name"
+                              hint="Item purchased."
+                              @change="update"
+                              persistent-hint
+                              :rules="[v => !!v || 'Please enter item name']"
+                              v-model="value.item"
+                              required>
+                </v-text-field>
               </v-col>
 
-              <v-col cols="12">
+              <v-col v-if="value.category === 'Purchase'" cols="12" md="6">
+                <v-checkbox
+                  label="Update store inventory"
+                  persistent-hint
+                  @change="updateItemState"
+                  v-model="value.updateStoreInventory"
+                  required
+                ></v-checkbox>
+              </v-col>
+
+              <v-col v-if="value.category === 'Purchase'" cols="12" md="6">
+                <v-text-field
+                  type="number"
+                  label="Quantity"
+                  hint="Item quantity."
+                  @change="update"
+                  persistent-hint
+                  :rules="[v => !!v || 'Please enter item quantity']"
+                  v-model="value.quantity"
+                  required
+                ></v-text-field>
+              </v-col>
+
+              <v-col v-if="value.category === 'Purchase'" cols="12" md="6">
+                <v-text-field
+                  type="number"
+                  label="Price"
+                  hint="Item price."
+                  @change="update"
+                  persistent-hint
+                  :rules="[v => !!v || 'Please enter item price']"
+                  v-model="value.price"
+                  required
+                ></v-text-field>
+              </v-col>
+
+              <v-col v-if="value.category === 'Salary'" cols="12">
+                <v-select
+                  label="Employee*"
+                  hint="Employee name."
+                  persistent-hint
+                  :items="types"
+                  @change="update"
+                  v-model="value.employee"
+                  item-value="name"
+                  item-text="name"
+                  :rules="[v => !!v || 'Please select an employee.']"
+                  required>
+                </v-select>
+              </v-col>
+
+              <v-col cols="12" v-if="value.category !== 'Salary'" >
+                <v-text-field
+                  label="Invoice number"
+                  hint="Invoice number."
+                  @change="update"
+                  v-model="value.invoiceNumber"
+                  persistent-hint
+                ></v-text-field>
+              </v-col>
+
+              <v-col cols="12" v-if="value.category !== 'Salary'" >
                 <v-file-input
                   accept="image/*"
                   label="Proof of payment"
-                  v-model="expense.attachment"
+                  @change="update"
+                  v-model="value.attachment"
                   hint="Upload proof of payment"
                   prepend-icon=""
                   persistent-hint/>
@@ -167,13 +234,14 @@
 
               <v-col cols="12">
                 <v-text-field
-                  label="Amount*"
-                  hint="Cost of the purchase / service."
+                  label="Total amount*"
+                  hint="Total amount incurred"
                   persistent-hint
                   prefix="₦"
+                  @change="update"
                   :rules="[v => !!v || 'Please enter an amount.']"
                   type="number"
-                  v-model="expense.amount"
+                  v-model="value.amount"
                   required
                 ></v-text-field>
               </v-col>
@@ -181,10 +249,11 @@
               <v-col cols="12">
                 <v-textarea
                   label="Description"
-                  clearable
+                  :clearable="isEditMode"
                   filled
                   no-resize
-                  v-model="expense.description"
+                  @change="update"
+                  v-model="value.description"
                   hint="Description of the expense or service."
                   persistent-hint
                   required
@@ -198,7 +267,7 @@
       <v-card-actions>
         <v-btn color="primary darken-1" text @click="cancel">Cancel</v-btn>
         <v-spacer></v-spacer>
-        <v-btn color="primary darken-1" tile @click="save">Save</v-btn>
+        <v-btn color="primary darken-1" tile @click="save">{{ actionTitle }}</v-btn>
       </v-card-actions>
     </v-card>
 
@@ -206,7 +275,7 @@
       v-model="snackbar"
       absolute
     >
-      An error occurred while creating expense.
+      An error occurred while {{ isEditMode ? 'editing' : 'creating' }} expense.
       <v-btn
         color="red"
         text
@@ -228,16 +297,12 @@ export default {
       dateMenu: false,
       valid: true,
       attachment: '',
-      expense: {
-        category: '',
-        type: {},
-        farm: '',
-        pen: null
-      },
       selectedFarm: '',
       selectedPen: '',
       batches: [],
-      showSnackbar: false
+      showSnackbar: false,
+      items: [],
+      editMode: false
     };
   },
   props: {
@@ -257,18 +322,28 @@ export default {
       type: Boolean,
       required: true
     },
-    suppliers: {
-      type: Array,
-      default: () => [],
-      required: true
-    },
     farmLocations: {
       type: Array,
       default: () => [],
       required: true
+    },
+    value: {
+      type: Object,
+      required: true
     }
   },
   computed: {
+    isEditMode() {
+      return !this.value.id || this.editMode;
+    },
+    actionTitle() {
+      if (this.editMode) {
+        if (this.value.id) return 'Update expense';
+        return 'Edit expense';
+      }
+      if (this.value.id) return 'Edit expense';
+      return 'Save expense';
+    },
     snackbar: {
       get() {
         return this.errored;
@@ -277,68 +352,72 @@ export default {
         this.$emit('update:errored', state);
       }
     },
-    supplier: {
-      get() {
-        return this.expense.supplier;
-      },
-      set({ id }) {
-        this.expense.supplier = id;
-      }
-    },
-    type: {
-      get() {
-        return this.expense.type.expense_type_id;
-      },
-      set(type) {
-        this.expense.type = type.expense_type_id;
-      }
-    },
-    farm: {
-      get() {
-        return this.selectedFarm;
-      },
-      set(farm) {
-        this.selectedFarm = farm;
-        this.expense.farm = farm.id;
-      }
-    },
-    pen: {
-      get() {
-        return this.selectedPen;
-      },
-      set(pen) {
-        this.selectedPen = pen;
-        this.expense.pen = pen.id;
-      }
-    },
     batch: {
       get() {
-        return this.expense.batch;
+        return this.value.batch;
       },
       set(batch) {
-        this.expense.batch = batch.id;
+        this.value.batch = batch.batchId;
+        this.update();
       }
+    },
+    houses() {
+      const filteredFarm = this.farmLocations.filter((farm) => farm.id === this.value.farm)[0];
+      return filteredFarm ? filteredFarm.houses : [];
     }
   },
   methods: {
+    update() {
+      this.$emit('input', this.value);
+    },
+    updateItemState() {
+      this.value.item = '';
+      this.update();
+    },
+    changeCategory() {
+      this.getItems();
+      this.update();
+    },
     updateBatchList() {
-      axios.get(`/batches?house=${this.selectedPen.id}`)
+      axios.get(`/batches?house=${this.value.house}`)
         .then(({ data }) => {
           this.batches = data;
         });
     },
+    getItems() {
+      axios.get('/items')
+        .then(({ data }) => {
+          this.items = data.filter((item) => !item.brand || !item.brand.toLowerCase().includes('bhammy'));
+        });
+    },
     cancel() {
+      if (this.editMode) { this.editMode = false; return; }
       this.$emit('cancel', true);
+      this.$refs.form.reset();
+      this.value.id = null;
     },
     save() {
-      if (this.$refs.form.validate()) {
-        const formData = new FormData();
-        Object.entries(this.expense).forEach((data) => {
-          formData.append(data[0], data[1]);
-        });
-        this.$emit('save', formData);
+      if (!this.editMode && !this.isEditMode) { this.editMode = true; return; }
+      if (this.isEditMode && this.$refs.form.validate()) {
+        if (!this.value.id) {
+          const formData = new FormData();
+          Object.entries(this.value)
+            .forEach((data) => {
+              formData.append(data[0], data[1]);
+            });
+          this.$emit('save', formData);
+        } else {
+          this.$emit('save', this.value);
+        }
       }
     }
+  },
+  created() {
+    axios.get('/batches')
+      .then(({ data }) => {
+        this.batches = data;
+      });
+    this.getItems();
   }
 };
 </script>

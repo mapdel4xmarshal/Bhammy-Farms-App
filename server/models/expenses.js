@@ -23,7 +23,7 @@ class Expenses extends Model {
         allowNull: false
       },
       category: {
-        type: DataTypes.ENUM('Purchase', 'Service'),
+        type: DataTypes.ENUM('Purchase', 'Service', 'Salary'),
         allowNull: false
       },
       quantity: {
@@ -34,6 +34,10 @@ class Expenses extends Model {
         type: DataTypes.STRING,
         allowNull: true
       },
+      price: {
+        type: DataTypes.DECIMAL,
+        allowNull: true
+      },
       amount: {
         type: DataTypes.DECIMAL,
         allowNull: true
@@ -42,21 +46,25 @@ class Expenses extends Model {
         type: DataTypes.STRING,
         allowNull: true
       },
-      description: {
+      provider: {
         type: DataTypes.STRING,
+        allowNull: true
+      },
+      description: {
+        type: DataTypes.TEXT,
         allowNull: true
       }
     };
   }
 
   static associate({
-    ExpenseType, Supplier, Location, House, Batch
+    ExpenseType, Item, Location, House, Batch
   }) {
     Expenses.location = Expenses.belongsTo(Location, { foreignKey: 'location_id' });
     Expenses.house = Expenses.belongsTo(House, { foreignKey: { name: 'house_id', allowNull: true }, constraints: false });
     Expenses.batch = Expenses.belongsTo(Batch, { foreignKey: { name: 'batch_id', allowNull: true }, constraints: false });
-    Expenses.type = Expenses.belongsTo(ExpenseType, { foreignKey: 'expense_type_id' });
-    Expenses.supplier = Expenses.belongsTo(Supplier, { foreignKey: 'supplier_id' });
+    Expenses.type = Expenses.belongsTo(ExpenseType, { foreignKey: { name: 'expense_type_id', allowNull: true }, constraints: false });
+    Expenses.item = Expenses.belongsTo(Item, { foreignKey: { name: 'item_id', allowNull: true }, constraints: false });
   }
 }
 

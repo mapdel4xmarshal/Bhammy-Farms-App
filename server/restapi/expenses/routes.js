@@ -23,4 +23,9 @@ router.post('/', async (req, res) => {
   res.status(expenseResponse.status || 200).json(expenseResponse);
 });
 
+router.patch('/:expenseId', async (req, res) => {
+  const expenseResponse = await controllers.updateExpense(req, req.body);
+  res.status(expenseResponse.status || 200).json(expenseResponse);
+});
+
 module.exports = router;

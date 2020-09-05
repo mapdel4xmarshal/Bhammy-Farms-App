@@ -12,12 +12,12 @@
       />
       <v-divider v-if="$mq.phone" vertical class="mr-2"></v-divider>
       <div class="header__container">
-        <img src="img/Logofull.png" width="100"/>
+        <img src="/img/Logofull.png" width="100"/>
 
-        <v-menu offset-y bottom :width="300" nudge-bottom="5">
+        <v-menu offset-y bottom :width="300" nudge-bottom="5" :close-on-content-click="false">
           <template v-slot:activator="{ on, attrs }">
             <div class="justify-end">
-              <v-list-item v-bind="attrs" v-on="on" class="pa-2 ml-2">
+              <v-list-item v-bind="attrs" v-on="on" class="pa-2 ml-2" @click="checkNotification">
                 <v-list-item-avatar class="ma-0">
                   <v-img :src="user.picture"></v-img>
                 </v-list-item-avatar>
@@ -34,6 +34,13 @@
             </v-card-title>
             <v-card-title class="justify-center pa-2" no-gutter>{{ user.displayName || user.name }}</v-card-title>
             <v-card-subtitle class="justify-center center pt-1">{{ user.email }}</v-card-subtitle>
+            <v-divider/>
+            <v-list-item class="ml-2 mr-2">
+              <v-switch v-model="notification"
+                        class="mr-3"
+                        @change="toggleNotification"
+                        label="Notifications"></v-switch>
+            </v-list-item>
             <v-divider/>
             <v-card-actions>
               <v-list-item>
@@ -108,6 +115,7 @@ export default {
   data: () => ({
     smallScreen: false,
     drawer: true,
+    notification: false,
     items: [
       { title: ROUTES.DASHBOARD, icon: 'mdi-monitor', to: ROUTES.DASHBOARD },
       { title: ROUTES.PRODUCTIONS, icon: 'mdi-chart-timeline', to: ROUTES.PRODUCTIONS },
@@ -134,12 +142,27 @@ export default {
     checkAuth() {
       return axios.get('user')
         .then(({ data }) => {
-          console.log(data);
           this.user = data;
         })
         .catch(() => {
           window.location.href = `/api/v1/login?returnTo=${window.location.href}`;
         });
+    },
+    checkNotification() {
+      if (window.OneSignal) {
+        window.OneSignal.push(() => {
+          window.OneSignal.isPushNotificationsEnabled().then((isEnabled) => {
+            this.notification = isEnabled;
+          });
+        });
+      }
+    },
+    toggleNotification() {
+      if (!this.notification) {
+        window.OneSignal.push(() => {
+          window.OneSignal.showSlidedownPrompt();
+        });
+      }
     }
   },
   mounted() {

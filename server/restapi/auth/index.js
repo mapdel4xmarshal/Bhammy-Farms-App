@@ -43,7 +43,6 @@ router.get('/callback', (req, res, next) => {
 // Perform session logout and redirect to homepage
 router.get('/logout', (req, res) => {
   req.logout();
-  console.log(req.query);
   let returnTo = req.query.returnTo || (`${req.protocol}://${req.hostname}`);
   const port = req.connection.localPort;
   if (!req.query.returnTo && port !== undefined && port !== 80 && port !== 443) {

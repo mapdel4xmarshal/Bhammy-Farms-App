@@ -1,6 +1,7 @@
 <template>
   <section>
     <expense :active="newExpense"
+             v-model="expense"
              :errored.sync="errored"
              @cancel="newExpense = false"
              @save="addExpense"
@@ -111,12 +112,17 @@
     <v-data-table
       :headers="headers"
       :items="expenses"
-      multi-sort
       no-data-text="No expenses found. Please add one."
       :search="search"
       class="elevation-1 table-cursor"
       @click:row="selectExpense"
     >
+      <template v-slot:item.provider="{ item }">
+        {{ item.provider ? item.provider : '—' }}
+      </template>
+      <template v-slot:item.itemName="{ item }">
+        {{ item.itemName ? item.itemName : '—' }}
+      </template>
       <template v-slot:item.amount="{ item }">
         ₦{{ item.amount | formatNumber }}
       </template>
@@ -155,6 +161,13 @@ export default {
       menu: false,
       date: null,
       errored: false,
+      expense: {
+        category: '',
+        type: '',
+        farm: '',
+        pen: null,
+        updateStoreInventory: true
+      },
       search: '',
       snackbar: false,
       category: '',
@@ -170,10 +183,11 @@ export default {
           sortable: true,
           value: 'date',
         },
-        { text: 'Farm', value: 'farm' },
-        { text: 'Pen', value: 'house' },
-        { text: 'Type', value: 'type' },
+        { text: 'Farm', value: 'farmName' },
+        { text: 'Pen', value: 'houseName' },
         { text: 'Category', value: 'category' },
+        { text: 'Item', value: 'itemName' },
+        { text: 'Provider', value: 'provider' },
         { text: 'Amount', value: 'amount' }
       ],
       expenses: [],
@@ -195,7 +209,8 @@ export default {
       this.title = 'New Expense';
     },
     addExpense(expense) {
-      axios.post('expenses', expense)
+      const { id } = expense;
+      axios[id ? 'patch' : 'post'](`expenses${id ? `/${id}` : ''}`, expense)
         .then(({ data }) => {
           if (data) {
             this.snackbar = true;
@@ -257,8 +272,10 @@ export default {
       this.$refs.menu.save(this.date);
       this.getExpenses();
     },
-    selectExpense() {
+    selectExpense(expense) {
       this.newExpense = true;
+      this.expense = { ...expense };
+      this.expense.updateStoreInventory = !Number.isNaN(expense.item);
       this.title = 'View Expense';
     }
   },

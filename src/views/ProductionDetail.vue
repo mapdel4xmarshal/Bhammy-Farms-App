@@ -121,14 +121,6 @@
                       vertical
                       class="mx-4"
                     ></v-divider>
-
-                    <v-col cols="12" md="3" class="subtitle-2" v-if="!$mq.phone">
-                      <ul>
-                        <li>Add an egg collection record by clicking on "Add item".</li>
-                        <li>You can add multiple records for this batch/flock, for the selected date.
-                          This can be the different grades of eggs or eggs collected at different times of the day.</li>
-                      </ul>
-                    </v-col>
                   </v-row>
                 </v-expansion-panel-content>
               </v-expansion-panel>
@@ -183,14 +175,6 @@
                       vertical
                       class="mx-4"
                     ></v-divider>
-
-                    <v-col cols="12" md="3" class="subtitle-2" v-if="!$mq.phone">
-                      <ul>
-                        <li>Add a feeding record record by clicking on "Add item".</li>
-                        <li>You can add multiple records for this batch/flock, for the selected date.
-                          This can be the different grades of eggs or eggs collected at different times of the day.</li>
-                      </ul>
-                    </v-col>
                   </v-row>
                 </v-expansion-panel-content>
               </v-expansion-panel>
@@ -236,14 +220,6 @@
                       vertical
                       class="mx-4"
                     ></v-divider>
-
-                    <v-col cols="12" md="3" class="subtitle-2" v-if="!$mq.phone">
-                      <ul>
-                        <li>Record a mortality by clicking on "Add item".</li>
-                        <li>You can add multiple records for this batch/flock, for the selected date.
-                          This can be the different mortality recorded at different times of the day.</li>
-                      </ul>
-                    </v-col>
                   </v-row>
                 </v-expansion-panel-content>
               </v-expansion-panel>
@@ -293,13 +269,6 @@
                       vertical
                       class="mx-4"
                     ></v-divider>
-
-                    <v-col cols="12" md="3" class="subtitle-2" v-if="!$mq.phone">
-                      <ul>
-                        <li>Record water consumed by clicking on "Add item".</li>
-                        <li>You can add multiple records for this batch/flock, for the selected date.</li>
-                      </ul>
-                    </v-col>
                   </v-row>
                 </v-expansion-panel-content>
               </v-expansion-panel>

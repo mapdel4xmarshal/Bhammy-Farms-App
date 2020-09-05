@@ -109,7 +109,7 @@ export default {
       snackbar: false,
       showDialog: false,
       customer: {},
-      chartData: [],
+      chartData: {},
       totalAmount: 0,
       unpaidAmount: 0,
       paidAmount: 0,
@@ -144,7 +144,7 @@ export default {
           type: 'areaspline',
           color: '#7f2775',
           fillOpacity: 0.1,
-          data: []
+          data: [{ x: new Date(), y: 0 }]
         }]
       },
       headers: [
@@ -176,14 +176,19 @@ export default {
           this.unpaidAmount = 0;
           this.partialAmount = 0;
           this.customer.altPhone = this.customer.altPhone || '―';
+          this.customer.invoices.sort((i1, i2) => new Date(i2.invoiceDate) - new Date(i1.invoiceDate));
           this.customer.invoices = data.invoices.map((invoice) => {
             /* eslint-disable prefer-destructuring */
             const newInvoice = { ...invoice };
             newInvoice.invoiceDate = invoice.invoiceDate.split('T')[0];
             newInvoice.paymentStatus = newInvoice.paymentStatus.toUpperCase();
-            this.chartData.push({ x: new Date(invoice.invoiceDate).getTime(), y: Number(newInvoice.amount) });
-            this.chartData.sort((d1, d2) => d1.x - d2.x);
-            this.chartOptions.series[0].data = this.chartData;
+            if (!this.chartData[invoice.invoiceDate]) {
+              this.chartData[invoice.invoiceDate] = {
+                x: new Date(invoice.invoiceDate).getTime(),
+                y: Number(newInvoice.amount)
+              };
+            } else this.chartData[invoice.invoiceDate].y += Number(newInvoice.amount);
+            this.chartOptions.series[0].data = Object.values(this.chartData).reverse();
             newInvoice.amount = Number(newInvoice.amount);
             this.totalAmount += newInvoice.amount;
             if (newInvoice.paymentStatus === 'PAID') this.paidAmount += newInvoice.amount;

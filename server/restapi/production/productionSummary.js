@@ -20,7 +20,7 @@ class ProductionSummary {
 
     this.vaccinations = properties.vaccinations;
     this.medications = properties.medications;
-    this.mortality = properties.mortality; console.log('items', properties.items);
+    this.mortality = properties.mortality;
 
     this.eggs = properties.items.filter((item) => item.category.toLowerCase() === 'egg');
     this.feeds = properties.items.filter((item) => item.category.toLowerCase() === 'feed');
@@ -100,7 +100,6 @@ class ProductionSummary {
   }
 
   set eggs(eggs) {
-    console.log(eggs);
     this._production.eggs = eggs.reduce((totalEggs, egg) => totalEggs + Number.parseInt(egg.quantity), 0);
   }
 

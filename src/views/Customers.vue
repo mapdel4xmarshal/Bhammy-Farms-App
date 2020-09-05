@@ -28,10 +28,6 @@
       class="elevation-1 table-cursor"
       @click:row="selectCustomer"
     >
-      <template v-slot:item.orderTotal="{ item }">
-        {{ item.invoices.length }}
-      </template>
-
       <template v-slot:item.rating="{ item }">
         <v-rating
           :value="item.rating + 1"
@@ -101,7 +97,11 @@ export default {
     getCustomers() {
       axios.get('/parties/customers')
         .then(({ data }) => {
-          this.customers = data;
+          this.customers = data.map((customer) => {
+            const newCustomer = customer;
+            newCustomer.orderTotal = customer.invoices.length;
+            return newCustomer;
+          });
         });
     },
     customerCreated(state) {

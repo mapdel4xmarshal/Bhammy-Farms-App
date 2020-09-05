@@ -1,10 +1,6 @@
 const request = require('request');
 const Notification = require('../../notification/notification');
 
-setTimeout(() => {
-  new Notification().send('Bhammy Farms - Production', 'teteteteteeet');
-}, 2000);
-
 const {
   Production, Vaccination, Batch, Sequelize: { Op }, sequelize, Location, House, ProductionItem, Mortality, Medication,
   Item, Breed
@@ -122,6 +118,26 @@ class Controller {
         resourceId: 'id'
       });
 
+      production.eggs.forEach(async (egg) => {
+        await Item.increment('quantity', {
+          by: Number(egg.quantity),
+          where: { item_id: egg.id },
+          transaction ,
+          user,
+          resourceId: 'item_id'
+        });
+      });
+
+      production.feeds.forEach(async (feed) => {
+        await Item.decrement('quantity', {
+          by: Number(feed.quantity),
+          where: { item_id: feed.id },
+          transaction,
+          user,
+          resourceId: 'item_id'
+        });
+      });
+
       await Mortality.bulkCreate(production.mortality.map((mortality) => ({
         time: mortality.time,
         reason: mortality.reason,
@@ -142,9 +158,9 @@ class Controller {
       // We commit the transaction.
       await transaction.commit();
 
-      //Push notify
+      // Push notify
       new Notification().send('Production',
-        `A new production record was added by ${req.user.displayName}`, `productions/${newProduction.id}`);
+        `A new production record was added by ${user.displayName}`, `productions/${newProduction.id}`);
 
       return newProduction;
     } catch (error) {
@@ -157,7 +173,7 @@ class Controller {
     }
   }
 
-  processTreatment(type, treatments, productionId, transaction, user) {
+  async processTreatment(type, treatments, productionId, transaction, user) {
     const medType = type === 'vaccination' ? 'vaccine' : 'medicament';
     const modelType = type === 'vaccination' ? 'Vaccination' : 'Medication';
 
@@ -173,6 +189,17 @@ class Controller {
       administered_by: treatment.administeredBy,
       notes: treatment.reason
     }));
+
+    for (const item of treatments) {
+      await Item.increment('quantity',
+        {
+          by: Number(item.total_dosage),
+          where: { item_id: item[`${medType}_id`] },
+          user,
+          resourceId: 'item_id',
+          transaction
+        });
+    }
 
     return eval(modelType)
       .bulkCreate(treatments, {

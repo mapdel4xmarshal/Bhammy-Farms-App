@@ -175,6 +175,11 @@
         </div>
       </v-col>
     </v-row>
+    <v-row justify="end" class="item__action">
+      <v-btn tile color="primary" @click="save">
+        Save invoice
+      </v-btn>
+    </v-row>
     <v-snackbar
       v-model="snackbar">
       {{ feedbackMessage }}
