@@ -1,5 +1,5 @@
 const {
-  Invoice: InvoiceModel, Customer, InvoiceItem, Party, Sequelize: {
+  Invoice: InvoiceModel, Customer, Item, InvoiceItem, Party, sequelize, Sequelize: {
     Op, col, fn, literal
   }, Location
 } = require('../../models');
@@ -7,8 +7,8 @@ const Invoice = require('./invoice');
 
 class Controller {
   async getInvoices({
-    before, after, paymentStatus, date
-  }) {
+                      before, after, paymentStatus, date
+                    }) {
     const where = {};
     if (before || after) where.invoice_date = {};
     if (date) where.invoice_date = date;
@@ -28,9 +28,15 @@ class Controller {
       where,
       include: [{
         model: Customer,
-        include: [{ model: Party, attributes: [] }],
+        include: [{
+          model: Party,
+          attributes: []
+        }],
         attributes: []
-      }, { model: Location, attributes: [] }]
+      }, {
+        model: Location,
+        attributes: []
+      }]
     })
       .then((invoices) => invoices);
   }
@@ -60,14 +66,38 @@ class Controller {
 
     const normalizedInvoice = new Invoice(invoice);
 
+    const transaction = await sequelize.transaction();
+
     return InvoiceModel.create({
       ...normalizedInvoice.toDBFormat()
-    }, { user, resourceId: 'invoice_id' })
+    }, {
+      user,
+      resourceId: 'invoice_id',
+      transaction
+    })
       .then(async (newInvoice) => {
-        await InvoiceItem.bulkCreate(normalizedInvoice.formatItems(newInvoice.invoice_id));
+        const invoiceItems = normalizedInvoice.formatItems(newInvoice.invoice_id);
+        await InvoiceItem.bulkCreate(invoiceItems,
+          {
+            user,
+            resourceId: 'invoice_id',
+            transaction
+          });
+
+        for (const item of invoiceItems) {
+          await Item.decrement('quantity', {
+            by: item.quantity,
+            where: { item_id: item.item_id },
+            transaction,
+            user,
+            resourceId: 'item_id'
+          });
+        }
+        transaction.commit();
         return newInvoice.invoice_id;
       })
       .catch((error) => {
+        transaction.rollback();
         console.log(error); // todo: add proper logger
         return {
           error: 'Unable to process request. Please try again later!',

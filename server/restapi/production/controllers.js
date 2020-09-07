@@ -107,10 +107,22 @@ class Controller {
       });
 
       const productionId = newProduction.production_id;
+      const productItems = [...production.eggs, ...production.feeds];
 
-      await ProductionItem.bulkCreate([...production.eggs, ...production.feeds].map((item) => ({
+      const itemPriceMap = await Item.findAll({
+        attributes: ['item_id', 'price'],
+        where: {
+          item_id: {
+            [Op.in]: productItems.map(item => item.id)
+          }
+        }
+      })
+        .then(items => new Map(items.map(item => [item.item_id, item.price])));
+
+      await ProductionItem.bulkCreate(productItems.map((item) => ({
         quantity: item.quantity,
         item_id: item.id,
+        price: itemPriceMap.get(item.id),
         production_id: productionId
       })), {
         transaction,
@@ -122,7 +134,7 @@ class Controller {
         await Item.increment('quantity', {
           by: Number(egg.quantity),
           where: { item_id: egg.id },
-          transaction ,
+          transaction,
           user,
           resourceId: 'item_id'
         });
@@ -275,7 +287,7 @@ class Controller {
         id: production.itemId,
         name: production.itemName,
         quantity: production.itemQuantity,
-        price: production.price,
+        price: production.itemPrice,
         category: production.itemCategory,
         size: production.itemSize,
         unit: production.itemUnit

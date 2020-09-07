@@ -13,6 +13,11 @@ router.post('/', async (req, res) => {
   res.status(itemResponse.status || 200).json(itemResponse);
 });
 
+router.patch('/:itemId', async (req, res) => {
+  const itemResponse = await controllers.updateItem(req.params.itemId, req);
+  res.status(itemResponse.status || 200).json(itemResponse);
+});
+
 router.get('/brands', async (req, res) => {
   const brands = await controllers.getItemBrands(req.query);
   res.json(brands);

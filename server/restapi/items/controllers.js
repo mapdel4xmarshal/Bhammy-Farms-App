@@ -85,6 +85,40 @@ class Controller {
     });
   }
 
+  async updateItem(id, req) {
+    const form = formidable({
+      multiples: false,
+      keepExtensions: true,
+      uploadDir: `${fileUploadPath}${path.sep}uploads`
+    });
+    const { user } = req;
+
+    return new Promise((resolve, reject) => {
+      form.parse(req, async (err, item) => {
+        if (err) reject(err);
+
+        Item.update({
+          item_name: item.name,
+          category: item.category,
+          brand: item.brand,
+          size: item.size,
+          quantity: item.quantity,
+          unit: item.unit,
+          price: item.price,
+          description: item.description
+        }, { user, resourceId: 'item_id', where: { item_id: id } })
+          .then(resolve)
+          .catch(reject);
+      });
+    }).catch((e) => {
+      console.log(e); // todo: add proper logger
+      return {
+        error: 'Unable to process request. Please try again later!',
+        status: 500
+      };
+    });
+  }
+
   async getItemBrands() {
     return Item.findAll({
       attributes: ['brand'],

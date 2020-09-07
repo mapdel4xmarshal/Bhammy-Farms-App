@@ -64,7 +64,7 @@ export default {
           });
 
           const values = Object.values(normalizedData).reverse();
-          this[`${type}Record`] = [...Array(day - values.length).fill(0), ...values];
+          this[`${type}Record`] = [...Array(Math.max(day - values.length, 0)).fill(0), ...values];
         });
     }
   }

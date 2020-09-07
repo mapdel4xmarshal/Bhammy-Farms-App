@@ -137,22 +137,29 @@ export default {
       this.$emit('update', false);
     },
     getItems() {
-      axios.get('items?groupBy=category')
+      axios.get('items')
         .then(({ data }) => {
-          this.itemCategories = Object.keys(data);
-          this.items = this.normalizeItems(data);
+          const filteredItems = data.filter((item) => item.brand.toLowerCase().includes('bhammyfarm'));
+          this.normalizeItems(filteredItems);
         });
     },
-    normalizeItems(itemsObject) {
-      // eslint-disable-next-line no-restricted-syntax
-      for (const [category, items] of Object.entries(itemsObject)) {
-        // eslint-disable-next-line no-param-reassign
-        itemsObject[category] = items.map((item) => {
-          const newItem = item;
-          newItem.size = item.size[0].toUpperCase() + item.size.slice(1);
-          return newItem;
-        });
-      }
+    normalizeItems(items) {
+      const itemsObject = {};
+      const categories = [];
+      items.forEach((item) => {
+        const newItem = item;
+        newItem.category = newItem.category[0].toUpperCase() + newItem.category.slice(1);
+
+        if (!itemsObject[item.category]) {
+          itemsObject[item.category] = [];
+          categories.push(item.category);
+        }
+        newItem.quantity = 0;
+        newItem.size = item.size[0].toUpperCase() + item.size.slice(1);
+        itemsObject[newItem.category].push(newItem);
+      });
+      this.itemCategories = categories;
+      this.items = itemsObject;
       return itemsObject;
     },
     cancel() {

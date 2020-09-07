@@ -11,7 +11,7 @@
 
     <v-divider></v-divider>
 
-    <v-row>
+    <v-row class="mt-3">
       <v-col cols="12" md="3">
         <v-autocomplete
           v-model="batch"
@@ -103,6 +103,11 @@
       <template v-slot:item.eggs="{ item }">
         {{ Number.parseInt(item.eggs / 30) }}
       </template>
+
+      <template v-slot:item.profit="{ item }">
+        <strong :style="{color: item.profit < 0? 'red' : 'green'}">
+          ₦{{ Math.abs(item.profit) | normalizeNumber }} </strong>
+      </template>
     </v-data-table>
   </section>
 </template>
@@ -143,7 +148,7 @@ export default {
         { text: 'Feed/animal (g)', value: 'feedPerAnimal' },
         { text: 'Mortality', value: 'mortality' },
         { text: 'Mortality %', value: 'mortalityRate' },
-        { text: 'Remark', value: 'status' },
+        { text: 'Est. Profit', value: 'profit' },
       ]
     };
   },
@@ -204,6 +209,11 @@ export default {
     },
     formatNumber(value, digits = 2) {
       return new Intl.NumberFormat('en-US', { minimumFractionDigits: digits }).format(value);
+    }
+  },
+  filters: {
+    normalizeNumber(value) {
+      return new Intl.NumberFormat('en-US', { minimumFractionDigits: 0 }).format(value);
     }
   },
   created() {

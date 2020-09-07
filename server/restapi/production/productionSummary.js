@@ -27,6 +27,7 @@ class ProductionSummary {
     this.feedPerAnimal = this.feeds;
     this.productionPercent = this.eggs;
     this.mortalityRate = this.mortality;
+    this.profit = properties.items;
 
     return this._production;
   }
@@ -117,6 +118,18 @@ class ProductionSummary {
 
   set productionPercent(eggs) {
     this._production.productionPercent = Number(((eggs * 100) / this._production.flockCount).toFixed(2));
+  }
+
+  get profit() {
+    return this._production.profit;
+  }
+
+  set profit(items) {
+    this._production.profit = items.reduce((total, item) => {
+      if (item.category.toLowerCase() === 'feed') return total - ((item.quantity / item.size) * item.price);
+      if (item.category.toLowerCase() === 'egg') return total + ((item.quantity / 30 ) * item.price);
+      return 0;
+    }, 0);
   }
 }
 

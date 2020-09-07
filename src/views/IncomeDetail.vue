@@ -253,7 +253,14 @@ export default {
           paymentStatus: this.paymentStatus,
           fulfilmentStatus: this.fulfilmentStatus,
           notes: this.notes,
-          items: this.items
+          items: this.items.map((item) => {
+            const newItem = { ...item };
+            /* todo: refactor logic */
+            if (newItem.category.toLowerCase() === 'egg') {
+              newItem.quantity *= 30;
+            }
+            return newItem;
+          })
         })
           .then(() => {
             this.$router.push('/income');
