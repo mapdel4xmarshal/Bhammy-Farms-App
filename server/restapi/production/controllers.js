@@ -23,7 +23,7 @@ class Controller {
       production_items.quantity AS itemQuantity, production_items.price AS itemPrice, batches.initial_stock_count AS initialFlockCount,
       batches.name AS batch, batches.initial_stock_count AS flockCount, batches.is_active AS isActive, breeds.type AS batchType,
       items.item_id AS itemId, items.item_name AS itemName, items.category AS itemCategory, items.size AS itemSize, items.unit AS itemUnit,
-      production_items.id AS productionItemsId,
+      production_items.id AS productionItemsId, productions.humidity AS humidity, productions.temperature AS temperature, 
       vaccinations.*
     FROM productions 
     JOIN batches ON productions.batch_id = batches.batch_id
@@ -276,6 +276,8 @@ class Controller {
           water: production.water,
           mortality: new Map(),
           items: new Map(),
+          temperature: production.temperature,
+          humidity: production.humidity,
           vaccinations: [],
           medications: []
         });

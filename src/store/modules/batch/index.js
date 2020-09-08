@@ -9,7 +9,6 @@ const actions = {
   [BATCH_ACTION_TYPES.GET_BREEDS]({ commit }) {
     return axios.get('/batches/breeds')
       .then(({ data }) => {
-        console.log(data);
         commit(BATCH_MUTATION_TYPES.SET_BREEDS, data);
       });
   }

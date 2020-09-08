@@ -1,6 +1,7 @@
 const ROUTES = {
   ACTIVITIES: 'Activities',
   BATCHES: 'Batches',
+  BATCH_DETAIL: 'BatchDetail',
   CUSTOMERS: 'Customers',
   CUSTOMER_DETAIL: 'CustomersDetail',
   DASHBOARD: 'Dashboard',

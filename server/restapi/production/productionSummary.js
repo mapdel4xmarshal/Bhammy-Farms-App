@@ -7,7 +7,7 @@ class ProductionSummary {
     this._production.humidity = properties.humidity;
     this._production.temperature = properties.temperature;
     this._production.weatherCondition = properties.weatherCondition;
-    this._production.water = properties.water;
+    this._production.water = Number(properties.water);
     this._production.note = properties.note;
     this._production.batch = properties.batch;
     this._production.type = properties.batchType;

@@ -28,7 +28,8 @@
       :headers="headers"
       :items="batches"
       :search="search"
-      class="elevation-1"
+      class="elevation-1 table-cursor"
+      @click:row="selectBatch"
       no-data-text="No batch available, please add a batch."
       multi-sort
     ></v-data-table>
@@ -52,6 +53,7 @@
 
 <script>
 import axios from '../plugins/axios';
+import ROUTES from '../router/routeNames';
 import Batch from '../components/Batch.vue';
 
 export default {
@@ -129,6 +131,9 @@ export default {
       this.newBatch = false;
 
       if (state) this.getBatches();
+    },
+    selectBatch(batch) {
+      this.$router.push({ name: ROUTES.BATCH_DETAIL, params: { id: batch.batchId } });
     }
   },
   mounted() {

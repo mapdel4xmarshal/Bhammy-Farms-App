@@ -1,13 +1,14 @@
 const {
-  Batch, Breed, House, Production, Mortality, Location, Sequelize: {
+  Batch, Breed, House, Production, Mortality, Location, Source, Party, Sequelize: {
     Op, literal, fn, col
   }
 } = require('../../models');
 
 class Controller {
-  async getBatches({ house }) {
+  async getBatches({ house, batch }) {
     let where = {};
     if (house) where = { house_id: house };
+    if (batch) where = { batch_id: batch };
 
     return Batch.findAll({
       where,
@@ -21,6 +22,7 @@ class Controller {
         [literal('initial_stock_count - "Productions->Mortalities.count"'), 'currentStock'], ['supplier_id', 'supplier'],
         ['source_id', 'source'], ['cost_per_unit', 'costPerUnit'], ['total_cost', 'totalCost'], ['description', 'batchNote'],
         [fn('sum', fn('COALESCE', col('Productions->Mortalities.count'), 0)), 'totalMortality'],
+        [literal('`Source->Party`.`name`'), 'sourceName'],
         [literal('CASE WHEN is_active = 1 THEN "Active" ELSE "Retired" END'), 'status']],
       include: [
         {
@@ -39,6 +41,16 @@ class Controller {
           ]
         },
         {
+          model: Source,
+          attributes: [],
+          include: [
+            {
+              model: Party,
+              attributes: []
+            }
+          ]
+        },
+        {
           model: Production,
           attributes: [],
           include: [
@@ -47,7 +59,7 @@ class Controller {
               attributes: []
             }
           ]
-        },
+        }
       ],
       group: ['Batch.batch_id'],
       raw: true
@@ -120,12 +132,10 @@ class Controller {
       });
   }
 
-  async getBatchById(BatchId) {
-    return Batch.findOne({
-      where: { id: BatchId },
-      attributes: { exclude: ['createdAt', 'updatedAt'] }
-    })
-      .then((Batch) => Batch);
+  async getBatchById(batchId) {
+    const batches = await this.getBatches({ batch: batchId});
+    if (Array.isArray(batches)) return batches[0];
+    return batches;
   }
 
   async updateBatch(BatchId) {

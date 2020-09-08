@@ -206,11 +206,11 @@ export default {
   }
 
   .slide-fade-enter-active {
-    transition: all .4s ease-in-out;
+    transition: all .3s ease-in-out;
   }
 
   .slide-fade-leave-active {
-    transition: all .4s cubic-bezier(1.0, 0.5, 0.8, 1.0);
+    transition: all .3s cubic-bezier(1.0, 0.5, 0.8, 1.0);
   }
 
   .slide-fade-enter, .slide-fade-leave-to {
@@ -224,5 +224,9 @@ export default {
 
   .spacer--right {
     margin-right: 10px;
+  }
+
+  .table-cursor tbody tr:hover {
+    cursor: pointer;
   }
 </style>
