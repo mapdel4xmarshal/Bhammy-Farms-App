@@ -463,12 +463,12 @@ export default {
         },
         Vaccination: {
           id: 'vaccinations',
-          key: 'vaccineBatchNo',
+          key: 'vaccine',
           title: 'Vaccination'
         },
         Medication: {
           id: 'medications',
-          key: 'medicamentBatchNo',
+          key: 'medicament',
           title: 'Medication'
         }
       },

@@ -68,7 +68,7 @@
       </v-col>
     </v-row>
     <v-row>
-      <v-col cols="9">
+      <v-col cols="12" md="9">
         <v-tabs
           background-color="transparent"
           color="primary accent-4"
@@ -101,8 +101,8 @@
           </v-tab-item>
         </v-tabs>
       </v-col>
-      <v-col cols="3">
-        <v-card-title class="subtitle-1 pl-0 pb-1">Vaccination/Medication history</v-card-title>
+      <v-col cols="12" md="3">
+        <v-card-title class="subtitle-1 pl-0 pb-1">Treatment history</v-card-title>
         <v-card outlined height="380">
           <v-list three-line>
             <template>
@@ -159,8 +159,6 @@
           </v-list>
         </v-card>
       </v-col>
-      <v-col cols="9">
-      </v-col>
       <v-col cols="12">
         <v-data-table
           :headers="headers"
@@ -186,6 +184,12 @@
           <template v-slot:item.profit="{ item }">
             <span :style="{color: item.profit < 0? 'red' : 'green'}">
               ₦{{ Math.abs(item.profit) | formatNumber }} </span>
+          </template>
+          <template v-slot:item.climateEffect.effect="{ item }">
+            <span v-if="item.climateEffect.effect">
+              {{ item.climateEffect.effect }}
+            </span>
+            <span v-else>&mdash;</span>
           </template>
         </v-data-table>
       </v-col>
@@ -234,12 +238,13 @@ export default {
         },
         { text: 'Eggs (crates)', value: 'eggs' },
         { text: 'Production %', value: 'productionPercent' },
+        { text: 'Expectancy', value: 'expectancy' },
         { text: 'Feed (kg)', value: 'feeds' },
         { text: 'Feed/animal (g)', value: 'feedPerAnimal' },
         { text: 'Mortality', value: 'mortality' },
-        { text: 'Mortality %', value: 'mortalityRate' },
         { text: 'Temperature', value: 'temperature' },
         { text: 'Humidity', value: 'humidity' },
+        { text: 'Climate effect', value: 'climateEffect.effect' },
         { text: 'Est. Profit', value: 'profit' },
       ]
     };
@@ -316,7 +321,7 @@ export default {
       this.waterData.data.push({ x: date, y: production.water });
       this.humidityData.data.push({ x: date, y: production.humidity });
       this.temperatureData.data.push({ x: date, y: production.temperature });
-      this.expectedProductionData.data.push({ x: date, y: Math.min(90, production.productionPercent + 10) });
+      this.expectedProductionData.data.push({ x: date, y: production.expectancy });
     }
   },
   filters: {

@@ -18,7 +18,7 @@
               <v-list-item v-on="on" dense color="primary">
                 <v-list-item-content>
                   <v-list-item-title>{{ item.name }}</v-list-item-title>
-                  <v-list-item-subtitle>{{ item.brand }} | {{ item.description }}</v-list-item-subtitle>
+                  <v-list-item-subtitle>{{ item.brand }} | {{ item.description | truncate }}</v-list-item-subtitle>
                 </v-list-item-content>
               </v-list-item>
             </template>
@@ -161,6 +161,14 @@ export default {
         .then(({ data }) => {
           this.medicaments = data;
         });
+    }
+  },
+  filters: {
+    truncate(string = '') {
+      if (string.length > 50) {
+        return `${string.substring(0, 50)}...`;
+      }
+      return string;
     }
   },
   created() {
