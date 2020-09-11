@@ -24,7 +24,18 @@ class Controller {
       batches.name AS batch, batches.initial_stock_count AS flockCount, batches.is_active AS isActive, breeds.type AS batchType,
       items.item_id AS itemId, items.item_name AS itemName, items.category AS itemCategory, items.size AS itemSize, items.unit AS itemUnit,
       production_items.id AS productionItemsId, productions.humidity AS humidity, productions.temperature AS temperature, 
-      vaccinations.*, DATEDIFF(productions.date, batches.move_in_date) + batches.move_in_age AS batchAge
+      vaccinations.administered_by AS vaccineAdministrator, vaccinations.notes AS vaccinationNotes, 
+      vaccinations.vaccination_id AS vaccinationId, vaccinations.vaccine_batch_no AS vaccineBatchNo,
+      vaccinations.method AS vaccinationMethod, vaccinations.vaccine_id AS vaccineId, 
+      vaccinations.dosage AS vaccineDosage, vaccinations.dosage_unit AS vaccineDosageUnit, 
+      vaccinations.total_dosage AS vaccineTotalDosage, vaccinations.no_of_birds AS vaccinatedBirds,
+      
+      medication.administered_by AS medicamentAdministrator, medication.notes AS medicationNotes, 
+      medication.medication_id AS medicationId, medication.medicament_batch_no AS medicamentBatchNo,
+      medication.method AS medicationMethod, medication.medicament_id AS medicamentId, medication.dosage AS medicamentDosage, 
+      medication.dosage_unit AS medicamentDosageUnit,
+         
+      DATEDIFF(productions.date, batches.move_in_date) + batches.move_in_age AS batchAge
     FROM productions 
     JOIN batches ON productions.batch_id = batches.batch_id
     JOIN breeds ON batches.breed_id = breeds.breed_id
@@ -32,11 +43,12 @@ class Controller {
     LEFT JOIN production_items ON productions.production_id = production_items.production_id
     LEFT JOIN items ON production_items.item_id = items.item_id
     LEFT JOIN vaccinations ON productions.production_id = vaccinations.production_id
+    LEFT JOIN medication ON productions.production_id = medication.production_id
     ${where.length > 0 ? ` WHERE ${where.join(' AND ')}` : ''}
     ORDER BY productions.date DESC;
 
 `)
-      .then(async ([productions,]) => {
+      .then(async ([productions]) => {
         productions = await this.processProduction(productions);
         return productions.map((production) => new ProductionSummary(production));
       });
@@ -279,13 +291,29 @@ class Controller {
           batchAge: production.batchAge,
           temperature: production.temperature,
           humidity: production.humidity,
-          vaccinations: [],
-          medications: []
+          vaccinations: new Map(),
+          medications: new Map()
         });
       }
 
       const productionGroup = productionMap.get(production.id);
+
       productionGroup.mortality.set(production.mortalityId, { count: production.mortalityCount });
+      if (production.vaccinationId) {
+        productionGroup.vaccinations.set(production.vaccinationId, {
+          batchNo: production.vaccineBatchNo,
+          dosage: production.vaccineDosage,
+          dosageUnit: production.vaccineDosageUnit,
+          totalDosage: production.vaccineTotalDosage,
+          vaccineId: production.vaccineId,
+          vaccinationId: production.vaccinationId,
+          vaccinationMethod: production.vaccinationMethod,
+          vaccinationNo: production.vaccinationNo,
+          administrator: production.vaccineAdministrator,
+          note: production.vaccinationNotes,
+          noOfBirds: production.vaccinatedBirds
+        });
+      }
       productionGroup.items.set(production.productionItemsId, {
         id: production.itemId,
         name: production.itemName,

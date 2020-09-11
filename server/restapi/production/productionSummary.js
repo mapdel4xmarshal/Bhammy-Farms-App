@@ -19,6 +19,8 @@ class ProductionSummary {
 
     properties.items = Array.from(properties.items.values());
     properties.mortality = Array.from(properties.mortality.values());
+    properties.vaccinations = Array.from(properties.vaccinations.values());
+    properties.medications = Array.from(properties.medications.values());
 
     this.vaccinations = properties.vaccinations;
     this.medications = properties.medications;
@@ -41,16 +43,17 @@ class ProductionSummary {
 
   set vaccinations(vaccinations) {
     this._production.vaccinations = vaccinations.map((vaccination) => ({
-      id: vaccination.vaccination_id,
-      vaccineBatchNo: vaccination.vaccine_batch_no,
+      id: vaccination.vaccinationId,
+      vaccineBatchNo: vaccination.vaccineBatchNo,
       dosage: vaccination.dosage,
-      dosageUnit: vaccination.dosage_unit,
-      totalDosage: vaccination.total_dosage,
-      noOfBirds: vaccination.no_of_birds,
-      vaccinationMethod: vaccination.method,
-      administeredBy: vaccination.administered_by,
-      reason: vaccination.notes,
-      vaccineId: vaccination.vaccine_id
+      dosageUnit: vaccination.dosageUnit,
+      totalDosage: vaccination.totalDosage,
+      vaccinationMethod: vaccination.vaccinationMethod,
+      administeredBy: vaccination.administrator,
+      reason: vaccination.note,
+      vaccineId: vaccination.vaccineId,
+      noOfBirds: vaccination.noOfBirds,
+      thumbnail: vaccination.thumbnail
     }));
   }
 
@@ -66,7 +69,7 @@ class ProductionSummary {
       dosageUnit: medication.dosage_unit,
       totalDosage: medication.total_dosage,
       noOfBirds: medication.no_of_birds,
-      vaccinationMethod: medication.method,
+      medicationMethod: medication.method,
       administeredBy: medication.administered_by,
       reason: medication.notes,
       medicamentId: medication.medicament_id

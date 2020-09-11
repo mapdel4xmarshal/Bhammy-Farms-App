@@ -56,30 +56,70 @@
         ></v-text-field>
       </v-col>
     </v-row>
-    <v-row class="mt-0 mb-3">
-      <v-col cols="12" md="6" sm="6" lg="3">
-        <v-card class="ma-auto elevation-1" height="100">
+
+    <v-toolbar class="pa-0" color="transparent elevation-0" dense>
+      <v-spacer/>
+      <v-btn-toggle
+        dense
+        rounded
+        class="pr-0"
+        v-model="mode"
+      >
+        <v-btn small>
+          Items sold
+        </v-btn>
+        <v-btn small>
+          Payment status
+        </v-btn>
+      </v-btn-toggle>
+    </v-toolbar>
+    <v-row class="mt-0 mb-3" v-if="!mode">
+      <v-col v-for="(summary, index) in incomeSummary" :key="index" class="pa-1">
+        <v-card outlined>
+          <v-list dense>
+            <v-list-item>
+              <v-list-item-avatar size="60">
+                <v-img :src="`/${summary.thumbnail}`"></v-img>
+              </v-list-item-avatar>
+
+              <v-list-item-content>
+                <v-list-item-title class="caption text-uppercase" style="color: rgb(114, 114, 114);">
+                  {{ summary.itemName }}</v-list-item-title>
+                <span class="body-2">{{ summary.quantity }} {{ summary.unit }}s
+                    </span>
+                <v-list-item-title class="title">
+                  <strong>₦{{ summary.itemAmount | formatNumber }}</strong>
+                </v-list-item-title>
+              </v-list-item-content>
+            </v-list-item>
+          </v-list>
+        </v-card>
+      </v-col>
+    </v-row>
+    <v-row class="mt-0 mb-3" v-else>
+      <v-col cols="12" md="6" sm="6" lg="3" class="pa-1">
+        <v-card class="ma-auto" height="100" outlined>
           <v-card-text class="pb-0">Paid orders</v-card-text>
           <v-card-title class="pt-1 display-1 text-md-h5 text-lg-h5">
             ₦ {{ paidAmount | formatNumber }}</v-card-title>
         </v-card>
       </v-col>
-      <v-col cols="12" md="6" sm="6" lg="3">
-        <v-card class="ma-auto elevation-1" height="100">
+      <v-col cols="12" md="6" sm="6" lg="3" class="pa-1">
+        <v-card class="ma-auto" height="100" outlined>
           <v-card-text class="pb-0">Unpaid orders</v-card-text>
           <v-card-title class="pt-1 display-1 text-md-h5 text-lg-h5">
             ₦ {{ unpaidAmount | formatNumber }}</v-card-title>
         </v-card>
       </v-col>
-      <v-col cols="12" md="6" sm="6" lg="3">
-        <v-card class="ma-auto elevation-1" height="100">
+      <v-col cols="12" md="6" sm="6" lg="3" class="pa-1">
+        <v-card class="ma-auto" height="100" outlined>
           <v-card-text class="pb-0">Partial orders</v-card-text>
           <v-card-title class="pt-1 display-1 text-md-h5 text-lg-h5">
             ₦ {{ partialAmount | formatNumber }}</v-card-title>
         </v-card>
       </v-col>
-      <v-col cols="12" md="6" sm="6" lg="3">
-        <v-card class="ma-auto elevation-1" height="100">
+      <v-col cols="12" md="6" sm="6" lg="3" class="pa-1">
+        <v-card class="ma-auto" height="100" outlined>
           <v-card-text class="pb-0">Total Amount</v-card-text>
           <v-card-title class="pt-1 display-1 text-md-h5 text-lg-h5">
             ₦ {{ totalAmount | formatNumber }}</v-card-title>
@@ -123,10 +163,15 @@ export default {
       search: '',
       paymentStatus: null,
       menu: false,
+      mode: 0,
       totalAmount: 0,
       unpaidAmount: 0,
       paidAmount: 0,
       partialAmount: 0,
+      incomeSummary: [
+        { name: 'Total Eggs Sold', value: 5678888 },
+        { name: 'Total Eggs Sold', value: 5678888 },
+        { name: 'Total Eggs Sold', value: 5678888 }],
       headers: [
         {
           text: 'ID',
@@ -166,6 +211,7 @@ export default {
     },
     updatePaymentStatus() {
       this.getInvoices();
+      this.getInvoiceSummary();
     },
     resetPaymentStatus() {
       this.paymentStatus = null;
@@ -192,8 +238,22 @@ export default {
           });
         });
     },
+    getInvoiceSummary() {
+      const filters = [];
+      if (this.date && this.date.length === 1) filters.push(`date=${this.date[0]}`);
+      if (this.date && this.date.length === 2) filters.push(`after=${this.date[0]}&before=${this.date[1]}`);
+      if (this.paymentStatus) filters.push(`paymentStatus=${this.paymentStatus}`);
+      this.incomeSummary = [];
+
+      axios.get(`/invoices/summary?${filters.join('&')}`)
+        .then(({ data }) => {
+          console.log(data);
+          this.incomeSummary = data;
+        });
+    },
     updateDate() {
       this.$refs.menu.save(this.date);
+      this.getInvoiceSummary();
       this.getInvoices();
     }
   },
@@ -207,6 +267,7 @@ export default {
   },
   created() {
     this.getInvoices();
+    this.getInvoiceSummary();
   }
 };
 </script>

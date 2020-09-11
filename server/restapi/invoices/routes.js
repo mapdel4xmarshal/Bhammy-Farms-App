@@ -17,6 +17,20 @@ router.get('/', async (req, res) => {
   }
 });
 
+router.get('/summary', async (req, res) => {
+  try {
+    const summary = await controllers.getInvoicesSummary(req.query);
+    res.json(summary);
+  } catch (e) {
+    console.log(e);
+    res.status(500)
+      .json({
+        error: 'Unable to process request. Please try again later!',
+        status: 500
+      });
+  }
+});
+
 router.post('/', async (req, res) => {
   try {
     const response = await controllers.addInvoice(req.user, req.body);

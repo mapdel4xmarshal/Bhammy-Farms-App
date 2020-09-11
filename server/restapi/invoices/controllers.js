@@ -6,9 +6,7 @@ const {
 const Invoice = require('./invoice');
 
 class Controller {
-  async getInvoices({
-                      before, after, paymentStatus, date
-                    }) {
+  async getInvoices({ before, after, paymentStatus, date }) {
     const where = {};
     if (before || after) where.invoice_date = {};
     if (date) where.invoice_date = date;
@@ -112,6 +110,28 @@ class Controller {
       attributes: { exclude: ['createdAt', 'updatedAt'] }
     })
       .then((invoice) => invoice.invoice_id);
+  }
+
+  async getInvoicesSummary({ before, after, date, paymentStatus }) {
+    let where = [];
+    if (date) where.push(`invoices.invoice_date = '${date}'`);
+    if (before) where.push(`invoices.invoice_date <= '${before}'`);
+    if (after) where.push(`invoices.invoice_date >= '${after}'`);
+    if (paymentStatus) where.push(`invoices. >= '${date}'`);
+
+    const clause = where.length > 0? `where ${where.join(' AND ')}` : '';
+
+    return sequelize.query(`
+      SELECT items.item_name AS itemName, SUM(invoice_items.quantity) AS quantity, items.image AS thumbnail, 
+      SUM(((invoice_items.quantity  / items.size) * invoice_items.item_price) - invoice_items.discount) AS itemAmount,
+      invoice_items.item_id AS itemId, items.unit FROM invoices
+      JOIN invoice_items ON invoices.invoice_id = invoice_items.invoice_id
+      JOIN items ON invoice_items.item_id = items.item_id
+      ${clause} group by invoice_items.item_id;
+    `)
+      .then(([summary,]) => {
+        return summary;
+      });
   }
 }
 

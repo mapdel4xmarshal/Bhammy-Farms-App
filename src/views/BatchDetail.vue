@@ -50,23 +50,42 @@
         </v-slide-group>
       </v-col>
     </v-row>
-    <v-row>
-      <v-col cols="12" md="3">
-        <metric-card title="Eggs Produced" :value="`${totalEggs} crates`" img="/img/egg.png"/>
-      </v-col>
+    <transition name="fade" mode="out-in">
+      <v-row v-if="!mode" key="1">
+        <v-col cols="12" md="3">
+          <metric-card title="Eggs Produced" :value="`${totalEggs} crates`" img="/img/egg.png"/>
+        </v-col>
 
-      <v-col cols="12" md="3">
-        <metric-card title="Birds" :value="`${totalBirds} birds`" img="/img/hen.png"/>
-      </v-col>
+        <v-col cols="12" md="3">
+          <metric-card title="Birds" :value="`${totalBirds} birds`" img="/img/hen.png"/>
+        </v-col>
 
-      <v-col cols="12" md="3">
-        <metric-card title="Feeds Consumed" :value="`${totalFeeds} kg`" img="/img/feed.png"/>
-      </v-col>
+        <v-col cols="12" md="3">
+          <metric-card title="Feeds Consumed" :value="`${totalFeeds} kg`" img="/img/feed.png"/>
+        </v-col>
 
-      <v-col cols="12" md="3">
-        <metric-card title="Morality" :value="`${totalMortality} bird(s)`" img="/img/dead.png"/>
-      </v-col>
-    </v-row>
+        <v-col cols="12" md="3">
+          <metric-card title="Morality" :value="`${totalMortality} bird(s)`" img="/img/dead.png"/>
+        </v-col>
+      </v-row>
+      <v-row v-else key="2">
+        <v-col cols="12" md="3">
+          <metric-card title="Egg sale" :value="`${totalEggs}`" img="/img/egg.png"/>
+        </v-col>
+
+        <v-col cols="12" md="3">
+          <metric-card title="Feed costs" :value="`${totalBirds}`" img="/img/hen.png"/>
+        </v-col>
+
+        <v-col cols="12" md="3">
+          <metric-card title="Other expenses" :value="`${totalFeeds} kg`" img="/img/feed.png"/>
+        </v-col>
+
+        <v-col cols="12" md="3">
+          <metric-card title="Total profit" :value="`${totalMortality} bird(s)`" img="/img/dead.png"/>
+        </v-col>
+      </v-row>
+    </transition>
     <v-row>
       <v-col cols="12" md="9">
         <v-tabs
@@ -82,10 +101,12 @@
           <v-tab>Water</v-tab>
 
           <v-tab-item>
+            <v-card outlined tile>
             <chart
               :series="[productionData, temperatureData, humidityData, expectedProductionData]"
               legend-enabled
               name="production"></chart>
+            </v-card>
           </v-tab-item>
           <v-tab-item>
             <chart :series="[eggsData]" name="Eggs"></chart>
@@ -103,60 +124,31 @@
       </v-col>
       <v-col cols="12" md="3">
         <v-card-title class="subtitle-1 pl-0 pb-1">Treatment history</v-card-title>
-        <v-card outlined height="380">
-          <v-list three-line>
-            <template>
-              <v-list-item>
-                <v-list-item-avatar>
-                  AUG, 20
-                </v-list-item-avatar>
-
-                <v-list-item-content>
-                  <v-list-item-title>Lasota</v-list-item-title>
-                  <v-list-item-subtitle>Reduction in production and weak egg shell.</v-list-item-subtitle>
-                </v-list-item-content>
-              </v-list-item>
-              <v-divider/>
-            </template>
-            <template>
-              <v-list-item>
-                <v-list-item-avatar>
-                  AUG, 20
-                </v-list-item-avatar>
-
-                <v-list-item-content>
-                  <v-list-item-title>Lasota</v-list-item-title>
-                  <v-list-item-subtitle>Reduction in production and weak egg shell.</v-list-item-subtitle>
-                </v-list-item-content>
-              </v-list-item>
-              <v-divider/>
-            </template>
-            <template>
-              <v-list-item>
-                <v-list-item-avatar>
-                  AUG, 21
-                </v-list-item-avatar>
-
-                <v-list-item-content>
-                  <v-list-item-title>Lasota</v-list-item-title>
-                  <v-list-item-subtitle>Reduction in production and weak egg shell.</v-list-item-subtitle>
-                </v-list-item-content>
-              </v-list-item>
-              <v-divider/>
-            </template>
-            <template>
-              <v-list-item>
-                <v-list-item-avatar>
-                  AUG, 22
-                </v-list-item-avatar>
-
-                <v-list-item-content>
-                  <v-list-item-title>Miavit</v-list-item-title>
-                  <v-list-item-subtitle>Post vaccination requirements.</v-list-item-subtitle>
-                </v-list-item-content>
-              </v-list-item>
-            </template>
-          </v-list>
+        <v-card outlined height="400" class="overflow-y-auto pa-1" color="transparent" tile>
+          <v-alert
+            v-for="(treatment, date) in treatments" :key="date"
+            color="primary"
+            border="left"
+            elevation="1"
+            colored-border
+            icon="mdi-twitter"
+          >
+            <v-chip small>
+              {{ date }}
+            </v-chip>
+            <div v-for="(item, index) in treatment" :key="index">
+              <div :key="index">
+                <strong class="text-uppercase body-2">{{ item.type }}</strong>   <br>
+                <span class="caption">{{ item.vaccineName }}, {{ item.vaccineBrand }}</span>
+                <v-divider
+                  class="my-4"
+                ></v-divider>
+              </div>
+            </div>
+          </v-alert>
+          <div class="d-flex justify-center pa-5 caption" v-if="!Object.keys(treatments).length">
+              No treatments found.
+          </div>
         </v-card>
       </v-col>
       <v-col cols="12">
@@ -246,7 +238,8 @@ export default {
         { text: 'Humidity', value: 'humidity' },
         { text: 'Climate effect', value: 'climateEffect.effect' },
         { text: 'Est. Profit', value: 'profit' },
-      ]
+      ],
+      treatments: {}
     };
   },
   components: { Chart, MetricCard },
@@ -259,6 +252,12 @@ export default {
         fillOpacity: 0.1,
         data: []
       };
+    },
+    getTreatments() {
+      axios.get(`/batches/${this.$route.params.id}/treatments`)
+        .then(({ data }) => {
+          this.treatments = data;
+        });
     },
     getProduction() {
       const filters = [];
@@ -288,7 +287,7 @@ export default {
             { name: 'Move in age', value: `${parseInt(+data.moveInAge / 7, 10)} weeks` },
             { name: 'Move in count', value: `${this.$options.filters.formatNumber(data.initialStock, 0)} birds` },
             { name: 'Current age', value: `${parseInt(+data.currentAge / 7, 10)} weeks` },
-            { name: 'Move in cost', value: `₦${this.$options.filters.formatNumber(data.totalCost, 0)}` },
+            { name: 'Move in cost', value: `₦${this.$options.filters.formatNumber(data.totalCost, 0)}` }
           ];
         });
     },
@@ -332,6 +331,7 @@ export default {
   mounted() {
     this.getProduction();
     this.getBatch();
+    this.getTreatments();
   }
 };
 </script>
@@ -340,5 +340,12 @@ export default {
  .v-toolbar__content {
    padding-left: 0 !important;
    padding-right: 0 !important;
+ }
+
+ .fade-enter-active, .fade-leave-active {
+   transition: opacity 250ms;
+ }
+ .fade-enter, .fade-leave-to /* .fade-leave-active below version 2.1.8 */ {
+   opacity: 0.2;
  }
 </style>

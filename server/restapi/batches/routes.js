@@ -25,6 +25,16 @@ router.get('/:batchId', async (req, res) => {
   res.json(batch);
 });
 
+router.get('/:batchId/treatments', async (req, res) => {
+  const treatments = await controllers.getBatchTreatments(req.params.batchId);
+  res.json(treatments);
+});
+
+router.get('/:batchId/expense-summary', async (req, res) => {
+  const treatments = await controllers.getExpenseSummary(req.params.batchId);
+  res.json(treatments);
+});
+
 router.patch('/:batchId', async (req, res) => {
   const batch = await controllers.updateBatch(req.user, req.body);
   res.json(batch);
