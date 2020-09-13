@@ -1,8 +1,9 @@
 const {
   Batch, Breed, House, Production, Mortality, Location, Source, Party, Sequelize: {
     Op, literal, fn, col
-  }, sequelize, ProductionItems
+  }, sequelize, Expense, Item
 } = require('../../models');
+const BatchProduction = require('./BatchProduction');
 
 class Controller {
   async getBatches({ house, batch }) {
@@ -121,7 +122,10 @@ class Controller {
       description: batch.note,
       is_active: moveOutDate > new Date(),
       house_id: batch.houseId
-    }, { user, resourceId: 'batch_id' })
+    }, {
+      user,
+      resourceId: 'batch_id'
+    })
       .then((newBatch) => newBatch.batch_id)
       .catch((error) => {
         console.log(error); // todo: add proper logger
@@ -158,7 +162,8 @@ class Controller {
       .then(async ([treatments]) => {
         const res = await this.processTreatments(treatments);
         return res;
-      }).catch((error) => {
+      })
+      .catch((error) => {
         console.log(error); // todo: add proper logger
         return {
           error: 'Unable to process request. Please try again later!',
@@ -168,15 +173,36 @@ class Controller {
   }
 
   async getBatchById(batchId) {
-    const batches = await this.getBatches({ batch: batchId});
+    const batches = await this.getBatches({ batch: batchId });
     if (Array.isArray(batches)) return batches[0];
     return batches;
   }
 
-  async getExpenseSummary(batchId) {
-    return Batch.findByPk(batchId, {
+  async getIncomeSummary(batchId) {
+    const expenses = await Expense.findAll({
+      where: { batch_id: batchId },
+      attributes: [[fn('SUM', col('amount')), 'amount']]
+    });
 
-    })
+    return sequelize.query(`
+      SELECT SUM(production_items.quantity * production_items.price) AS amount, 
+        items.category 
+      FROM productions 
+      JOIN production_items ON productions.production_id = production_items.production_id 
+      JOIN items ON production_items.item_id = items.item_id
+      WHERE productions.batch_id = '${batchId}'
+      GROUP BY items.category;`)
+      .then(([summary,]) => [...summary, {
+        category: 'expense',
+        amount: expenses[0].amount
+      }])
+      .catch((error) => {
+        console.log(error); // todo: add proper logger
+        return {
+          error: 'Unable to process request. Please try again later!',
+          status: 500
+        };
+      });
   }
 
   async updateBatch(BatchId) {
@@ -187,48 +213,71 @@ class Controller {
       .then((Batch) => Batch);
   }
 
+  async getProduction(batchId) {
+    return Production.findAll({
+      where: {
+        batch_id: batchId
+      },
+      attributes: [
+        ['production_id', 'id'], 'date', 'humidity', 'temperature', 'weatherCondition', 'water', 'note'],
+      include: [
+        {
+          model: Item,
+          attributes: [
+            ['item_id', 'id'],['item_name', 'name'], 'category', 'brand', 'size', 'unit', ['image', 'thumbnail'],
+            'description'
+          ],
+          through: {
+            attributes: ['quantity', 'price' ]
+          }
+        }
+      ]
+    })
+      .then((productions) => productions.map((production) => new BatchProduction(production.toJSON())));
+  }
+
   async processTreatments(treatments) {
     const normalizedTreatments = {};
     treatments.forEach((treatment) => {
-       if (!normalizedTreatments[treatment.date] && (treatment.vaccinationId || treatment.medicationId)) {
-         normalizedTreatments[treatment.date] = [];
-       }
-       if (treatment.vaccinationId) {
-         normalizedTreatments[treatment.date].push({
-           type: "vaccination",
-           administeredBy: treatment.vaccineAdministrator,
-           note: treatment.vaccinationNotes,
-           id: treatment.vaccinationId,
-           batchNo: treatment.vaccineBatchNo,
-           method: treatment.vaccinationMethod,
-           vaccineId: treatment.vaccineId,
-           dosage: treatment.vaccineDosage,
-           dosageUnit: treatment.vaccineDosageUnit,
-           totalDosage: treatment.vaccineTotalDosage,
-           noOfBirds: treatment.vaccinatedBirds,
-           vaccineName: treatment.vaccineName,
-           vaccineBrand: treatment.vaccineBrand,
-           thumbnail: treatment.vaccineThumbnail
-         });
-       }
-       if (treatment.medicationId) {
-         normalizedTreatments[treatment.date].push({
-           type: "medication",
-           administeredBy: treatment.medicamentAdministrator,
-           note: treatment.medicationNotes,
-           id: treatment.medicationId,
-           batchNo: treatment.medicamentBatchNo,
-           method: treatment.medicationMethod,
-           vaccineId: treatment.medicamentId,
-           dosage: treatment.medicamentDosage,
-           dosageUnit: treatment.medicamentDosageUnit,
-           totalDosage: treatment.medicamentTotalDosage,
-           noOfBirds: treatment.medicatedBirds,
-           medicamentName: treatment.medicamentName,
-           medicamentBrand: treatment.medicamentBrand,
-           thumbnail: treatment.medicamentThumbnail
-         });
-       }
+      if (!normalizedTreatments[treatment.date] && (treatment.vaccinationId || treatment.medicationId)) {
+        normalizedTreatments[treatment.date] = [];
+      }
+      if (treatment.vaccinationId) {
+        normalizedTreatments[treatment.date].push({
+          type: 'vaccination',
+          administeredBy: treatment.vaccineAdministrator,
+          note: treatment.vaccinationNotes,
+          id: treatment.vaccinationId,
+          batchNo: treatment.vaccineBatchNo,
+          method: treatment.vaccinationMethod,
+          vaccineId: treatment.vaccineId,
+          dosage: treatment.vaccineDosage,
+          dosageUnit: treatment.vaccineDosageUnit,
+          totalDosage: treatment.vaccineTotalDosage,
+          noOfBirds: treatment.vaccinatedBirds,
+          vaccineName: treatment.vaccineName,
+          vaccineBrand: treatment.vaccineBrand,
+          thumbnail: treatment.vaccineThumbnail
+        });
+      }
+      if (treatment.medicationId) {
+        normalizedTreatments[treatment.date].push({
+          type: 'medication',
+          administeredBy: treatment.medicamentAdministrator,
+          note: treatment.medicationNotes,
+          id: treatment.medicationId,
+          batchNo: treatment.medicamentBatchNo,
+          method: treatment.medicationMethod,
+          vaccineId: treatment.medicamentId,
+          dosage: treatment.medicamentDosage,
+          dosageUnit: treatment.medicamentDosageUnit,
+          totalDosage: treatment.medicamentTotalDosage,
+          noOfBirds: treatment.medicatedBirds,
+          medicamentName: treatment.medicamentName,
+          medicamentBrand: treatment.medicamentBrand,
+          thumbnail: treatment.medicamentThumbnail
+        });
+      }
     });
     return normalizedTreatments;
   }

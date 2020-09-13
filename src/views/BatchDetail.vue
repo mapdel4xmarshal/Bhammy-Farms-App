@@ -1,17 +1,19 @@
 <template>
   <v-sheet color="transparent">
-    <div class="d-flex header" no-gutters>
+    <Batch :active="editBatch" @update="handleBatchEvent" title="Edit Batch" v-model="batch"/>
+    <div class="d-flex header mb-2" no-gutters>
       <div class="mr-auto">
         <v-btn tile text class="pl-0" color="primary" :to="{ name: batchesRoute }">
           <v-icon>mdi-chevron-left</v-icon> Back
         </v-btn>
       </div>
       <div class="ml-auto">
-        <v-btn tile color="primary">
+        <v-btn tile color="primary" @click="editBatch = true" disabled>
           <v-icon small class="mr-1">mdi-pencil</v-icon>Edit
         </v-btn>
       </div>
     </div>
+    <v-divider/>
     <v-toolbar class="mt-4 pa-0" color="transparent elevation-0">
       <v-toolbar-title class="display-1">{{ batch.name }}
         <sup class="subtitle-1"><v-chip small>{{ batch.status }}</v-chip></sup>
@@ -53,36 +55,36 @@
     <transition name="fade" mode="out-in">
       <v-row v-if="!mode" key="1">
         <v-col cols="12" md="3">
-          <metric-card title="Eggs Produced" :value="`${totalEggs} crates`" img="/img/egg.png"/>
+          <metric-card title="Eggs Produced" :value="totalEggs" :digits="0" unit="crates" img="/img/egg.png"/>
         </v-col>
 
         <v-col cols="12" md="3">
-          <metric-card title="Birds" :value="`${totalBirds} birds`" img="/img/hen.png"/>
+          <metric-card title="Birds" :value="totalBirds" :digits="0" unit="birds" img="/img/hen.png"/>
         </v-col>
 
         <v-col cols="12" md="3">
-          <metric-card title="Feeds Consumed" :value="`${totalFeeds} kg`" img="/img/feed.png"/>
+          <metric-card title="Feeds Consumed" :value="totalFeeds" :digits="0" unit="kg" img="/img/feed.png"/>
         </v-col>
 
         <v-col cols="12" md="3">
-          <metric-card title="Morality" :value="`${totalMortality} bird(s)`" img="/img/dead.png"/>
+          <metric-card title="Morality" :value="totalMortality" :digits="0" unit="bird(s)" img="/img/dead.png"/>
         </v-col>
       </v-row>
       <v-row v-else key="2">
         <v-col cols="12" md="3">
-          <metric-card title="Egg sale" :value="`${totalEggs}`" img="/img/egg.png"/>
+          <metric-card title="Egg sale" :value="eggSales" value-prefix="₦"/>
         </v-col>
 
         <v-col cols="12" md="3">
-          <metric-card title="Feed costs" :value="`${totalBirds}`" img="/img/hen.png"/>
+          <metric-card title="Feed costs" :value="feedCosts" value-prefix="₦"/>
         </v-col>
 
         <v-col cols="12" md="3">
-          <metric-card title="Other expenses" :value="`${totalFeeds} kg`" img="/img/feed.png"/>
+          <metric-card title="Other expenses" :value="totalExpenses" value-prefix="₦"/>
         </v-col>
 
         <v-col cols="12" md="3">
-          <metric-card title="Total profit" :value="`${totalMortality} bird(s)`" img="/img/dead.png"/>
+          <metric-card title="Total profit" :value="profit" value-prefix="₦"/>
         </v-col>
       </v-row>
     </transition>
@@ -109,16 +111,17 @@
             </v-card>
           </v-tab-item>
           <v-tab-item>
-            <chart :series="[eggsData]" name="Eggs"></chart>
+            <chart :series="[eggsData]" name="Eggs" unit=""
+                   :y-axis-label-formatter="chartFormatter" y-axis-unit="crates"></chart>
           </v-tab-item>
           <v-tab-item>
-            <chart :series="[feedsData]" name="Feeds"></chart>
+            <chart :series="[feedsData]" name="Feeds" y-axis-unit="kg"></chart>
           </v-tab-item>
           <v-tab-item>
-            <chart :series="[populationData]" name="Feeds"></chart>
+            <chart :series="[populationData]" name="Mortality"></chart>
           </v-tab-item>
           <v-tab-item>
-            <chart :series="[waterData]" name="Feeds"></chart>
+            <chart :series="[waterData]" name="Water" y-axis-unit="l"></chart>
           </v-tab-item>
         </v-tabs>
       </v-col>
@@ -131,7 +134,7 @@
             border="left"
             elevation="1"
             colored-border
-            icon="mdi-twitter"
+            icon="mdi-medical-bag"
           >
             <v-chip small>
               {{ date }}
@@ -142,6 +145,7 @@
                 <span class="caption">{{ item.vaccineName }}, {{ item.vaccineBrand }}</span>
                 <v-divider
                   class="my-4"
+                  v-if="index < treatment.length - 1"
                 ></v-divider>
               </div>
             </div>
@@ -152,38 +156,87 @@
         </v-card>
       </v-col>
       <v-col cols="12">
-        <v-data-table
-          :headers="headers"
-          :items="productions"
-          no-data-text="No production record found."
-          class="elevation-1 table-cursor"
-        >
-          <template v-slot:item.amount="{ item }">
-            ₦{{ item.amount | formatNumber }}
-          </template>
-          <template v-slot:item.humidity="{ item }">
-            <span v-if="item.humidity">
-              {{ item.humidity }}%
-            </span>
-            <span v-else>&mdash;</span>
-          </template>
-          <template v-slot:item.temperature="{ item }">
-            <span v-if="item.temperature">
-              {{ item.temperature }}°C
-            </span>
-            <span v-else>&mdash;</span>
-          </template>
-          <template v-slot:item.profit="{ item }">
-            <span :style="{color: item.profit < 0? 'red' : 'green'}">
-              ₦{{ Math.abs(item.profit) | formatNumber }} </span>
-          </template>
-          <template v-slot:item.climateEffect.effect="{ item }">
-            <span v-if="item.climateEffect.effect">
-              {{ item.climateEffect.effect }}
-            </span>
-            <span v-else>&mdash;</span>
-          </template>
-        </v-data-table>
+        <v-tabs
+            background-color="transparent"
+            color="primary accent-4"
+            show-arrows
+          >
+            <v-tabs-slider color="primary"></v-tabs-slider>
+            <v-tab>Production</v-tab>
+            <v-tab>Eggs</v-tab>
+            <v-tab>Feed</v-tab>
+
+            <v-tab-item>
+              <v-data-table
+                :headers="headers"
+                :items="productions"
+                no-data-text="No production record found."
+                class="elevation-1 table-cursor"
+              >
+                <template v-slot:item.amount="{ item }">
+                  ₦{{ item.amount | formatNumber }}
+                </template>
+                <template v-slot:item.humidity="{ item }">
+                  <span v-if="item.humidity">
+                    {{ item.humidity }}%
+                  </span>
+                  <span v-else>&mdash;</span>
+                </template>
+                <template v-slot:item.temperature="{ item }">
+                  <span v-if="item.temperature">
+                    {{ item.temperature }}°C
+                  </span>
+                  <span v-else>&mdash;</span>
+                </template>
+                <template v-slot:item.profit="{ item }">
+                  <span :style="{color: item.profit < 0? 'red' : 'green'}">
+                    ₦{{ Math.abs(item.profit) | formatNumber }} </span>
+                </template>
+                <template v-slot:item.climateEffect.effect="{ item }">
+                  <span v-if="item.climateEffect.effect">
+                    {{ item.climateEffect.effect }}
+                  </span>
+                  <span v-else>&mdash;</span>
+                </template>
+              </v-data-table>
+            </v-tab-item>
+          <v-tab-item>
+            <v-data-table
+              :headers="eggInsightHeaders"
+              :items="eggInsights"
+              no-data-text="No egg records found."
+              class="elevation-1 table-cursor"
+            >
+              <template v-slot:[`item.${header.value}`]="{ item }" v-for="header in eggInsightHeaders">
+                <span v-if="header.value !== 'date'" :key="header.text">
+                  <span v-if="item[header.value]">
+                    {{ item[header.value] | formatNumber }} creates
+                  </span>
+                  <span v-else>&mdash;</span>
+                </span>
+                <span v-else :key="header.text">{{ item[header.value] }}</span>
+              </template>
+            </v-data-table>
+          </v-tab-item>
+          <v-tab-item>
+            <v-data-table
+              :headers="feedInsightHeaders"
+              :items="feedInsights"
+              no-data-text="No feed records found."
+              class="elevation-1 table-cursor"
+            >
+              <template v-slot:[`item.${header.value}`]="{ item }" v-for="header in feedInsightHeaders">
+                <span v-if="header.value !== 'date'" :key="header.text">
+                  <span v-if="item[header.value]">
+                    {{ item[header.value] | formatNumber }} kg
+                  </span>
+                  <span v-else>&mdash;</span>
+                </span>
+                <span v-else :key="header.text">{{ item[header.value] }}</span>
+              </template>
+            </v-data-table>
+          </v-tab-item>
+          </v-tabs>
       </v-col>
     </v-row>
   </v-sheet>
@@ -194,6 +247,7 @@ import axios from '../plugins/axios';
 import ROUTES from '../router/routeNames';
 import MetricCard from '../components/MetricCard.vue';
 import Chart from '../components/Chart.vue';
+import Batch from '../components/Batch.vue';
 
 export default {
   name: 'BatchDetail',
@@ -211,15 +265,19 @@ export default {
       totalMortality: 0,
       totalBirds: 0,
       productions: [],
+      eggSales: 0,
+      feedCosts: 0,
+      totalExpenses: 0,
       initialPopulation: 0,
       batchInfo: [],
-      productionData: this.baseData('Production'),
-      eggsData: this.baseData('Egg'),
-      feedsData: this.baseData('Feed'),
-      waterData: this.baseData('Water'),
-      populationData: this.baseData('Population'),
-      humidityData: this.baseData('Humidity', '#37878f'),
-      temperatureData: this.baseData('Temperature', '#616161'),
+      editBatch: false,
+      productionData: this.baseData('Production', '-'),
+      eggsData: this.baseData('Egg', 'crate'),
+      feedsData: this.baseData('Feed', 'kg'),
+      waterData: this.baseData('Water', 'liter'),
+      populationData: this.baseData('Population', 'bird'),
+      humidityData: this.baseData('Humidity', '%', '#37878f'),
+      temperatureData: this.baseData('Temperature', '°C', '#616161'),
       expectedProductionData: this.baseData('Projected Production', '#8f8f8f'),
       headers: [
         {
@@ -239,14 +297,39 @@ export default {
         { text: 'Climate effect', value: 'climateEffect.effect' },
         { text: 'Est. Profit', value: 'profit' },
       ],
-      treatments: {}
+      treatments: {},
+      eggInsights: [],
+      feedInsights: [],
+      feedInsightHeaders: [{
+        text: 'Date',
+        align: 'start',
+        sortable: true,
+        value: 'date',
+      }],
+      eggInsightHeaders: [{
+        text: 'Date',
+        align: 'start',
+        sortable: true,
+        value: 'date',
+      }]
     };
   },
-  components: { Chart, MetricCard },
+  components: { Batch, Chart, MetricCard },
   methods: {
-    baseData(name, color = '#7f2775') {
+    chartFormatter() {
+      return function () {
+        return `${new Intl.NumberFormat('en-US', { minimumFractionDigits: 0 }).format(this.value / 1000)}k`;
+      };
+    },
+    handleBatchEvent(state) {
+      this.snackbar = state;
+      this.editBatch = false;
+
+      if (state) this.updateSections();
+    },
+    baseData(name, unit, color = '#7f2775') {
       return {
-        name,
+        name: `${name} [${unit}]`,
         type: 'areaspline',
         color,
         fillOpacity: 0.1,
@@ -271,6 +354,37 @@ export default {
           this.computeSummary(data);
         });
     },
+    getBatchProduction() {
+      axios.get(`/batches/${this.$route.params.id}/productions`)
+        .then(({ data }) => {
+          const uniqueHeaders = {};
+          data.forEach((production, index) => {
+            let info = {};
+
+            this.eggInsights.push({
+              date: production.date
+            });
+            this.feedInsights.push({
+              date: production.date
+            });
+
+            production.items.forEach((item) => {
+              info = { ...item };
+              const category = info.category.toLowerCase();
+              if (!uniqueHeaders[category]) {
+                uniqueHeaders[category] = {};
+              }
+              uniqueHeaders[category][info.name] = {
+                text: info.name,
+                value: info.name
+              };
+              this[`${category}Insights`][index][info.name] = info.quantity;
+            });
+          });
+          this.eggInsightHeaders = [...this.eggInsightHeaders, ...Object.values(uniqueHeaders.egg)];
+          this.feedInsightHeaders = [...this.feedInsightHeaders, ...Object.values(uniqueHeaders.feed)];
+        });
+    },
     getBatch() {
       axios.get(`/batches/${this.$route.params.id}`)
         .then(({ data }) => {
@@ -291,6 +405,21 @@ export default {
           ];
         });
     },
+    getIncomeSummary() {
+      this.eggSales = 0;
+      this.feedCosts = 0;
+      this.totalExpenses = 0;
+
+      axios.get(`/batches/${this.$route.params.id}/income-summary`)
+        .then(({ data }) => {
+          data.forEach((item) => {
+            if (item.category.toLowerCase() === 'egg') this.eggSales = item.amount;
+            if (item.category.toLowerCase() === 'feed') this.feedCosts = item.amount;
+            if (item.category.toLowerCase() === 'expense') this.totalExpenses = item.amount;
+          });
+          this.profit = this.eggSales - this.feedCosts - this.totalExpenses;
+        });
+    },
     computeSummary(productions) {
       this.totalFeeds = 0;
       this.totalEggs = 0;
@@ -305,11 +434,6 @@ export default {
         this.initialPopulation = production.initialPopulation;
         this.curateChartData(production);
       });
-
-      this.totalFeeds = this.$options.filters.formatNumber(this.totalFeeds, 0);
-      this.totalEggs = this.$options.filters.formatNumber(this.totalEggs, 0);
-      this.totalMortality = this.$options.filters.formatNumber(this.totalMortality, 0);
-      this.totalBirds = this.$options.filters.formatNumber(this.initialPopulation - this.totalMortality, 0);
     },
     curateChartData(production) {
       const date = new Date(production.date).getTime();
@@ -321,6 +445,13 @@ export default {
       this.humidityData.data.push({ x: date, y: production.humidity });
       this.temperatureData.data.push({ x: date, y: production.temperature });
       this.expectedProductionData.data.push({ x: date, y: production.expectancy });
+    },
+    updateSections() {
+      this.getProduction();
+      this.getBatch();
+      this.getTreatments();
+      this.getIncomeSummary();
+      this.getBatchProduction();
     }
   },
   filters: {
@@ -329,9 +460,7 @@ export default {
     }
   },
   mounted() {
-    this.getProduction();
-    this.getBatch();
-    this.getTreatments();
+    this.updateSections();
   }
 };
 </script>

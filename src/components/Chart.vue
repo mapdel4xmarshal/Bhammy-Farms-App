@@ -43,6 +43,9 @@ export default {
     name: {
       type: String
     },
+    yAxisLabelFormatter: {
+      type: Function
+    },
     series: {
       type: Array
     },
@@ -55,6 +58,7 @@ export default {
     options() {
       const options = { ...this.chartOptions };
       options.legend.enabled = this.legendEnabled;
+      if (this.yAxisLabelFormatter) options.yAxis.labels = { formatter: this.yAxisLabelFormatter() };
       options.series = this.series;
       return options;
     }

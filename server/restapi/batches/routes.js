@@ -30,9 +30,14 @@ router.get('/:batchId/treatments', async (req, res) => {
   res.json(treatments);
 });
 
-router.get('/:batchId/expense-summary', async (req, res) => {
-  const treatments = await controllers.getExpenseSummary(req.params.batchId);
-  res.json(treatments);
+router.get('/:batchId/income-summary', async (req, res) => {
+  const summary = await controllers.getIncomeSummary(req.params.batchId);
+  res.json(summary);
+});
+
+router.get('/:batchId/productions', async (req, res) => {
+  const production = await controllers.getProduction(req.params.batchId);
+  res.json(production);
 });
 
 router.patch('/:batchId', async (req, res) => {

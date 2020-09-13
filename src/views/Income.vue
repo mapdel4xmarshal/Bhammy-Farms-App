@@ -247,7 +247,6 @@ export default {
 
       axios.get(`/invoices/summary?${filters.join('&')}`)
         .then(({ data }) => {
-          console.log(data);
           this.incomeSummary = data;
         });
     },
