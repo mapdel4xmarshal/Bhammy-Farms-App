@@ -6,6 +6,7 @@ class Notification {
   }
 
   send(title, message, url) {
+    if (process.env.NODE_ENV !== 'production') return;
     request.post({
       url: this._pushUrl,
       body: JSON.stringify({

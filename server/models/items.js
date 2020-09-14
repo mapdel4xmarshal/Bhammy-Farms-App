@@ -30,12 +30,18 @@ class Items extends Model {
         type: DataTypes.STRING,
         allowNull: true
       },
-      size: {
+      packaging_size: {
+        type: DataTypes.DECIMAL,
+        allowNull: false,
+        default: 1
+      },
+      packaging_metric: {
         type: DataTypes.STRING,
-        allowNull: true
+        allowNull: false
       },
       quantity: {
         type: DataTypes.DECIMAL,
+        default: 0,
         allowNull: true
       },
       unit: {
@@ -44,11 +50,14 @@ class Items extends Model {
       },
       price: {
         type: DataTypes.DECIMAL,
-        allowNull: true
+        allowNull: false
       },
       image: {
         type: DataTypes.STRING,
         allowNull: true
+      },
+      is_produced: {
+        type: DataTypes.BOOLEAN
       },
       description: {
         type: DataTypes.STRING,

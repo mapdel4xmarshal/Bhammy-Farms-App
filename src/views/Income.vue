@@ -85,8 +85,7 @@
               <v-list-item-content>
                 <v-list-item-title class="caption text-uppercase" style="color: rgb(114, 114, 114);">
                   {{ summary.itemName }}</v-list-item-title>
-                <span class="body-2">{{ summary.quantity }} {{ summary.unit }}s
-                    </span>
+                <span class="body-2">{{ summary.quantityText }}</span>
                 <v-list-item-title class="title">
                   <strong>₦{{ summary.itemAmount | formatNumber }}</strong>
                 </v-list-item-title>
@@ -150,6 +149,7 @@
 </template>
 
 <script>
+import pluralize from 'pluralize';
 import axios from '../plugins/axios';
 import ROUTES from '../router/routeNames';
 
@@ -247,7 +247,13 @@ export default {
 
       axios.get(`/invoices/summary?${filters.join('&')}`)
         .then(({ data }) => {
-          this.incomeSummary = data;
+          this.incomeSummary = data.map((_summary) => {
+            const summary = { ..._summary };
+            const quantity = +summary.quantity / +summary.packagingSize;
+            summary.quantityText = `${Intl.NumberFormat('en-US').format(quantity)}
+            ${pluralize(summary.packagingMetric, quantity)}`;
+            return summary;
+          });
         });
     },
     updateDate() {

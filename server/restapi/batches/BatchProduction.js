@@ -10,7 +10,7 @@ class BatchProduction {
   }
 
   set items(productionItems) {
-    this._production.items = productionItems.map(item => {  console.log(item, item.quantity);
+    this._production.items = productionItems.map(item => {
       item.quantity = item.ProductionItem.quantity;
       item.price = item.ProductionItem.price;
       delete item.ProductionItem;

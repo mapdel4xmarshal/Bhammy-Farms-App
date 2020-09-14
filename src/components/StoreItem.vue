@@ -67,32 +67,9 @@
               </v-col>
 
               <v-col cols="12">
-                <v-text-field
-                  label="Size*"
-                  hint="Item size."
-                  persistent-hint
-                  v-model="value.size"
-                  :rules="[v => !!v || 'Please enter item size.']"
-                  required
-                ></v-text-field>
-              </v-col>
-
-              <v-col cols="12">
-                <v-text-field
-                  type="number"
-                  label="Quantity*"
-                  hint="Item quantity."
-                  :rules="[v => !!v || 'Please enter item quantity.']"
-                  persistent-hint
-                  v-model="value.quantity"
-                  required
-                ></v-text-field>
-              </v-col>
-
-              <v-col cols="12">
                 <v-autocomplete
                   label="Unit / Metric*"
-                  hint="Item measurement metric. i.e kg, ml etc"
+                  hint="Item measurement metric. i.e kg, ml, piece etc"
                   :rules="[v => !!v || 'Please enter item unit.']"
                   v-model="value.unit"
                   persistent-hint
@@ -107,6 +84,42 @@
                     >
                       <v-list-item-content>
                         <v-list-item-title>{{ unitSearch }}</v-list-item-title>
+                      </v-list-item-content>
+                    </v-list-item>
+                  </template>
+                </v-autocomplete>
+              </v-col>
+
+              <v-col cols="12">
+                <v-text-field
+                  label="Packaging size*"
+                  hint="The size of a given item package e.g Packaging size is 30 for a crate of egg."
+                  type="number"
+                  persistent-hint
+                  v-model="value.packagingSize"
+                  :rules="[v => !!v || 'Please enter item size.']"
+                  required
+                ></v-text-field>
+              </v-col>
+
+              <v-col cols="12">
+                <v-autocomplete
+                  label="Packaging metric*"
+                  hint="Item packaging measurement metric, e.g bag, sachet, crate etc"
+                  :rules="[v => !!v || 'Please enter packaging metric.']"
+                  v-model="value.packagingMetric"
+                  persistent-hint
+                  :search-input.sync="packagingMetricSearch"
+                  :items="packagingMetrics"
+                  required
+                >
+                  <template v-slot:no-data>
+                    <v-list-item
+                      ripple
+                      @click="addNewMetric"
+                    >
+                      <v-list-item-content>
+                        <v-list-item-title>{{ packagingMetricSearch }}</v-list-item-title>
                       </v-list-item-content>
                     </v-list-item>
                   </template>
@@ -135,6 +148,16 @@
                   v-model="value.price"
                   required
                 ></v-text-field>
+              </v-col>
+
+              <v-col>
+                <v-checkbox
+                  v-model="value.isProduced"
+                  label="Production item"
+                  persistent-hint
+                  hint="Determines if an item is produced in-house.
+                  e.g Egg, Manure and Formulated feed are produced in-house"
+                ></v-checkbox>
               </v-col>
 
               <v-col cols="12">
@@ -193,6 +216,8 @@ export default {
       message: '',
       itemCategories: [],
       itemUnits: [],
+      packagingMetrics: [],
+      packagingMetricSearch: '',
       attachment: '',
       showSnackbar: false
     };
@@ -269,6 +294,10 @@ export default {
       this.itemUnits.push(this.unitSearch);
       this.value.unit = this.unitSearch;
     },
+    addNewMetric() {
+      this.packagingMetrics.push(this.packagingMetricSearch);
+      this.value.packagingMetrics = this.packagingMetrics;
+    },
     addNewCategory() {
       this.itemCategories.push(this.categorySearch);
       this.value.category = this.categorySearch;
@@ -292,6 +321,12 @@ export default {
       axios.get('/items/units')
         .then(({ data }) => {
           this.itemUnits = data;
+        });
+    },
+    getPackagingMetrics() {
+      axios.get('/items/packaging-metrics')
+        .then(({ data }) => {
+          this.packagingMetrics = data;
         });
     },
     save() {
@@ -318,12 +353,13 @@ export default {
           this.snackbar = true;
           this.message = error;
         });
-    },
+    }
   },
   created() {
     this.getItemBrands();
     this.getItemCategories();
     this.getItemUnits();
+    this.getPackagingMetrics();
   }
 };
 </script>

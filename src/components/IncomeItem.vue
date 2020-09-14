@@ -8,30 +8,31 @@
           <v-container>
             <v-row>
               <v-col cols="12">
-                <v-select
-                  :items="itemCategories"
-                  return-object
-                  v-model="item.category"
-                  :rules="[v => !!v || 'Please select an item.']"
+                <v-autocomplete
                   label="Name"
-                  hint="Item name"
+                  hint="Item name."
                   persistent-hint
-                ></v-select>
-              </v-col>
-
-              <v-col cols="12">
-                <v-select
-                  :items="this.items[this.item.category]"
-                  label="Size"
-                  v-model="itemSize"
-                  :disabled="!item.category"
-                  :rules="[v => !!v || 'Please select a size.']"
+                  :rules="[v => !!v || 'Please select an item.']"
+                  v-model="item"
+                  item-value="id"
+                  item-text="name"
                   return-object
-                  item-text="size"
-                  item-value="size"
-                  hint="Item size"
-                  persistent-hint
-                ></v-select>
+                  :items="items"
+                  @change="updateQuantity"
+                  required
+                >
+                  <template v-slot:item="{ item }">
+                    <v-list-item-avatar tile>
+                      <v-img :src="`/${item.image}`"></v-img>
+                    </v-list-item-avatar>
+                    <v-list-item-content>
+                      <v-list-item-title>{{ item.name }}</v-list-item-title>
+                      <v-list-item-subtitle>
+                        {{ item.category }} {{ item.brand ? `| ${item.brand}` : '' }}
+                      </v-list-item-subtitle>
+                    </v-list-item-content>
+                  </template>
+                </v-autocomplete>
               </v-col>
 
               <v-col>
@@ -39,7 +40,7 @@
                   type="number"
                   label="Quantity"
                   hint="Quantity"
-                  :suffix="itemUnit"
+                  :suffix="item.packagingMetric"
                   :rules="[v => !!v || 'Please input item quantity.']"
                   v-model="item.quantity"
                   persistent-hint
@@ -121,7 +122,8 @@ export default {
   },
   computed: {
     itemUnit() {
-      return this.item.category ? `${this.items[this.item.category][0].unit}(s)` : '';
+      const filteredItem = this.items.filter((item) => item.id === this.item.id)[0] || {};
+      return filteredItem.packagingMetric;
     },
     itemSize: {
       get() {
@@ -133,34 +135,21 @@ export default {
     }
   },
   methods: {
+    updateQuantity() {
+      this.item.quantity = '';
+    },
     update() {
       this.$emit('update', false);
     },
     getItems() {
-      axios.get('items')
+      axios.get('items?isProduced=true')
         .then(({ data }) => {
-          const filteredItems = data.filter((item) => item.brand.toLowerCase().includes('bhammyfarm'));
-          this.normalizeItems(filteredItems);
+          this.items = data.map((item) => {
+            const itemCopy = { ...item };
+            itemCopy.category = itemCopy.category.replace(/\b[a-z]/g, (match) => match.toUpperCase());
+            return itemCopy;
+          });
         });
-    },
-    normalizeItems(items) {
-      const itemsObject = {};
-      const categories = [];
-      items.forEach((item) => {
-        const newItem = item;
-        newItem.category = newItem.category[0].toUpperCase() + newItem.category.slice(1);
-
-        if (!itemsObject[item.category]) {
-          itemsObject[item.category] = [];
-          categories.push(item.category);
-        }
-        newItem.quantity = 0;
-        newItem.size = item.size[0].toUpperCase() + item.size.slice(1);
-        itemsObject[newItem.category].push(newItem);
-      });
-      this.itemCategories = categories;
-      this.items = itemsObject;
-      return itemsObject;
     },
     cancel() {
       this.$emit('cancel', true);

@@ -22,7 +22,7 @@ class Controller {
     SELECT productions.production_id AS id, productions.water, mortality.id AS mortalityId, mortality.count AS mortalityCount, productions.date,
       production_items.quantity AS itemQuantity, production_items.price AS itemPrice, batches.initial_stock_count AS initialFlockCount,
       batches.name AS batch, batches.initial_stock_count AS flockCount, batches.is_active AS isActive, breeds.type AS batchType,
-      items.item_id AS itemId, items.item_name AS itemName, items.category AS itemCategory, items.size AS itemSize, items.unit AS itemUnit,
+      items.item_id AS itemId, items.item_name AS itemName, items.category AS itemCategory, items.packaging_size AS packagingSize, items.unit AS itemUnit,
       production_items.id AS productionItemsId, productions.humidity AS humidity, productions.temperature AS temperature, 
       vaccinations.administered_by AS vaccineAdministrator, vaccinations.notes AS vaccinationNotes, 
       vaccinations.vaccination_id AS vaccinationId, vaccinations.vaccine_batch_no AS vaccineBatchNo,
@@ -320,7 +320,7 @@ class Controller {
         quantity: production.itemQuantity,
         price: production.itemPrice,
         category: production.itemCategory,
-        size: production.itemSize,
+        packagingSize: production.packagingSize,
         unit: production.itemUnit
       });
     });

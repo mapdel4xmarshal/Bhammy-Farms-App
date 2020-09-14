@@ -47,6 +47,7 @@ export default {
   data() {
     return {
       eggTypes: [],
+      packagingSize: 1,
       crateRules: [
         (v) => !!v || 'Please enter total crate of eggs collected.',
         (v) => v >= 0 || 'Crate should be zero (0) or more.'
@@ -61,10 +62,13 @@ export default {
   props: ['value'],
   methods: {
     updateName() {
-      this.value.name = this.eggTypes.filter((egg) => egg.id === this.value.id)[0].name;
+      const filteredEgg = this.eggTypes.filter((egg) => egg.id === this.value.id)[0];
+      this.packagingSize = filteredEgg.packagingSize;
+      this.value.packagingSize = this.packagingSize;
+      this.value.name = filteredEgg.name;
     },
     update() {
-      this.value.quantity = +this.value.pieces + (this.value.crates * 30);
+      this.value.quantity = +this.value.pieces + (this.value.crates * this.packagingSize);
       this.$emit('input', this.value);
     },
     validate() {

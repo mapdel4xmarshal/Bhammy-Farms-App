@@ -164,7 +164,7 @@
             <v-tabs-slider color="primary"></v-tabs-slider>
             <v-tab>Production</v-tab>
             <v-tab>Eggs</v-tab>
-            <v-tab>Feed</v-tab>
+            <v-tab>Feeds</v-tab>
 
             <v-tab-item>
               <v-data-table
@@ -173,6 +173,9 @@
                 no-data-text="No production record found."
                 class="elevation-1 table-cursor"
               >
+                <template v-slot:item.eggs="{ item }">
+                  {{ (item.eggs / item.eggPackagingSize).toFixed(2) }}
+                </template>
                 <template v-slot:item.amount="{ item }">
                   ₦{{ item.amount | formatNumber }}
                 </template>
@@ -273,12 +276,12 @@ export default {
       editBatch: false,
       productionData: this.baseData('Production', '-'),
       eggsData: this.baseData('Egg', 'crate'),
-      feedsData: this.baseData('Feed', 'kg'),
+      feedsData: this.baseData('Feed', 'bag'),
       waterData: this.baseData('Water', 'liter'),
       populationData: this.baseData('Population', 'bird'),
       humidityData: this.baseData('Humidity', '%', '#37878f'),
       temperatureData: this.baseData('Temperature', '°C', '#616161'),
-      expectedProductionData: this.baseData('Projected Production', '#8f8f8f'),
+      expectedProductionData: this.baseData('Projected Production', '%', '#8f8f8f'),
       headers: [
         {
           text: 'Date',
@@ -318,7 +321,8 @@ export default {
   methods: {
     chartFormatter() {
       return function () {
-        return `${new Intl.NumberFormat('en-US', { minimumFractionDigits: 0 }).format(this.value / 1000)}k`;
+        return this.value > 999
+          ? `${new Intl.NumberFormat('en-US', { minimumFractionDigits: 0 }).format(this.value / 1000)}k` : this.value;
       };
     },
     handleBatchEvent(state) {
@@ -429,7 +433,7 @@ export default {
       const productionCopy = [...productions].reverse();
       productionCopy.forEach((production) => {
         this.totalFeeds += production.feeds;
-        this.totalEggs += Number.parseInt(production.eggs / 30, 10);
+        this.totalEggs += Number.parseInt(production.eggs / production.eggPackagingSize, 10);
         this.totalMortality += production.mortality;
         this.initialPopulation = production.initialPopulation;
         this.curateChartData(production);
@@ -438,8 +442,8 @@ export default {
     curateChartData(production) {
       const date = new Date(production.date).getTime();
       this.productionData.data.push({ x: date, y: production.productionPercent });
-      this.eggsData.data.push({ x: date, y: production.eggs });
-      this.feedsData.data.push({ x: date, y: production.feeds });
+      this.eggsData.data.push({ x: date, y: +(production.eggs / production.eggPackagingSize).toFixed(2) });
+      this.feedsData.data.push({ x: date, y: +(production.feeds / +production.feedPackagingSize).toFixed(2) });
       this.populationData.data.push({ x: date, y: production.mortality });
       this.waterData.data.push({ x: date, y: production.water });
       this.humidityData.data.push({ x: date, y: production.humidity });

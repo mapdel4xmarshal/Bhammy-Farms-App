@@ -274,7 +274,7 @@ export default {
     },
     selectExpense(expense) {
       this.newExpense = true;
-      this.expense = { ...expense };
+      this.expense = { ...expense, attachment: null };
       this.expense.updateStoreInventory = !Number.isNaN(expense.item);
       this.title = 'View Expense';
     }

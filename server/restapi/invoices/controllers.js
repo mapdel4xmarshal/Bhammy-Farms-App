@@ -123,8 +123,9 @@ class Controller {
 
     return sequelize.query(`
       SELECT items.item_name AS itemName, SUM(invoice_items.quantity) AS quantity, items.image AS thumbnail, 
-      SUM(((invoice_items.quantity  / items.size) * invoice_items.item_price) - invoice_items.discount) AS itemAmount,
-      invoice_items.item_id AS itemId, items.unit FROM invoices
+      SUM(((invoice_items.quantity / items.packaging_size) * invoice_items.item_price) - invoice_items.discount) AS itemAmount,
+      invoice_items.item_id AS itemId, items.unit, items.packaging_size AS packagingSize, 
+      items.packaging_metric AS packagingMetric FROM invoices
       JOIN invoice_items ON invoices.invoice_id = invoice_items.invoice_id
       JOIN items ON invoice_items.item_id = items.item_id
       ${clause} group by invoice_items.item_id;

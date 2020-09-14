@@ -100,6 +100,7 @@ class ProductionSummary {
 
   set feeds(feeds) {
     this._production.feeds = feeds.reduce((totalFeed, feed) => totalFeed + Number.parseInt(feed.quantity), 0);
+    this._production.feedPackagingSize = feeds[0].packagingSize;
   }
 
   get eggs() {
@@ -108,6 +109,7 @@ class ProductionSummary {
 
   set eggs(eggs) {
     this._production.eggs = eggs.reduce((totalEggs, egg) => totalEggs + Number.parseInt(egg.quantity), 0);
+    this._production.eggPackagingSize = eggs[0].packagingSize;
   }
 
   get feedPerAnimal() {
@@ -131,11 +133,11 @@ class ProductionSummary {
   }
 
   set profit(items) {
-    this._production.profit = items.reduce((total, item) => {
-      if (item.category.toLowerCase() === 'feed') return total - ((item.quantity / item.size) * item.price);
-      if (item.category.toLowerCase() === 'egg') return total + ((item.quantity / 30) * item.price);
+    this._production.profit = Number.parseInt(items.reduce((total, item) => {
+      if (item.category.toLowerCase() === 'feed') return total - ((item.quantity / item.packagingSize) * item.price);
+      if (item.category.toLowerCase() === 'egg') return total + ((item.quantity / item.packagingSize) * item.price);
       return 0;
-    }, 0);
+    }, 0));
   }
 
   get climateEffect() {

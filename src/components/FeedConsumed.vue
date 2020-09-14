@@ -16,7 +16,7 @@
         <v-col cols="12">
           <v-text-field
             label="Quantity*"
-            suffix="bags (25kg)"
+            :suffix="suffix"
             :rules="bagRules"
             v-model="value.bags"
             type="number"
@@ -35,6 +35,11 @@ export default {
   name: 'FeedConsumed',
   data() {
     return {
+      feed: {
+        packagingSize: '',
+        packagingMetric: '',
+        unit: 'kg'
+      },
       feedTypes: [],
       bagRules: [
         (v) => !!v || 'Please enter total feed consumed.',
@@ -43,13 +48,20 @@ export default {
     };
   },
   props: ['value'],
+  computed: {
+    suffix() {
+      if (this.value.name) this.updateId();
+      return `${this.feed.packagingMetric} (${this.feed.packagingSize}${this.feed.unit})`;
+    }
+  },
   methods: {
     update() {
-      this.value.quantity = +this.value.bags * 25;
+      this.value.quantity = +this.value.bags * this.feed.packagingSize;
       this.$emit('input', this.value);
     },
     updateId() {
-      this.value.id = this.feedTypes.filter((feed) => feed.name === this.value.name)[0].id;
+      this.feed = { ...this.feedTypes.filter((feed) => feed.name === this.value.name)[0] };
+      this.value.id = this.feed.id;
     },
     validate() {
       return this.$refs.form.validate();

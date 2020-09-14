@@ -95,7 +95,7 @@
                         :items="production.eggs"
                       >
                         <template v-slot:item.total="{ item }">
-                          {{ +item.crates + +((+item.pieces / 30).toFixed(2)) | formatNumber }} crates
+                          {{ +item.crates + +((+item.pieces / item.packagingSize).toFixed(2)) | formatNumber }} crates
                         </template>
 
                         <template v-slot:item.actions="{ item }">

@@ -185,8 +185,7 @@ class Controller {
     });
 
     return sequelize.query(`
-      SELECT SUM(production_items.quantity * production_items.price) AS amount, 
-        items.category 
+      SELECT ROUND(SUM((production_items.quantity / items.packaging_size) * production_items.price)) AS amount, items.category 
       FROM productions 
       JOIN production_items ON productions.production_id = production_items.production_id 
       JOIN items ON production_items.item_id = items.item_id
@@ -224,11 +223,11 @@ class Controller {
         {
           model: Item,
           attributes: [
-            ['item_id', 'id'],['item_name', 'name'], 'category', 'brand', 'size', 'unit', ['image', 'thumbnail'],
-            'description'
+            ['item_id', 'id'],['item_name', 'name'], 'category', 'brand', ['packaging_size', 'packagingSize'],
+            'unit', ['image', 'thumbnail'], 'description', ['packaging_metric', 'packagingMetric']
           ],
           through: {
-            attributes: ['quantity', 'price' ]
+            attributes: ['quantity', 'price']
           }
         }
       ]

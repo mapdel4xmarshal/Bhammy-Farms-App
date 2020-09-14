@@ -51,7 +51,6 @@ export default {
   props: ['value'],
   methods: {
     update() {
-      this.value.quantity = +this.value.bags * 25;
       this.$emit('input', this.value);
     },
     validate() {

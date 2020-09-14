@@ -33,4 +33,9 @@ router.get('/units', async (req, res) => {
   res.json(categories);
 });
 
+router.get('/packaging-metrics', async (req, res) => {
+  const metrics = await controllers.getPackagingMetrics(req.query);
+  res.json(metrics);
+});
+
 module.exports = router;

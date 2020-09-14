@@ -81,7 +81,8 @@
                     </v-col>
 
                     <v-col cols="4">
-                      <strong class="item__prop">{{ item.quantity }} {{ item.unit }}</strong>
+                      <strong class="item__prop">
+                        {{ item.remaining }}</strong>
                       <small>Remaining</small>
                     </v-col>
                   </v-row>
@@ -111,6 +112,7 @@
 </template>
 
 <script>
+import pluralize from 'pluralize';
 import axios from '../plugins/axios';
 import StoreItem from '../components/StoreItem.vue';
 
@@ -144,11 +146,13 @@ export default {
         .then(({ data }) => {
           this.items = data.map((item) => {
             const newItem = { ...item };
-            if (item.category.toLowerCase() === 'egg') {
-              newItem.quantity /= 30;
-              newItem.quantity = Number(newItem.quantity).toFixed(1);
+            if (+newItem.quantity < +newItem.packagingSize && newItem.quantity >= 0) {
+              newItem.quantity = Number(newItem.quantity);
+              newItem.remaining = `${this.formatNumber(newItem.quantity)} ${pluralize(newItem.unit, newItem.quantity)}`;
+            } else {
+              const remaining = +newItem.quantity / +newItem.packagingSize;
+              newItem.remaining = `${this.formatNumber(remaining)} ${pluralize(newItem.packagingMetric, remaining)}`;
             }
-
             return newItem;
           });
         });
@@ -158,7 +162,11 @@ export default {
     },
     editItem(selectedItem) {
       this.item = { ...selectedItem };
+      this.item.unit = this.item.unit.replace(/\b[a-z]/g, (match) => match.toUpperCase());
       this.newItem = true;
+    },
+    formatNumber(value) {
+      return new Intl.NumberFormat('en-US', { minimumFractionDigits: 0 }).format((value).toFixed(2));
     }
   },
   created() {

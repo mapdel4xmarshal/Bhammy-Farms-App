@@ -5,19 +5,20 @@ const { fileUploadPath } = require('../../configs');
 
 class Controller {
   // eslint-disable-next-line class-methods-use-this
-  async getItems({ groupBy, category }) {
+  async getItems({ groupBy, category, isProduced }) {
     const where = {};
     if (category) where.category = category;
+    if (isProduced !== undefined) where.is_produced = +Boolean(isProduced);
 
     return Item.findAll({
       where,
       attributes: [
-        ['item_id', 'id'], ['item_name', 'name'], 'category', 'quantity', 'size', 'unit', 'price', 'brand', 'image',
+        ['item_id', 'id'], ['item_name', 'name'], 'category', 'quantity', ['packaging_size', 'packagingSize'],
+        'unit', 'price', 'brand', 'image', ['packaging_metric', 'packagingMetric'], ['is_produced', 'isProduced'],
         'description'
       ],
       order: [
-        ['category', 'ASC'],
-        ['size', 'ASC'],
+        ['category', 'ASC']
       ]
     })
       .then((items) => {
@@ -64,13 +65,15 @@ class Controller {
 
         Item.create({
           item_name: item.name,
-          category: item.category,
+          category: item.category.toLowerCase(),
           brand: item.brand,
-          size: item.size,
-          quantity: item.quantity,
-          unit: item.unit,
+          packaging_size: item.packagingSize,
+          packaging_metric: item.packagingMetric.toLowerCase(),
+          quantity: 0,
+          unit: item.unit.toLowerCase(),
           price: item.price,
           image: attachment,
+          is_produced: item.isProduced,
           description: item.description
         }, { user, resourceId: 'item_id' })
           .then(resolve)
@@ -99,12 +102,14 @@ class Controller {
 
         Item.update({
           item_name: item.name,
-          category: item.category,
+          category: item.category.toLowerCase(),
           brand: item.brand,
-          size: item.size,
-          quantity: item.quantity,
-          unit: item.unit,
+          packaging_size: item.packagingSize,
+          packaging_metric: item.packagingMetric.toLowerCase(),
+          quantity: 0,
+          unit: item.unit.toLowerCase(),
           price: item.price,
+          is_produced: item.isProduced,
           description: item.description
         }, { user, resourceId: 'item_id', where: { item_id: id } })
           .then(resolve)
@@ -133,6 +138,24 @@ class Controller {
       }
     })
       .then((brands) => brands);
+  }
+
+  async getPackagingMetrics() {
+    return Item.findAll({
+      attributes: [['packaging_metric', 'packagingMetric']],
+      order: [
+        ['packaging_metric', 'ASC']
+      ],
+      group: ['packaging_metric'],
+      where: {
+        packaging_metric: {
+          [Sequelize.Op.ne]: null
+        }
+      }
+    })
+      .then((items) => items.map((item) => {
+        return item.toJSON().packagingMetric.replace(/\b[a-z]/g, (match) => match.toUpperCase());
+      }));
   }
 
   async getItemCategories() {

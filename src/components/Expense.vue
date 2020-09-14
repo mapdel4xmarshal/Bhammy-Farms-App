@@ -133,7 +133,7 @@
                   v-model="value.item"
                   item-value="id"
                   item-text="name"
-                  @click="getItems"
+                  @click="isEditMode && getItems"
                   :items="items"
                   required
                 >
@@ -177,8 +177,9 @@
                   hint="Item quantity."
                   @change="update"
                   persistent-hint
+                  :suffix="itemQuantityMetric"
                   :rules="[v => !!v || 'Please enter item quantity']"
-                  v-model="value.quantity"
+                  v-model="quantity"
                   required
                 ></v-text-field>
               </v-col>
@@ -187,6 +188,7 @@
                 <v-text-field
                   type="number"
                   label="Price"
+                  prefix="₦"
                   hint="Item price."
                   @change="update"
                   persistent-hint
@@ -221,13 +223,14 @@
                 ></v-text-field>
               </v-col>
 
-              <v-col cols="12" v-if="value.category !== 'Salary'" >
+              <v-col cols="12" v-if="value.category !== 'Salary' && !this.value.id" >
                 <v-file-input
                   accept="image/*"
                   label="Proof of payment"
                   @change="update"
                   v-model="value.attachment"
                   hint="Upload proof of payment"
+                  :disabled="!isEditMode"
                   prepend-icon=""
                   persistent-hint/>
               </v-col>
@@ -288,6 +291,7 @@
 </template>
 
 <script>
+import pluralize from 'pluralize';
 import axios from '../plugins/axios';
 
 export default {
@@ -302,7 +306,8 @@ export default {
       batches: [],
       showSnackbar: false,
       items: [],
-      editMode: false
+      editMode: false,
+      itemQuantity: this.value.quantity
     };
   },
   props: {
@@ -333,8 +338,25 @@ export default {
     }
   },
   computed: {
+    quantity: {
+      get() {
+        return this.itemQuantity || this.value.quantity / this.itemPackagingSize;
+      },
+      set(value) {
+        this.itemQuantity = value;
+        this.value.quantity = value * this.itemPackagingSize;
+      }
+    },
     isEditMode() {
       return !this.value.id || this.editMode;
+    },
+    itemQuantityMetric() {
+      const filteredItem = this.items.filter((item) => item.id === this.value.item)[0];
+      return (filteredItem ? pluralize(filteredItem.packagingMetric) : '').toLowerCase();
+    },
+    itemPackagingSize() {
+      const filteredItem = this.items.filter((item) => item.id === this.value.item)[0] || { packagingSize: 1 };
+      return filteredItem.packagingSize;
     },
     actionTitle() {
       if (this.editMode) {
@@ -387,7 +409,7 @@ export default {
     getItems() {
       axios.get('/items')
         .then(({ data }) => {
-          this.items = data.filter((item) => !item.brand || !item.brand.toLowerCase().includes('bhammy'));
+          this.items = data.filter((item) => !item.isProduced);
         });
     },
     cancel() {

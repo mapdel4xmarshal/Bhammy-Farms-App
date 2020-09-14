@@ -19,6 +19,7 @@
           persistent-hint
           required
           dense
+          no-data-text="No batch available"
           clearable
           return-object
           :items="batches"
@@ -76,19 +77,19 @@
 
     <v-row>
       <v-col cols="12" md="3">
-        <metric-card title="Eggs Produced" :value="`${totalEggs} crates`" img="img/egg.png"/>
+        <metric-card title="Eggs Produced" :value="totalEggs" unit="crates" img="img/egg.png"/>
       </v-col>
 
       <v-col cols="12" md="3">
-        <metric-card title="Birds" :value="`${totalBirds} birds`" img="img/hen.png"/>
+        <metric-card title="Birds" :value="totalBirds" unit="birds" img="img/hen.png"/>
       </v-col>
 
       <v-col cols="12" md="3">
-        <metric-card title="Feeds Consumed" :value="`${totalFeeds} kg`" img="img/feed.png"/>
+        <metric-card title="Feeds Consumed" :value="totalFeeds" unit="kg" img="img/feed.png"/>
       </v-col>
 
       <v-col cols="12" md="3">
-        <metric-card title="Morality" :value="`${totalMortality} bird(s)`" img="img/dead.png"/>
+        <metric-card title="Morality" :value="totalMortality" unit="bird(s)" img="img/dead.png"/>
       </v-col>
     </v-row>
     <v-data-table
@@ -101,7 +102,7 @@
       @click:row="selectProduction"
     >
       <template v-slot:item.eggs="{ item }">
-        {{ Number.parseInt(item.eggs / 30) }}
+        {{ Number.parseInt(item.eggs / item.eggPackagingSize ) }}
       </template>
 
       <template v-slot:item.profit="{ item }">
@@ -192,16 +193,13 @@ export default {
       const flockMap = new Map();
       productions.forEach((production) => {
         this.totalFeeds += production.feeds;
-        this.totalEggs += Number.parseInt(production.eggs / 30, 10);
+        this.totalEggs += Number.parseInt(production.eggs / production.eggPackagingSize, 10);
         this.totalMortality += production.mortality;
         flockMap.set(production.batch, production.initialPopulation);
       });
 
-      this.totalFeeds = this.formatNumber(this.totalFeeds, 0);
-      this.totalEggs = this.formatNumber(this.totalEggs, 0);
-      this.totalMortality = this.formatNumber(this.totalMortality, 0);
-      this.totalBirds = this.formatNumber(Array.from(flockMap.values())
-        .reduce((totalFlock, flock) => totalFlock + flock, 0) - this.totalMortality, 0);
+      this.totalBirds = Array.from(flockMap.values())
+        .reduce((totalFlock, flock) => totalFlock + flock, 0) - this.totalMortality;
     },
     updateDate() {
       this.$refs.menu.save(this.date);

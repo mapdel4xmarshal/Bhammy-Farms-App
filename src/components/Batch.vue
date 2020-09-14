@@ -78,7 +78,7 @@
                 >
                   <template v-slot:item="{ item }">
                     <v-list-item-avatar color="primary" tile>
-                      <span class="white--text">{{ item.initials }}</span>
+                      <span class="white--text" style="width: 100%;">{{ item.initials }}</span>
                     </v-list-item-avatar>
                     <v-list-item-content>
                       <v-list-item-title>{{ item.name }}</v-list-item-title>
@@ -104,7 +104,7 @@
                 >
                   <template v-slot:item="{ item }">
                     <v-list-item-avatar color="primary" tile>
-                      <span class="white--text">{{ item.initials }}</span>
+                      <span class="white--text" style="width: 100%;">{{ item.initials }}</span>
                     </v-list-item-avatar>
                     <v-list-item-content>
                       <v-list-item-title>{{ item.name }}</v-list-item-title>
