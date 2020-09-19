@@ -45,12 +45,18 @@ class Controller {
     LEFT JOIN vaccinations ON productions.production_id = vaccinations.production_id
     LEFT JOIN medication ON productions.production_id = medication.production_id
     ${where.length > 0 ? ` WHERE ${where.join(' AND ')}` : ''}
-    ORDER BY productions.date DESC;
-
+    ORDER BY productions.date ASC;
 `)
       .then(async ([productions]) => {
         productions = await this.processProduction(productions);
-        return productions.map((production) => new ProductionSummary(production));
+        const totalMortality = {};
+        return productions.map((production) => {
+          const productionSummary = new ProductionSummary(production);
+          if (!totalMortality[production.batch]) totalMortality[production.batch] = 0;
+          totalMortality[production.batch] += productionSummary.mortality;
+          productionSummary.flockCount -= totalMortality[production.batch];
+          return productionSummary;
+        }).reverse();
       });
   }
 
@@ -215,7 +221,7 @@ class Controller {
     }));
 
     for (const item of treatments) {
-      await Item.increment('quantity',
+      await Item.decrement('quantity',
         {
           by: Number(item.total_dosage),
           where: { item_id: item[`${medType}_id`] },

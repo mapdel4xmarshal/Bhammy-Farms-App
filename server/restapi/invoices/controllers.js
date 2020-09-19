@@ -4,6 +4,7 @@ const {
   }, Location
 } = require('../../models');
 const Invoice = require('./invoice');
+const InvoiceDetail = require('./invoiceDetail');
 
 class Controller {
   async getInvoices({ before, after, paymentStatus, date }) {
@@ -105,11 +106,39 @@ class Controller {
   }
 
   async getInvoiceById(invoiceId) {
-    return InvoiceModel.findOne({
-      where: { invoice_id: invoiceId },
-      attributes: { exclude: ['createdAt', 'updatedAt'] }
+    return InvoiceModel.findByPk(invoiceId, {
+      attributes: [['invoice_id', 'id'],
+        [fn('date_format', col('invoice_date'), '%Y-%m-%d'), 'invoiceDate'],
+        [fn('date_format', col('payment_date'), '%Y-%m-%d'), 'paymentDate'],
+        [col('Location.name'), 'farmLocation'],
+        ['customer_id', 'customerId'], ['payment_status', 'paymentStatus'], ['fulfilment_status', 'fulfilmentStatus'],
+        'amount', 'discount', 'notes'],
+      order: [['invoice_id', 'DESC'], ['created_at', 'DESC']],
+      include: [
+        {
+          model: Item,
+          through: InvoiceItem
+        },
+        {
+          model: Customer,
+          include: [{
+            model: Party
+          }]
+        }, {
+          model: Location,
+          attributes: []
+        }]
     })
-      .then((invoice) => invoice.invoice_id);
+      .then((invoice) => {
+        return invoice? new InvoiceDetail(invoice.toJSON()) : { status: 404, message: 'Invoice not found.' };
+      })
+      .catch((error) => {
+        console.log(error); // todo: add proper logger
+        return {
+          error: 'Unable to process request. Please try again later!',
+          status: 500
+        };
+      });
   }
 
   async getInvoicesSummary({ before, after, date, paymentStatus }) {
@@ -119,7 +148,7 @@ class Controller {
     if (after) where.push(`invoices.invoice_date >= '${after}'`);
     if (paymentStatus) where.push(`invoices. >= '${date}'`);
 
-    const clause = where.length > 0? `where ${where.join(' AND ')}` : '';
+    const clause = where.length > 0 ? `where ${where.join(' AND ')}` : '';
 
     return sequelize.query(`
       SELECT items.item_name AS itemName, SUM(invoice_items.quantity) AS quantity, items.image AS thumbnail, 
@@ -134,6 +163,8 @@ class Controller {
         return summary;
       });
   }
+
+
 }
 
 module.exports = new Controller();

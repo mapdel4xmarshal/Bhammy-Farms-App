@@ -59,7 +59,7 @@
         </v-col>
 
         <v-col cols="12" md="3">
-          <metric-card title="Birds" :value="totalBirds" :digits="0" unit="birds" img="/img/hen.png"/>
+          <metric-card title="Birds" :value="batch.currentStock" :digits="0" unit="birds" img="/img/hen.png"/>
         </v-col>
 
         <v-col cols="12" md="3">
@@ -231,7 +231,7 @@
               <template v-slot:[`item.${header.value}`]="{ item }" v-for="header in feedInsightHeaders">
                 <span v-if="header.value !== 'date'" :key="header.text">
                   <span v-if="item[header.value]">
-                    {{ item[header.value] | formatNumber }} kg
+                    {{ item[header.value] | formatNumber }} bags
                   </span>
                   <span v-else>&mdash;</span>
                 </span>
@@ -382,7 +382,7 @@ export default {
                 text: info.name,
                 value: info.name
               };
-              this[`${category}Insights`][index][info.name] = info.quantity;
+              this[`${category}Insights`][index][info.name] = +(info.quantity / info.packagingSize).toFixed(2);
             });
           });
           this.eggInsightHeaders = [...this.eggInsightHeaders, ...Object.values(uniqueHeaders.egg)];
@@ -428,7 +428,6 @@ export default {
       this.totalFeeds = 0;
       this.totalEggs = 0;
       this.totalMortality = 0;
-      this.totalBirds = 0;
 
       const productionCopy = [...productions].reverse();
       productionCopy.forEach((production) => {

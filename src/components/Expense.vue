@@ -432,7 +432,10 @@ export default {
           this.$emit('save', this.value);
         }
       }
-    }
+    },
+    reset() {
+      this.$refs.form.reset();
+    },
   },
   created() {
     axios.get('/batches')

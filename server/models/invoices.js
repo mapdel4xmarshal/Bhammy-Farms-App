@@ -18,11 +18,11 @@ class Invoices extends Model {
         primaryKey: true
       },
       invoice_date: {
-        type: DataTypes.DATE,
+        type: DataTypes.DATEONLY,
         allowNull: false
       },
       payment_date: {
-        type: DataTypes.DATE,
+        type: DataTypes.DATEONLY,
         allowNull: false
       },
       payment_status: {

@@ -57,8 +57,18 @@ const routes = [{
   component: () => import(/* webpackChunkName: "income" */ '../views/Income.vue'),
 },
 {
+  path: '/income/new',
+  name: ROUTES.NEW_INCOME,
+  component: () => import(/* webpackChunkName: "income" */ '../views/IncomeDetail.vue'),
+},
+{
   path: '/income/:id',
   name: ROUTES.INCOME_DETAIL,
+  component: () => import(/* webpackChunkName: "income" */ '../views/ViewIncome.vue'),
+},
+{
+  path: '/income/:id/edit',
+  name: ROUTES.EDIT_INCOME,
   component: () => import(/* webpackChunkName: "income" */ '../views/IncomeDetail.vue'),
 },
 {

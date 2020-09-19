@@ -218,12 +218,16 @@ class Controller {
         batch_id: batchId
       },
       attributes: [
-        ['production_id', 'id'], 'date', 'humidity', 'temperature', 'weatherCondition', 'water', 'note'],
+        ['production_id', 'id'], 'date', 'humidity', 'temperature', 'weatherCondition', 'water', 'note'
+      ],
+      order: [
+        ['date', 'DESC']
+      ],
       include: [
         {
           model: Item,
           attributes: [
-            ['item_id', 'id'],['item_name', 'name'], 'category', 'brand', ['packaging_size', 'packagingSize'],
+            ['item_id', 'id'], ['item_name', 'name'], 'category', 'brand', ['packaging_size', 'packagingSize'],
             'unit', ['image', 'thumbnail'], 'description', ['packaging_metric', 'packagingMetric']
           ],
           through: {

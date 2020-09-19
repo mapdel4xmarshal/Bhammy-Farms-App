@@ -10,6 +10,8 @@ const ROUTES = {
   FEEDS: 'Feeds',
   INCOME: 'Income',
   INCOME_DETAIL: 'IncomeDetail',
+  NEW_INCOME: 'NewIncome',
+  EDIT_INCOME: 'EditIncome',
   NEW_PRODUCTION: 'NewProduction',
   PRODUCTION: 'Production',
   PRODUCTIONS: 'Productions',

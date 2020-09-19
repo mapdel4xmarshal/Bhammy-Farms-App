@@ -9,7 +9,7 @@
             required
             :rules="quantityRules"
             v-model="value.quantity"
-            suffix="liters"
+            suffix="litres"
             @keyup.enter="$emit('enter', true)"
           ></v-text-field>
         </v-col>

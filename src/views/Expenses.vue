@@ -3,10 +3,11 @@
     <expense :active="newExpense"
              v-model="expense"
              :errored.sync="errored"
-             @cancel="newExpense = false"
+             @cancel="resetExpense"
              @save="addExpense"
              :types="expenseTypes"
              :title="title"
+             ref="form"
              :farm-locations="farmLocations"
              :suppliers="suppliers"/>
     <v-toolbar flat dense color="transparent">
@@ -204,6 +205,10 @@ export default {
     }
   },
   methods: {
+    resetExpense() {
+      this.newExpense = false;
+      this.$refs.form.reset();
+    },
     createExpense() {
       this.newExpense = true;
       this.title = 'New Expense';
@@ -223,6 +228,7 @@ export default {
         })
         .finally(() => {
           this.getExpenses();
+          this.$refs.form.reset();
         });
     },
     createNew() {

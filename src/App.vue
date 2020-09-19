@@ -125,6 +125,7 @@ export default {
       { title: ROUTES.ACTIVITIES, icon: 'mdi-chart-line-variant', to: ROUTES.ACTIVITIES },
       { title: ROUTES.BATCHES, icon: 'mdi-factory', to: ROUTES.BATCHES },
       { title: ROUTES.CUSTOMERS, icon: 'mdi-account-multiple-outline', to: ROUTES.CUSTOMERS },
+      { title: ROUTES.EMPLOYEES, icon: 'mdi-account-multiple-outline', to: ROUTES.EMPLOYEES },
       { title: ROUTES.STORE, icon: 'mdi-silo', to: ROUTES.STORE }
     ],
     mini: true,
@@ -193,6 +194,7 @@ export default {
     display: grid;
     align-items: center;
     width: 100%;
+    padding-left: 15px;
     grid-template-columns: 150px auto;
   }
 

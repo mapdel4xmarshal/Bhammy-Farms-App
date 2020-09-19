@@ -130,7 +130,8 @@
       :headers="headers"
       :items="invoices"
       :search="search"
-      class="elevation-1"
+      class="elevation-1 table-cursor"
+      @click:row="selectInvoice"
     >
       <template v-slot:item.status="{ item }">
         <v-chip class="payment-status"
@@ -168,10 +169,7 @@ export default {
       unpaidAmount: 0,
       paidAmount: 0,
       partialAmount: 0,
-      incomeSummary: [
-        { name: 'Total Eggs Sold', value: 5678888 },
-        { name: 'Total Eggs Sold', value: 5678888 },
-        { name: 'Total Eggs Sold', value: 5678888 }],
+      incomeSummary: [],
       headers: [
         {
           text: 'ID',
@@ -202,8 +200,11 @@ export default {
     }
   },
   methods: {
+    selectInvoice(invoice) {
+      this.$router.push({ name: ROUTES.INCOME_DETAIL, params: { id: invoice.id } });
+    },
     createNew() {
-      this.$router.push({ name: ROUTES.INCOME_DETAIL, params: { id: 'new' } });
+      this.$router.push({ name: ROUTES.NEW_INCOME, params: { id: 'new' } });
     },
     resetDate() {
       this.date = [];
@@ -291,6 +292,10 @@ export default {
 
     &--partial {
       border-color: #2b2b2b !important;
+    }
+
+    .table-cursor tbody tr:hover {
+      cursor: pointer;
     }
   }
 </style>

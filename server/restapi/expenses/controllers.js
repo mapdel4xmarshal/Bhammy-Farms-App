@@ -141,10 +141,9 @@ class Controller {
             transaction
           })
             .catch(reject);
-
-          await transaction.commit();
-          resolve(newExpense);
         }
+        await transaction.commit();
+        resolve(newExpense);
       });
     }).catch(async (e) => {
       console.log(e); // todo: add proper logger
