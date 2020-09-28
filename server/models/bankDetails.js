@@ -43,8 +43,8 @@ class BankDetails extends Model {
     };
   }
 
-  static associate({ Party }) {
-    BankDetails.party = BankDetails.belongsTo(Party, { as: 'user', foreignKey: 'user_id' });
+  static associate({ Employee }) {
+    BankDetails.employee = BankDetails.belongsTo(Employee, { foreignKey: 'id' });
   }
 }
 

@@ -5,6 +5,7 @@ const ROUTES = {
   CUSTOMERS: 'Customers',
   CUSTOMER_DETAIL: 'CustomersDetail',
   DASHBOARD: 'Dashboard',
+  EMPLOYEE: 'Employee',
   EMPLOYEES: 'Employees',
   EXPENSES: 'Expenses',
   FEEDS: 'Feeds',

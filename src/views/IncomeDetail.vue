@@ -5,7 +5,7 @@
       <v-toolbar-title class="grey--text">New Invoice</v-toolbar-title>
       <v-spacer></v-spacer>
       <v-btn text color="primary" class="spacer--right" @click="$router.push('/income')">cancel</v-btn>
-      <v-btn tile color="primary" @click="save">
+      <v-btn tile color="primary" @click="save" :loading="busy">
         Save invoice
       </v-btn>
     </v-toolbar>
@@ -176,7 +176,7 @@
       </v-col>
     </v-row>
     <v-row justify="end" class="item__action">
-      <v-btn tile color="primary" @click="save">
+      <v-btn tile color="primary" @click="save" :loading="busy">
         Save invoice
       </v-btn>
     </v-row>
@@ -206,6 +206,7 @@ export default {
   components: { Income, CustomerDetail },
   data() {
     return {
+      busy: false,
       farm: {},
       feedbackMessage: '',
       snackbar: false,
@@ -244,7 +245,8 @@ export default {
   },
   methods: {
     save() {
-      if (this.$refs.invoiceForm.validate()) {
+      if (!this.busy && this.$refs.invoiceForm.validate()) {
+        this.busy = true;
         axios.post('/invoices', {
           farmLocation: this.farm.id,
           paymentDate: this.paymentDate,
@@ -268,6 +270,9 @@ export default {
           .catch(({ response: { data } }) => {
             this.snackbar = true;
             this.feedbackMessage = data.error;
+          })
+          .finally(() => {
+            this.busy = false;
           });
       }
     },

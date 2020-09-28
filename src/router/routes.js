@@ -37,9 +37,14 @@ const routes = [{
   component: () => import(/* webpackChunkName: "customers" */ '../views/CustomerDetail.vue'),
 },
 {
+  path: '/employees/new',
+  name: ROUTES.EMPLOYEE,
+  component: () => import(/* webpackChunkName: "employees" */ '../components/Employee.vue'),
+},
+{
   path: '/employees',
   name: ROUTES.EMPLOYEES,
-  component: () => import(/* webpackChunkName: "batches" */ '../views/Employees.vue'),
+  component: () => import(/* webpackChunkName: "employees" */ '../views/Employees.vue'),
 },
 {
   path: '/expenses',

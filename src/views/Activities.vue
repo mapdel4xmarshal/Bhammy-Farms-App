@@ -108,7 +108,7 @@ export default {
   },
   filters: {
     truncate(string) {
-      return string.length > 40 ? `${string.substring(0, 37)}...` : string;
+      return string && string.length > 40 ? `${string.substring(0, 37)}...` : string;
     }
   }
 };

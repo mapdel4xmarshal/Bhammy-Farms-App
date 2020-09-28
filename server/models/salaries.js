@@ -29,8 +29,20 @@ class Salaries extends Model {
         allowNull: false
       },
       amount: {
-        type: DataTypes.DATEONLY,
+        type: DataTypes.DECIMAL,
         allowNull: false
+      },
+      loan_payment: {
+        type: DataTypes.DECIMAL,
+        allowNull: false
+      },
+      status: {
+        type: DataTypes.STRING,
+        allowNull: true
+      },
+      reference_id: {
+        type: DataTypes.STRING,
+        allowNull: true
       },
       comment: {
         type: DataTypes.TEXT

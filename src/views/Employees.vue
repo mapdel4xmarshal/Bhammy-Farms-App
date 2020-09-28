@@ -4,7 +4,7 @@
       <v-toolbar-title>Employees</v-toolbar-title>
 
       <v-spacer></v-spacer>
-      <v-btn tile color="primary">
+      <v-btn tile color="primary" @click="$router.push({ name: newEmployeeRoute})">
         Add employee
       </v-btn>
     </v-toolbar>
@@ -15,6 +15,8 @@
       :items="employees"
       hide-default-header
       :search="search"
+      :disable-pagination="true"
+      hide-default-footer
     >
       <template v-slot:header>
         <v-row
@@ -46,12 +48,12 @@
                 class="elevation-1 justify-center pt-2 pb-3"
                 :hover="true"
                 tile
-                :key="item.name"
+                :key="item.id"
               >
                 <v-card-text class="align-content-center center">
                   <v-avatar size="150px">
                     <v-img
-                      :src="item.image"></v-img>
+                      :src="item.avatar || defaultImage"></v-img>
                   </v-avatar>
                   <v-card-title class="justify-center">
                <span style="color: #7f2775">
@@ -61,7 +63,7 @@
                   <v-card-subtitle>
                     {{ item.phone }}
                   </v-card-subtitle>
-                  <v-chip small class=" text-uppercase">{{ item.position }}</v-chip>
+                  <v-chip small class=" text-uppercase">{{ item.role }}</v-chip>
                 </v-card-text>
               </v-card>
             </template>
@@ -69,60 +71,50 @@
         </v-container>
       </template>
     </v-data-iterator>
+    <v-snackbar
+      v-model="snackbar"
+      absolute
+    >
+      Employee created successfully
+      <v-btn
+        color="blue"
+        text
+        @click="snackbar = false"
+      >
+        Close
+      </v-btn>
+    </v-snackbar>
   </section>
 </template>
 
 <script>
+import axios from '../plugins/axios';
+import ROUTES from '../router/routeNames';
+
 export default {
   name: 'Employees',
   data() {
     return {
+      newEmployeeRoute: ROUTES.EMPLOYEE,
+      snackbar: false,
+      newEmployee: false,
       search: '',
-      employees: [
-        {
-          name: 'Test employee',
-          image: 'https://image.shutterstock.com/image-photo/portrait-sexy-smiling-male-model-260nw-439389172.jpg',
-          position: 'Pen Attendant',
-          phone: '08073290177'
-        },
-        {
-          name: 'Bamidele employee',
-          image: 'https://images.pexels.com/photos/736716/pexels-photo-736716.jpeg?auto=compress&cs=tinysrgb&dpr=1&w=500',
-          position: 'Pen Attendant',
-          phone: '08073290177'
-        },
-        {
-          name: 'employee employee',
-          image: '/img/user.png',
-          position: 'Manager',
-          phone: '08073290177'
-        },
-        {
-          name: 'employee employee',
-          image: '/img/user.png',
-          position: 'Manager',
-          phone: '08073290177'
-        },
-        {
-          name: 'employee employee',
-          image: '/img/user.png',
-          position: 'Manager',
-          phone: '08073290177'
-        },
-        {
-          name: 'employee employee',
-          image: '/img/user.png',
-          position: 'Security',
-          phone: '08073290177'
-        },
-        {
-          name: 'employee employee',
-          image: '/img/user.png',
-          position: 'Driver',
-          phone: '08073290177'
-        }
-      ]
+      errored: false,
+      employee: {},
+      employees: [],
+      defaultImage: '/../img/user.png'
     };
+  },
+  methods: {
+    getEmployees() {
+      axios.get('/employees')
+        .then(({ data }) => {
+          this.employees = data;
+        });
+    }
+  },
+  created() {
+    this.getEmployees();
   }
 };
 </script>

@@ -3,44 +3,39 @@ const controllers = require('./controllers');
 
 const router = express.Router();
 
-router.get('/suppliers', async (req, res) => {
-  const suppliers = await controllers.getSuppliers();
-  res.json(suppliers);
+router.get('/', async (req, res) => {
+  const employees = await controllers.getEmployees();
+  res.json(employees);
 });
 
-router.get('/suppliers/:supplierId', async (req, res) => {
-  const location = await controllers.getSupplierById(req.params.supplierId);
-  res.json(location);
+router.get('/roles', async (req, res) => {
+  const roles = await controllers.getRoles();
+  res.json(roles);
 });
 
-router.get('/sources', async (req, res) => {
-  const sources = await controllers.getSources();
-  res.json(sources);
+router.get('/departments', async (req, res) => {
+  const departments = await controllers.getDepartments();
+  res.json(departments);
 });
 
-router.get('/sources/:sourceId', async (req, res) => {
-  const sources = await controllers.getSourceById(req.params.sourceId);
-  res.json(sources);
+router.post('/', async (req, res) => {
+  const employee = await controllers.addEmployee(req);
+  res.status(employee.status ? employee.status : 200).json(employee);
 });
 
-router.get('/customers', async (req, res) => {
-  const customers = await controllers.getCustomers();
-  res.json(customers);
+router.post('/bank-detail', async (req, res) => {
+  const bankDetail = await controllers.addBankDetails(req.body, req.user);
+  res.status(bankDetail.status ? bankDetail.status : 200).json(bankDetail);
 });
 
-router.post('/customers', async (req, res) => {
-  const customer = await controllers.addCustomer(req.user, req.body);
-  res.json(customer);
+router.post('/webhook/salary', async (req, res) => {
+  controllers.processWebhookEvent(req);
+  res.sendStatus(200);
 });
 
-router.get('/customers/:customerId', async (req, res) => {
-  const customer = await controllers.getCustomers(req.params.customerId);
-  res.json(customer);
-});
-
-router.patch('/customers/:customerId', async (req, res) => {
-  const customer = await controllers.updateCustomer(req.user, req.body);
-  res.json(customer);
+router.get('/bank/resolve', async (req, res) => {
+  const bank = await controllers.getBank(req.query.accountNumber, req.query.bankCode);
+  res.json(bank);
 });
 
 module.exports = router;

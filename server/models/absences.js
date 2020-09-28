@@ -25,11 +25,11 @@ class Absences extends Model {
         allowNull: false
       },
       type: {
-        type: DataTypes.ENUM('vacation, dayoff, unapproved'),
+        type: DataTypes.ENUM(['vacation', 'dayoff', 'unapproved']),
         allowNull: false
       },
       approved_by: {
-        type: DataTypes.ENUM('vacation, dayoff, unapproved'),
+        type: DataTypes.STRING,
         allowNull: false
       },
       comment: {

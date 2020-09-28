@@ -10,7 +10,7 @@ const protect = require('./protect');
 dotenv.config();
 
 // Perform the login, after login Auth0 will redirect to callback
-router.get('/login', (req, res, next) => { return Zres.redirect(req.query.returnTo);
+router.get('/login', (req, res, next) => { return res.redirect(req.query.returnTo);
   if (!req.session.returnTo) {
     req.session.returnTo = req.query.returnTo || req.originalUrl;
   }

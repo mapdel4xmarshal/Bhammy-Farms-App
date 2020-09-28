@@ -106,7 +106,6 @@ class Controller {
           brand: item.brand,
           packaging_size: item.packagingSize,
           packaging_metric: item.packagingMetric.toLowerCase(),
-          quantity: 0,
           unit: item.unit.toLowerCase(),
           price: item.price,
           is_produced: item.isProduced,

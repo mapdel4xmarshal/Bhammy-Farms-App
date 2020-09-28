@@ -17,6 +17,7 @@ const items = require('./restapi/items/routes');
 const invoices = require('./restapi/invoices/routes');
 const activities = require('./restapi/activities/routes');
 const production = require('./restapi/production/routes');
+const employees = require('./restapi/employees/routes');
 
 dotenv.config();
 
@@ -92,6 +93,7 @@ app.use('/api/v1/invoices', protect(), invoices);
 app.use('/api/v1/activities', protect(), activities);
 app.use('/api/v1/productions', protect(), production);
 app.use('/api/v1/activity-logs', protect(), activityLogs);
+app.use('/api/v1/employees', protect(), employees);
 
 app.get('*', (req, res) => {
   res.sendFile(path.resolve('../dist/index.html'));

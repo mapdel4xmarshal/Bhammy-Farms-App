@@ -17,6 +17,10 @@ class Employees extends Model {
         autoIncrement: true,
         primaryKey: true
       },
+      gender: {
+        type: DataTypes.STRING,
+        allowNull: false
+      },
       position: {
         type: DataTypes.STRING,
         allowNull: false
@@ -38,7 +42,7 @@ class Employees extends Model {
         allowNull: false
       },
       salary: {
-        type: DataTypes.SMALLINT,
+        type: DataTypes.INTEGER,
         allowNull: false
       },
       is_manager: {
@@ -61,10 +65,12 @@ class Employees extends Model {
     };
   }
 
-  static associate({ Party, Salary, Deductible, House, Location }) {
+  static associate({ Party, Salary, Deductible, House, Location, BankDetail, Absence }) {
     Employees.party = Employees.belongsTo(Party, { foreignKey: 'party_id' });
     Employees.salaries = Employees.hasMany(Salary, { as: 'salaries', foreignKey: 'employee_id' });
-    Employees.loans = Employees.hasMany(Deductible, { as: 'deductible', foreignKey: 'employee_id' });
+    Employees.loans = Employees.hasMany(Deductible, { as: 'deductibles', foreignKey: 'employee_id' });
+    Employees.absences = Employees.hasMany(Absence, { foreignKey: 'employee_id' });
+    Employees.bankDetail = Employees.hasMany(BankDetail, { as: 'bankDetail', foreignKey: 'employee_id' });
     Employees.house = Employees.belongsTo(House, { foreignKey: { name: 'house_id', allowNull: true }, constraints: false });
     Employees.location = Employees.belongsTo(Location, { foreignKey: { name: 'location_id', allowNull: true }, constraints: false });
   }

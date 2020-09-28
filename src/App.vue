@@ -194,7 +194,6 @@ export default {
     display: grid;
     align-items: center;
     width: 100%;
-    padding-left: 15px;
     grid-template-columns: 150px auto;
   }
 
