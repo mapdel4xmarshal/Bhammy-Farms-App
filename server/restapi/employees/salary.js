@@ -8,8 +8,17 @@ class Salary {
     this._salary = employee.salaries;
     this.base = employee.salary;
     this.totalRepayment = employee.salaries;
+    this.paidSalaries = employee.salaries;
     this.outstandingLoanAmount = employee.deductibles;
     this.absences = employee.Absences.filter((absence) => absence.type === Salary.ABSENCE);
+  }
+
+  get paidSalaries() {
+    return this._paidSalaries;
+  }
+
+  set paidSalaries(salaries) {
+    this._paidSalaries = salaries.reduce((totalPaidAmount, salary) => (totalPaidAmount + +salary.amount), 0);
   }
 
   set absences(absences) {
@@ -37,6 +46,7 @@ class Salary {
   }
 
   get nextSalary() {
+    if (this.unpaidSalaries.length === 0) return { amount: 0, period: null };
     return {
       amount: (this.unpaidSalaries
         .reduce((totalSalary, month) => (totalSalary + +month.estSalary), 0) - this.nextRepaymentAmount).toFixed(2),
@@ -51,11 +61,11 @@ class Salary {
 
     let lastPaidDate;
     if (lastSalary) {
-      const dateArray = lastSalary.period_end.split('-');
+      const dateArray = lastSalary.periodEnd.split('-');
       lastPaidDate = new Date(`${dateArray[0]}-${dateArray[1]}-${+dateArray[2] + 1}`);
     } else {
       const date = new Date();
-      `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2,'0')}-01`;
+      lastPaidDate = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2,'0')}-01`;
     }
 
     const owedMonths = this.pendingMonths(lastPaidDate);
@@ -77,7 +87,7 @@ class Salary {
   }
 
   set totalRepayment(salaries) {
-    this._totalRepayment = salaries.reduce((totalPaidAmount, salary) => (totalPaidAmount + +salary.loan_payment), 0);
+    this._totalRepayment = salaries.reduce((totalPaidAmount, salary) => (totalPaidAmount + +salary.loanPaidAmount), 0);
   }
 
   get outstandingLoanAmount() {
@@ -86,7 +96,7 @@ class Salary {
 
   set outstandingLoanAmount(deductibles) {
     const loans = deductibles.filter((deductible) => deductible.type === Salary.LOAN);
-    this._loanPaymentDate = loans[loans.length - 1] ? loans[loans.length - 1].expiry_date : null;
+    this._loanPaymentDate = loans[loans.length - 1] ? loans[loans.length - 1].dueDate : null;
 
     this.totalLoan = loans.reduce((totalLoan, loan) => (totalLoan + +loan.amount), 0);
     this._outstandingLoan = (this.totalLoan - this.totalRepayment);
@@ -94,7 +104,10 @@ class Salary {
 
   pendingMonths(date) {
     const dateStart = moment.utc(date);
-    const dateEnd = moment.utc(new Date());
+    const dateEnd = moment.utc(new Date(new Date().getTime() - 86400000));
+
+    if (moment.duration(dateEnd.diff(dateStart)).asDays() < 1) return [];
+
     const interim = dateStart.clone();
     const timeValues = [];
 

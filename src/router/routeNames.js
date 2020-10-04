@@ -5,6 +5,7 @@ const ROUTES = {
   CUSTOMERS: 'Customers',
   CUSTOMER_DETAIL: 'CustomersDetail',
   DASHBOARD: 'Dashboard',
+  EDIT_EMPLOYEE: 'EditEmployee',
   EMPLOYEE: 'Employee',
   EMPLOYEES: 'Employees',
   EXPENSES: 'Expenses',
@@ -20,7 +21,8 @@ const ROUTES = {
   REPORTS: 'Reports',
   SETTINGS: 'Settings',
   STORE: 'Store',
-  SCHEDULES: 'Schedules'
+  SCHEDULES: 'Schedules',
+  VIEW_EMPLOYEE: 'ViewEmployee',
 };
 
 export default ROUTES;

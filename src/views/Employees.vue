@@ -46,8 +46,10 @@
             >
               <v-card
                 class="elevation-1 justify-center pt-2 pb-3"
-                :hover="true"
+                hover
                 tile
+                v-ripple
+                @click="viewDetail(item.id)"
                 :key="item.id"
               >
                 <v-card-text class="align-content-center center">
@@ -111,6 +113,9 @@ export default {
         .then(({ data }) => {
           this.employees = data;
         });
+    },
+    viewDetail(id) {
+      this.$router.push({ name: ROUTES.VIEW_EMPLOYEE, params: { id } });
     }
   },
   created() {

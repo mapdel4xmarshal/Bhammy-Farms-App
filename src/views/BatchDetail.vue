@@ -41,12 +41,12 @@
             :key="index"
           >
             <div style="display: flex;">
-              <div class="pl-5 pr-5 pt-1 pb-1">
+              <div class="pt-1 pb-1">
                 <span class="caption text-uppercase" style="color: #727272">{{ item.name }}</span>
                 <br>
                 <span class="body-1">{{ item.value }}</span>
               </div>
-              <v-divider vertical v-if="index < batchInfo.length - 1"/>
+              <v-divider vertical v-if="index < batchInfo.length - 1" class="ml-5 mr-5"/>
             </div>
           </v-slide-item>
         </v-slide-group>

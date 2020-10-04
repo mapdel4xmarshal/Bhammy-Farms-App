@@ -17,7 +17,7 @@ class BankDetails extends Model {
         primaryKey: true
       },
       account_number: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.BIGINT,
         allowNull: false
       },
       account_name: {

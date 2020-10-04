@@ -174,6 +174,7 @@ export default {
       category: '',
       type: '',
       title: '',
+      busy: false,
       purchaseExpenses: 0,
       serviceExpenses: 0,
       totalExpenses: 0,
@@ -215,6 +216,8 @@ export default {
     },
     addExpense(expense) {
       const { id } = expense;
+      if (this.busy) return;
+      this.busy = true;
       axios[id ? 'patch' : 'post'](`expenses${id ? `/${id}` : ''}`, expense)
         .then(({ data }) => {
           if (data) {
@@ -229,6 +232,7 @@ export default {
         .finally(() => {
           this.getExpenses();
           this.$refs.form.reset();
+          this.busy = false;
         });
     },
     createNew() {

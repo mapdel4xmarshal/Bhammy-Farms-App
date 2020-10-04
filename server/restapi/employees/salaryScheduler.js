@@ -13,7 +13,7 @@ class SalaryScheduler {
     return this._jobHandle;
   }
 
-  async schedule() {   this.process();
+  async schedule() {
     return new Promise((resolve) => {
       this._jobHandle = schedule.scheduleJob('0 0 1 * *', async () => {
         const result = await this.process();
@@ -22,9 +22,10 @@ class SalaryScheduler {
     });
   }
 
-  async process() {
+  async process(employeeId, user = { id: 'Auto', displayName: 'System'}) {
     return new Promise(async (resolve) => {
       const transaction = await sequelize.transaction();
+      const where = employeeId ? { employee_id : employeeId } : {};
 
       const employees = await Employee.findAll({
         include: [
@@ -37,16 +38,21 @@ class SalaryScheduler {
           },
           {
             model: Salary,
-            as: 'salaries'
+            as: 'salaries',
+            attributes: ['id', ['period_start', 'periodStart'], ['period_end', 'periodEnd'],
+              ['payment_date', 'paymentDate'], 'amount', 'status', ['reference_id', 'referenceId'],
+              ['loan_payment', 'loanPaidAmount']]
           },
           {
             model: Deductible,
-            as: 'deductibles'
+            as: 'deductibles',
+            attributes: ['id', 'amount', 'comment', 'date', ['expiry_date', 'dueDate'], 'type']
           },
           {
             model: Absence
           }
-        ]
+        ],
+        where
       }, { transaction });
 
       const recipients = {
@@ -61,8 +67,9 @@ class SalaryScheduler {
         recipients.transfers.push({
           amount: Math.floor(salary.nextSalary.amount) * 100,
           reason: `BHAMMYFARMS: SALARY ${salary.nextSalary.period}`,
-          recipient: employeeData.bankDetail[0].intermediary_id
-        });   console.log(salary.nextRepaymentAmount, salary.outstandingLoanAmount, salary.nextSalary)
+          recipient: employeeData.bankDetail[0].intermediary_id,
+          reference: employeeData.id
+        });
 
         await employee.createSalary({
           period_start: new Date(),
@@ -72,7 +79,7 @@ class SalaryScheduler {
           loan_payment: salary.nextRepaymentAmount,
           status: 'processing',
           comment: `base: ${salary.base}, ${salary.nextSalary.period}`
-        }, { transaction });
+        }, { transaction, user, resourceId: 'id' });
       });
 
       const url = `https://api.paystack.co/transfer/bulk`;
@@ -84,8 +91,9 @@ class SalaryScheduler {
           mailer.sendNotification('Salary Process Error', JSON.stringify(error || detail));
           await transaction.rollback();
           resolve({
-            error: 'Unable to process request. Please try again later!',
-            status: 500
+            message: 'Unable to process request. Please ensure the bank detail is accurate, then try again!',
+            status: 500,
+            error: error || detail
           });
         } else {
           await transaction.commit();

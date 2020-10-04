@@ -5,8 +5,10 @@ const request = require('request');
 const path = require('path');
 const formidable = require('formidable');
 const uuid = require('uuid');
-const { Party, Employee, Sequelize, BankDetail, Salary } = require('../../models');
+const { Party, Employee, Sequelize, BankDetail, Salary, Deductible, Absence } = require('../../models');
 const { fileUploadPath } = require('../../configs');
+const mailer = require('../../mailer/mailer');
+const SalaryClass = require('./salary');
 const SalaryScheduler = require('./salaryScheduler');
 
 class Controller {
@@ -55,6 +57,57 @@ class Controller {
       });
   }
 
+  getEmployee(employeeId) {
+    return Employee.findByPk(employeeId, {
+      attributes: [['date_of_birth', 'dateOfBirth'], ['day_off', 'dayOff'], 'department',
+        ['employment_date', 'employmentDate'], 'gender', ['house_id', 'house'], ['is_active', 'isActive'],
+        ['is_manager', 'isManager'], ['location_id', 'location'], 'salary', ['manager_id', 'managerId'], 'position',
+        'salary', 'comment', ['image', 'avatar'], ['employee_id', 'id']],
+      include: [
+        {
+          model: BankDetail,
+          as: 'bankDetail',
+          attributes: [['account_name', 'accountName'], ['account_number', 'accountNumber'], ['bank_code', 'bankCode'],
+            ['employee_id', 'employeeId'], 'id', ['intermediary_id', 'intermediaryId'], 'verified',
+            ['bank_name', 'bankName']]
+        },
+        {
+          model: Party,
+          attributes: ['address', ['alt_phone', 'altPhone'], 'email', 'name', ['party_id', 'partyId'], 'phone', 'state']
+        },
+        {
+          model: Salary,
+          as: 'salaries',
+          attributes: ['id', ['period_start', 'periodStart'], ['period_end', 'periodEnd'],
+            ['payment_date', 'paymentDate'], 'amount', 'status', ['reference_id', 'referenceId'],
+            ['loan_payment', 'loanPaidAmount']]
+        },
+        {
+          model: Deductible,
+          as: 'deductibles',
+          attributes: ['id', 'amount', 'comment', 'date', ['expiry_date', 'dueDate'], 'type']
+        },
+        {
+          model: Absence
+        }
+      ]
+    })
+      .then(employee => {
+        employee = employee && employee.toJSON();
+        const salaryInfo = new SalaryClass(employee);
+        employee.unPaidSalary = +salaryInfo.nextSalary.amount;
+        employee.unPaidLoan = +salaryInfo.outstandingLoanAmount;
+        employee.totalLoan = +salaryInfo.totalLoan;
+        employee.paidSalary = +salaryInfo.paidSalaries;
+        employee.absences = [...employee.Absences];
+        employee = { ...employee, ...employee.Party };
+        employee.bankDetail = employee.bankDetail[0];
+        delete employee.Absences;
+        delete employee.Party;
+        return employee;
+      });
+  }
+
   async getRoles() {
     return Employee.findAll({
       attributes: ['position'],
@@ -98,7 +151,7 @@ class Controller {
           resolve(JSON.parse(detail));
         }
       })
-        .auth(null, null, true, 'sk_test_b1ed49c1c941573da4eeaa7de1c9169e068cfc8d');
+        .auth(null, null, true, process.env.PAYSTACK_SECRET);
     });
   }
 
@@ -122,8 +175,8 @@ class Controller {
     });
   }
 
-  async addBankDetails(bankDetail, user) {
-    const employee = await Employee.findByPk(bankDetail.employeeId);
+  async addBankDetails(employeeId, bankDetail, user) {
+    const employee = await Employee.findByPk(employeeId);
 
     if (!employee) {
       return {
@@ -134,7 +187,7 @@ class Controller {
 
     const employeeBankDetail = await BankDetail.count({
       where: {
-        employee_id: bankDetail.employeeId
+        employee_id: employeeId
       }
     });
 
@@ -164,7 +217,7 @@ class Controller {
           bank_code: bankDetail.bankCode,
           verified: true,
           intermediary_id: recipient.data.recipient_code,
-          employee_id: bankDetail.employeeId
+          employee_id: employeeId
         }, {
           user,
           resourceId: 'id'
@@ -186,6 +239,90 @@ class Controller {
       return {
         status: 400,
         message: 'Invalid bank details'
+      };
+    }
+  }
+
+  async addLoan(employeeId, loan, user) {
+    let employee = await Employee.findByPk(employeeId);
+
+    if (!employee) {
+      return {
+        status: 400,
+        message: 'No employee found matching the supplied "employeeId"'
+      };
+    }
+
+    employee = employee && employee.toJSON();
+    const salaryInfo = new SalaryClass(employee);
+
+    if (salaryInfo.outstandingLoanAmount > 0) {
+      return {
+        status: 409,
+        message: 'an outstanding loan exists. No new loan can be added until the outstanding one is paid.'
+      };
+    }
+
+    return Deductible.create({
+      type: 'loan',
+      date: loan.date,
+      expiry_date: loan.expiryDate,
+      amount: loan.amount,
+      comment: loan.comment,
+      employee_id: employeeId
+    }, {
+      user,
+      resourceId: 'id'
+    });
+  }
+
+  async updateBankDetails(employeeId, bankDetail, user) {
+    const employee = await Employee.findByPk(employeeId);
+
+    if (!employee) {
+      return {
+        status: 400,
+        message: 'No employee found matching the supplied "employeeId"'
+      };
+    }
+
+    const bankDetailCount = await BankDetail.count({
+      where: {
+        employee_id: employeeId
+      }
+    });
+
+    if (bankDetailCount === 0) {
+      return {
+        status: 404,
+        message: 'No matching bank detail found'
+      };
+    }
+
+    const bankInfo = await this.getBank(bankDetail.accountNumber, bankDetail.bankCode);
+    if (bankInfo && bankInfo.status) {
+      return BankDetail.update({
+        account_number: bankDetail.accountNumber,
+        account_name: bankDetail.accountName,
+        bank_code: bankDetail.bankCode
+      }, {
+        user,
+        resourceId: 'id',
+        where: {
+          employee_id: employeeId
+        }
+      })
+        .catch((error) => {
+          console.log(error);
+          return {
+            status: 500,
+            message: 'unable to update bank-detail. Please try again or contact us.'
+          };
+        });
+    } else {
+      return {
+        status: 400,
+        message: bankInfo.message
       };
     }
   }
@@ -224,7 +361,7 @@ class Controller {
           is_manager: employee.level,
           image: thumbnail,
           day_off: employee.dayOff,
-          comment: employee.remark,
+          comment: employee.comment,
           house_id: employee.house,
           location_id: employee.location
         }, {
@@ -234,6 +371,84 @@ class Controller {
         });
 
         resolve(newEmployee);
+      });
+    }).catch(async (e) => {
+      console.log(e); // todo: add proper logger
+      return {
+        error: 'Unable to process request. Please try again later!',
+        status: 500
+      };
+    });
+  }
+
+  async updateEmployee(req) {
+    const form = formidable({
+      multiples: false,
+      keepExtensions: true,
+      uploadDir: `${fileUploadPath}${path.sep}uploads`
+    });
+    const { user } = req;
+
+    return new Promise((resolve, reject) => {
+      form.parse(req, async (err, employee, files) => {
+        if (err) reject(err);
+
+        const existingEmployee = await Employee.findOne({
+          where: {
+            employee_id: employee.id
+          }
+        });
+
+        if (!existingEmployee) {
+          return {
+            error: 'No employee found with the supplied id',
+            status: 400
+          };
+        }
+
+        const thumbnail = files.thumbnail ? files.thumbnail.path.replace(`${fileUploadPath}${path.sep}`, '') : null;
+        const payload = {
+          gender: employee.gender,
+          employment_date: employee.employmentDate,
+          position: employee.position,
+          department: employee.department,
+          date_of_birth: employee.dateOfBirth,
+          is_active: true,
+          salary: employee.salary,
+          is_manager: employee.level,
+          day_off: employee.dayOff,
+          comment: employee.comment,
+          house_id: employee.house,
+          location_id: employee.location
+        };
+
+        if (thumbnail) payload.image = thumbnail;
+
+        await Employee.update(
+          payload, {
+            include: [Party],
+            user,
+            resourceId: 'employee_id',
+            where: {
+              employee_id: employee.id
+            }
+          });
+
+        await Party.update({
+            name: employee.name,
+            address: employee.address,
+            state: employee.state,
+            email: employee.email,
+            phone: employee.phone,
+            alt_phone: employee.altPhone
+          },
+          {
+            where: {
+              party_id: existingEmployee.toJSON().party_id
+            }
+          });
+
+        resolve(existingEmployee);
       });
     }).catch(async (e) => {
       console.log(e); // todo: add proper logger
@@ -255,7 +470,15 @@ class Controller {
   }
 
   async updateSalaryStatus(transferInfo) {
+    let where = {},
+      bankDetailWhere = {};
+    if (transferInfo.data.recipient.metadata) {
+      where = { employee_id: transferInfo.data.recipient.metadata };
+    } else {
+      bankDetailWhere = { intermediary_id: transferInfo.data.recipient.recipient_code };
+    }
     const employee = await Employee.findOne({
+      where,
       include: [
         {
           model: BankDetail,
@@ -263,7 +486,7 @@ class Controller {
           attributes: [],
           where: {
             verified: true,
-            intermediary_id: transferInfo.data.recipient.recipient_code
+            ...bankDetailWhere
           }
         },
         {
@@ -275,11 +498,27 @@ class Controller {
         }]
     });
 
-    const salariesLen = employee.salaries.length - 1;
-    employee.salaries[salariesLen].reference_id = transferInfo.data.reference;
-    employee.salaries[salariesLen].status = transferInfo.data.status;
+    if (employee.salaries) {
+      const salariesLen = employee.salaries.length - 1;
+      employee.salaries[salariesLen].reference_id = transferInfo.data.reference;
+      employee.salaries[salariesLen].status = transferInfo.data.status;
 
-    employee.salaries[salariesLen].save();
+      employee.salaries[salariesLen].save();
+    }
+
+    mailer.sendNotification('Salary Process Update', JSON.stringify(transferInfo));
+  }
+
+  async paySalary(employeeId, user) {
+    const salaryScheduler = new SalaryScheduler();
+    return salaryScheduler.process(employeeId, user)
+      .catch((error) => {
+        console.log(error);
+        return {
+          status: 500,
+          message: 'unable to update bank-detail. Please try again or contact us.'
+        };
+      });
   }
 }
 

@@ -229,8 +229,6 @@ export default {
       default: false
     }
   },
-  computed: {
-  },
   methods: {
     update(state) {
       this.$emit('update', state);

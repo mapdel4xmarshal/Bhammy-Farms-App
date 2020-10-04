@@ -18,14 +18,39 @@ router.get('/departments', async (req, res) => {
   res.json(departments);
 });
 
+router.get('/:employeeId', async (req, res) => {
+  const employee = await controllers.getEmployee(req.params.employeeId);
+  res.json(employee);
+});
+
 router.post('/', async (req, res) => {
   const employee = await controllers.addEmployee(req);
   res.status(employee.status ? employee.status : 200).json(employee);
 });
 
-router.post('/bank-detail', async (req, res) => {
-  const bankDetail = await controllers.addBankDetails(req.body, req.user);
+router.patch('/:employeeId', async (req, res) => {
+  const employee = await controllers.updateEmployee(req);
+  res.status(employee.status ? employee.status : 200).json(employee);
+});
+
+router.post('/:employeeId/loan', async (req, res) => {
+  const loan = await controllers.addLoan(req.params.employeeId, req.body, req.user);
+  res.status(loan.status ? loan.status : 200).json(loan);
+});
+
+router.post('/:employeeId/bank-detail', async (req, res) => {
+  const bankDetail = await controllers.addBankDetails(req.params.employeeId, req.body, req.user);
   res.status(bankDetail.status ? bankDetail.status : 200).json(bankDetail);
+});
+
+router.patch('/:employeeId/bank-detail', async (req, res) => {
+  const bankDetail = await controllers.updateBankDetails(req.params.employeeId, req.body, req.user);
+  res.status(bankDetail.status ? bankDetail.status : 200).json(bankDetail);
+});
+
+router.post('/:employeeId/process-payment', async (req, res) => {
+  const salary = await controllers.paySalary(req.params.employeeId, req.user);
+  res.status(salary.status === true ? 200 : salary.status).json(salary);
 });
 
 router.post('/webhook/salary', async (req, res) => {
