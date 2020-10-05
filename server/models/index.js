@@ -6,6 +6,8 @@ const Sequelize = require('sequelize');
 const basename = path.basename(__filename);
 const config = require('../configs');
 
+process.env.DEBUG = null;
+
 const db = {};
 
 let sequelize;
@@ -15,7 +17,7 @@ sequelize = new Sequelize(config.dbName, config.dbUser, config.dbPass, {
   define: {
     underscored: true
   },
-  logging: process.env.NODE_ENV !== 'production'
+  logging: false
 });
 
 fs

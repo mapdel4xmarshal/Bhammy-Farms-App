@@ -38,6 +38,11 @@ router.post('/:employeeId/loan', async (req, res) => {
   res.status(loan.status ? loan.status : 200).json(loan);
 });
 
+router.post('/:employeeId/leave', async (req, res) => {
+  const leave = await controllers.addLeave(req.params.employeeId, req.body, req.user);
+  res.status(leave.status ? leave.status : 200).json(leave);
+});
+
 router.post('/:employeeId/bank-detail', async (req, res) => {
   const bankDetail = await controllers.addBankDetails(req.params.employeeId, req.body, req.user);
   res.status(bankDetail.status ? bankDetail.status : 200).json(bankDetail);

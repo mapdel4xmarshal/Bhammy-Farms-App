@@ -65,7 +65,7 @@ class Salary {
       lastPaidDate = new Date(`${dateArray[0]}-${dateArray[1]}-${+dateArray[2] + 1}`);
     } else {
       const date = new Date();
-      lastPaidDate = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2,'0')}-01`;
+      lastPaidDate = `${date.getUTCFullYear()}-${(date.getUTCMonth() + 1).toString().padStart(2,'0')}-01`;
     }
 
     const owedMonths = this.pendingMonths(lastPaidDate);
@@ -78,7 +78,7 @@ class Salary {
       }
       date.estSalary = ((this.base / date.days) * date.workedDays).toFixed(2);
     });
-
+    
     return owedMonths;
   }
 

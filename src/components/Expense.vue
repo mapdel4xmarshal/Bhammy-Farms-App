@@ -88,7 +88,7 @@
                   hint="Expense category."
                   persistent-hint
                   @change="changeCategory"
-                  :items="['Purchase', 'Service', 'Salary']"
+                  :items="['Purchase', 'Service']"
                   v-model="value.category"
                   :rules="[v => !!v || 'Please select a category.']"
                   required

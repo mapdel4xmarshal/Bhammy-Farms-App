@@ -13,7 +13,7 @@
         <v-card-title>Loan request</v-card-title>
         <v-divider></v-divider>
         <v-card-text>
-          <loan-request v-model="loan"/>
+          <loan-request ref="loan" v-model="loan" @save="addLoan" @cancel="cancelLoan"/>
         </v-card-text>
       </v-card>
       <v-card v-else>
@@ -120,56 +120,76 @@
             :event-color="absenceEventColors"
             @click:date="absenceEvent"
           ></v-date-picker>
-          <v-menu
+          <v-dialog
+            width="500"
             v-model="showVacationMenu"
-            :close-on-content-click="false"
-            :nudge-width="200"
-            :position-x="x"
-            :position-y="y"
-            absolute
-            offset-y
+            :fullscreen="$mq.phone"
           >
-            <v-card>
-              <v-list>
-                <v-list-item>
-                  <v-list-item-avatar>
-                    <img src="https://cdn.vuetifyjs.com/images/john.jpg" alt="John">
-                  </v-list-item-avatar>
-
-                  <v-list-item-content>
-                    <v-list-item-title>Absense</v-list-item-title>
-                    <v-list-item-subtitle></v-list-item-subtitle>
-                  </v-list-item-content>
-
-                </v-list-item>
-              </v-list>
-
+            <v-card class="ma-auto" max-width="500">
+              <v-card-title>Leave request</v-card-title>
               <v-divider></v-divider>
+              <v-form ref="leaveForm">
+                <v-row class="ma-4 mt-0">
+                  <v-col cols="12">
+                    <v-text-field
+                      label="Start date"
+                      hint="Leave start date."
+                      autocomplete="off"
+                      persistent-hint
+                      readonly
+                      required
+                      v-model="absences.startDate"
+                    ></v-text-field>
+                  </v-col>
 
-              <v-list>
-                <v-list-item>
-                  <v-list-item-action>
-                    Type
-                  </v-list-item-action>
-                  <v-list-item-title>Vacation</v-list-item-title>
-                </v-list-item>
+                  <v-col cols="12">
+                    <v-text-field
+                      label="Days"
+                      hint="No of days to be out of office"
+                      autocomplete="off"
+                      persistent-hint
+                      required
+                      type="number"
+                      v-model="absences.days"
+                      :rules="[v => !!v || 'Please enter days.']"
+                    ></v-text-field>
+                  </v-col>
 
-                <v-list-item>
-                  <v-list-item-action>
-                    Test
-                  </v-list-item-action>
-                  <v-list-item-title>Enable hints</v-list-item-title>
-                </v-list-item>
-              </v-list>
+                  <v-col cols="12">
+                    <v-select
+                      label="Type"
+                      hint="Leave type"
+                      autocomplete="off"
+                      persistent-hint
+                      required
+                      :items="['Vacation', 'Unapproved']"
+                      v-model="absences.type"
+                      :rules="[v => !!v || 'Please select leave type.']"
+                    ></v-select>
+                  </v-col>
 
-              <v-card-actions>
+                  <v-col cols="12">
+                    <v-textarea
+                      label="Remark"
+                      clearable
+                      rows="2"
+                      filled
+                      no-resize
+                      v-model="absences.comment"
+                      hint="Notable information about this leave."
+                      persistent-hint
+                      required
+                    ></v-textarea>
+                  </v-col>
+                </v-row>
+              </v-form>
+              <v-card-actions class="pa-7 pt-1 pb-4">
+                <v-btn text @click="showVacationMenu = false">Cancel</v-btn>
                 <v-spacer></v-spacer>
-
-                <v-btn text @click="menu = false">Cancel</v-btn>
-                <v-btn color="primary" text @click="menu = false">Save</v-btn>
+                <v-btn tile color="primary" @click="requestLeave">Save</v-btn>
               </v-card-actions>
             </v-card>
-          </v-menu>
+          </v-dialog>
         </v-card>
       </v-col>
       <v-col cols="12" :md="$mq.tablet ? 12 : 8" sm="12" lg="9">
@@ -276,6 +296,7 @@ export default {
   components: { LoanRequest, PaymentInfo },
   data() {
     return {
+      absences: {},
       loanDialog: false,
       paymentInProgress: false,
       dialog: false,
@@ -285,7 +306,8 @@ export default {
       message: '',
       snackbar: false,
       employee: {
-        bankDetail: {}
+        bankDetail: {},
+        absences: {}
       },
       absenceEvents: [],
       salaryHeaders: [
@@ -335,6 +357,29 @@ export default {
     };
   },
   methods: {
+    requestLeave() {
+      if (this.$refs.leaveForm.validate()) {
+        this.absences.endDate = new Date(new Date(this.absences.startDate)
+          .getTime() + ((this.absences.days - 1) * 86400000))
+          .toISOString().substr(0, 10);
+        axios.post(`/employees/${this.employee.id}/leave`, this.absences)
+          .then(() => {
+            this.message = 'Vacation added successfully';
+            this.snackbar = true;
+            this.showVacationMenu = false;
+            this.$refs.leaveForm.reset();
+            this.getEmployee();
+          })
+          .catch(({ response }) => {
+            this.message = response.data.message;
+            this.snackbar = true;
+          });
+      }
+    },
+    cancelLoan() {
+      this.dialog = false;
+      this.loanDialog = false;
+    },
     editProfile() {
       this.$router.push({ name: ROUTES.EDIT_EMPLOYEE });
     },
@@ -391,15 +436,11 @@ export default {
       const farm = this.getFarm(farmId);
       return id ? farm.houses.find((house) => house.id === id).name : null;
     },
-    absenceEvent(date, e) {
-      this.showVacationMenu = true;
-      this.x = e.clientX;
-      this.y = e.clientY;
-      /* if (this.absenceEvents.includes(date)) {
-
-      } else {
-
-      } */
+    absenceEvent(date) {
+      if (!this.absenceEvents.includes(date)) {
+        this.showVacationMenu = true;
+        this.absences.startDate = date;
+      }
     },
     updateBankDetail() {
       this.busy = true;
@@ -435,6 +476,21 @@ export default {
         })
         .finally(() => {
           this.paymentInProgress = false;
+        });
+    },
+    addLoan() {
+      axios.post(`/employees/${this.employee.id}/loan`, this.loan)
+        .then(() => {
+          this.message = 'Loan added successfully';
+          this.snackbar = true;
+          this.dialog = false;
+          this.loanDialog = false;
+          this.$refs.loan.reset();
+          this.getEmployee();
+        })
+        .catch(({ response }) => {
+          this.message = response.data.message;
+          this.snackbar = true;
         });
     }
   },

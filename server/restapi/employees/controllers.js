@@ -5,7 +5,10 @@ const request = require('request');
 const path = require('path');
 const formidable = require('formidable');
 const uuid = require('uuid');
-const { Party, Employee, Sequelize, BankDetail, Salary, Deductible, Absence } = require('../../models');
+const {
+  Party, Employee, Sequelize, BankDetail, Salary, Deductible,
+  Absence, Expense, sequelize, Batch
+} = require('../../models');
 const { fileUploadPath } = require('../../configs');
 const mailer = require('../../mailer/mailer');
 const SalaryClass = require('./salary');
@@ -45,7 +48,8 @@ class Controller {
         ['position', 'role'],
         ['day_off', 'dayOff']
       ],
-      where
+      where,
+      logging: false
     })
       .then((employees) => employees)
       .catch((error) => {
@@ -90,7 +94,8 @@ class Controller {
         {
           model: Absence
         }
-      ]
+      ],
+      logging: false
     })
       .then(employee => {
         employee = employee && employee.toJSON();
@@ -244,32 +249,96 @@ class Controller {
   }
 
   async addLoan(employeeId, loan, user) {
-    let employee = await Employee.findByPk(employeeId);
+    let employee = await this.getEmployee(employeeId);
 
-    if (!employee) {
+    if (!employee || (employee && !employee.id)) {
       return {
         status: 400,
         message: 'No employee found matching the supplied "employeeId"'
       };
     }
 
-    employee = employee && employee.toJSON();
-    const salaryInfo = new SalaryClass(employee);
-
-    if (salaryInfo.outstandingLoanAmount > 0) {
+    if (employee.unPaidLoan > 0) {
       return {
         status: 409,
-        message: 'an outstanding loan exists. No new loan can be added until the outstanding one is paid.'
+        message: 'An outstanding loan exists. No new loan can be added until the existing one is paid.'
       };
     }
 
-    return Deductible.create({
+    const transaction = await sequelize.transaction();
+
+    const batchInfo = await Batch.findOne({
+      attributes: ['batch_id'],
+      where: {
+        is_active: 1,
+        house_id: employee.house
+      }
+    }) || {};
+
+    Expense.create({
+      category: 'salary',
+      amount: loan.amount,
+      date: loan.date,
+      provider: employee.name,
+      description: 'Loan',
+      location_id: employee.location,
+      house_id: employee.house,
+      batch_id: batchInfo.batch
+    }, {
+      transaction,
+      user,
+      resourceId: 'expense_id'
+    });
+
+    const deductible = await Deductible.create({
       type: 'loan',
       date: loan.date,
       expiry_date: loan.expiryDate,
       amount: loan.amount,
       comment: loan.comment,
       employee_id: employeeId
+    }, {
+      transaction,
+      user,
+      resourceId: 'id'
+    });
+
+    await transaction.commit();
+
+    return deductible;
+  }
+
+  async addLeave(employeeId, leave, user) {
+    let employee = await this.getEmployee(employeeId);
+
+    if (!employee || (employee && !employee.id)) {
+      return {
+        status: 400,
+        message: 'No employee found matching the supplied "employeeId"'
+      };
+    }
+
+    let overlappingLeaves = await sequelize.query(`
+        SELECT COUNT(*) AS count FROM absences 
+        WHERE ('${leave.startDate}' BETWEEN start_date AND end_date) 
+        OR ('${leave.endDate}' BETWEEN start_date AND end_date); 
+    `)
+      .then(async ([leaves]) => leaves[0].count);
+
+    if (overlappingLeaves > 0) {
+      return {
+        status: 409,
+        message: 'Leave dates conflicts with an existing one.'
+      };
+    }
+
+    return Absence.create({
+      start_date: leave.startDate,
+      end_date: leave.endDate,
+      type: leave.type,
+      comment: leave.comment,
+      employee_id: employeeId,
+      approved_by: user.displayName || ""
     }, {
       user,
       resourceId: 'id'
@@ -490,13 +559,17 @@ class Controller {
           }
         },
         {
+          model: Party,
+          attributes: ['name']
+        },
+        {
           model: Salary,
           as: 'salaries',
           where: {
             status: 'processing'
           }
         }]
-    });
+    }) || {};
 
     if (employee.salaries) {
       const salariesLen = employee.salaries.length - 1;
@@ -507,6 +580,30 @@ class Controller {
     }
 
     mailer.sendNotification('Salary Process Update', JSON.stringify(transferInfo));
+
+    const batchInfo = await Batch.findOne({
+      attributes: ['batch_id'],
+      where: {
+        is_active: 1,
+        house_id: employee.house_id
+      }
+    }) || {};
+
+    Expense.create({
+        category: 'salary',
+        amount: Math.floor(transferInfo.data.amount / 100),
+        date: transferInfo.data.amount.created_at.substr(0, 10),
+        invoice_number: transferInfo.data.transfer_code,
+        provider: employee.Party.name,
+        description: transferInfo.data.reason,
+        location_id: employee.location_id,
+        house_id: employee.house_id,
+        batch_id: batchInfo.batch_id
+      },
+      {
+        user,
+        resourceId: 'expense_id'
+      });
   }
 
   async paySalary(employeeId, user) {
@@ -516,7 +613,7 @@ class Controller {
         console.log(error);
         return {
           status: 500,
-          message: 'unable to update bank-detail. Please try again or contact us.'
+          message: 'unable to process salary. Please try again or contact us.'
         };
       });
   }

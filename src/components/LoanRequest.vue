@@ -46,12 +46,12 @@
                 persistent-hint
                 @change="update"
                 v-on="on"
-                @click:clear="value.date = null"
+                @click:clear="value.expiryDate = null"
               ></v-text-field>
             </template>
             <v-date-picker
-              v-model="value.date"
-              @change="dateMenu = false"
+              v-model="value.expiryDate"
+              @change="dueDateMenu = false"
             ></v-date-picker>
           </v-menu>
         </v-col>
@@ -63,8 +63,9 @@
             autocomplete="off"
             persistent-hint
             required
+            type="number"
             v-model="value.amount"
-            type="email"
+            :rules="[v => !!v || 'Please enter loan amount.']"
           ></v-text-field>
         </v-col>
 
@@ -81,9 +82,9 @@
             required
           ></v-textarea>
         </v-col>
-        <v-btn text color="primary">cancel</v-btn>
+        <v-btn text color="primary" @click="$emit('cancel')">cancel</v-btn>
         <v-spacer/>
-        <v-btn class="mr-3" color="primary">Save loan</v-btn>
+        <v-btn class="mr-3" color="primary" @click="save">Save loan</v-btn>
       </v-row>
     </v-container>
   </v-form>
@@ -105,6 +106,14 @@ export default {
     }
   },
   methods: {
+    save() {
+      if (this.$refs.form.validate()) {
+        this.$emit('save', this.value);
+      }
+    },
+    reset() {
+      this.$refs.form.reset();
+    },
     update(state) {
       this.$emit('update', state);
     }

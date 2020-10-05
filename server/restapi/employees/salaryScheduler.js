@@ -22,10 +22,13 @@ class SalaryScheduler {
     });
   }
 
-  async process(employeeId, user = { id: 'Auto', displayName: 'System'}) {
+  async process(employeeId, user = {
+    id: 'Auto',
+    displayName: 'System'
+  }) {
     return new Promise(async (resolve) => {
       const transaction = await sequelize.transaction();
-      const where = employeeId ? { employee_id : employeeId } : {};
+      const where = employeeId ? { employee_id: employeeId } : {};
 
       const employees = await Employee.findAll({
         include: [
@@ -34,26 +37,33 @@ class SalaryScheduler {
             as: 'bankDetail',
             where: {
               verified: true
-            }
+            },
+            required: false
           },
           {
             model: Salary,
             as: 'salaries',
             attributes: ['id', ['period_start', 'periodStart'], ['period_end', 'periodEnd'],
               ['payment_date', 'paymentDate'], 'amount', 'status', ['reference_id', 'referenceId'],
-              ['loan_payment', 'loanPaidAmount']]
+              ['loan_payment', 'loanPaidAmount']],
+            required: false
           },
           {
             model: Deductible,
             as: 'deductibles',
-            attributes: ['id', 'amount', 'comment', 'date', ['expiry_date', 'dueDate'], 'type']
+            attributes: ['id', 'amount', 'comment', 'date', ['expiry_date', 'dueDate'], 'type'],
+            required: false
           },
           {
-            model: Absence
+            model: Absence,
+            required: false
           }
         ],
         where
-      }, { transaction });
+      }, { transaction })
+        .catch((error) => {
+          console.log(error);
+        });
 
       const recipients = {
         currency: 'NGN',
@@ -61,26 +71,40 @@ class SalaryScheduler {
         transfers: []
       };
 
-      employees.forEach( async (employee) => {
+      employees.forEach(async (employee) => {
         const employeeData = employee.toJSON();
         const salary = new SalaryClass(employeeData);
-        recipients.transfers.push({
-          amount: Math.floor(salary.nextSalary.amount) * 100,
-          reason: `BHAMMYFARMS: SALARY ${salary.nextSalary.period}`,
-          recipient: employeeData.bankDetail[0].intermediary_id,
-          reference: employeeData.id
-        });
+        if (salary.nextSalary.amount > 0 && employeeData.bankDetail) {
+          recipients.transfers.push({
+            amount: Math.floor(salary.nextSalary.amount) * 100,
+            reason: `BHAMMYFARMS: SALARY ${salary.nextSalary.period}`,
+            recipient: employeeData.bankDetail[0].intermediary_id,
+            reference: employeeData.id
+          });
 
-        await employee.createSalary({
-          period_start: new Date(),
-          period_end: new Date(),
-          payment_date: new Date(),
-          amount: salary.nextSalary.amount,
-          loan_payment: salary.nextRepaymentAmount,
-          status: 'processing',
-          comment: `base: ${salary.base}, ${salary.nextSalary.period}`
-        }, { transaction, user, resourceId: 'id' });
+          await employee.createSalary({
+            period_start: new Date(),
+            period_end: new Date(),
+            payment_date: new Date(),
+            amount: salary.nextSalary.amount,
+            loan_payment: salary.nextRepaymentAmount,
+            status: 'processing',
+            comment: `base: ${salary.base}, ${salary.nextSalary.period}`
+          }, {
+            transaction,
+            user,
+            resourceId: 'id'
+          });
+        }
       });
+
+      if (recipients.transfers.length === 0 && employeeId) {
+        return resolve({
+           message: 'Ensure bank detail is accurate and salary is greater than zero (0)',
+           status: 400,
+           error: 'Salary should be greater than zero (0)'
+         });
+      }
 
       const url = `https://api.paystack.co/transfer/bulk`;
       request.post({
