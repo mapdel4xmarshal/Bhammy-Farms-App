@@ -7,7 +7,10 @@ class Controller {
   // eslint-disable-next-line class-methods-use-this
   async getItems({ groupBy, category, isProduced }) {
     const where = {};
-    if (category) where.category = category;
+    if (category) {
+      if (Array.isArray(category)) where.category = { [Sequelize.Op.in]: category };
+      else where.category = category;
+    }
     if (isProduced !== undefined) where.is_produced = +Boolean(isProduced);
 
     return Item.findAll({
@@ -152,9 +155,7 @@ class Controller {
         }
       }
     })
-      .then((items) => items.map((item) => {
-        return item.toJSON().packagingMetric.replace(/\b[a-z]/g, (match) => match.toUpperCase());
-      }));
+      .then((items) => items.map((item) => item.toJSON().packagingMetric.replace(/\b[a-z]/g, (match) => match.toUpperCase())));
   }
 
   async getItemCategories() {

@@ -298,7 +298,7 @@ export default {
     formatNumber(value) {
       return new Intl.NumberFormat('en-US', { minimumFractionDigits: 2 }).format(value);
     }
-  },
+  }
 };
 </script>
 <style>

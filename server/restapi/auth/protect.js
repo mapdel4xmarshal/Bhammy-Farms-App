@@ -1,5 +1,5 @@
-module.exports = () => (req, res, next) => {
-  if (process.env.NODE_ENV !== 'production') {
+module.exports = (options = {}) => (req, res, next) => {
+  if (process.env.NODE_ENV !== 'production' || req.path === options.skip) {
     req.user = {};
     return next();
   }

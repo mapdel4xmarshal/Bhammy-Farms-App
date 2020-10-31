@@ -22,7 +22,7 @@ class Medications extends Model {
         allowNull: true
       },
       dosage: {
-        type: DataTypes.DECIMAL,
+        type: DataTypes.DECIMAL(10, 2),
         allowNull: false
       },
       dosage_unit: {
@@ -30,7 +30,7 @@ class Medications extends Model {
         allowNull: false
       },
       total_dosage: {
-        type: DataTypes.DECIMAL,
+        type: DataTypes.DECIMAL(10, 2),
         allowNull: false
       },
       no_of_birds: {

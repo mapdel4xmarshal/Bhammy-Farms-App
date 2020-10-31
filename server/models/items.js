@@ -31,7 +31,7 @@ class Items extends Model {
         allowNull: true
       },
       packaging_size: {
-        type: DataTypes.DECIMAL,
+        type: DataTypes.DECIMAL(10, 2),
         allowNull: false,
         default: 1
       },
@@ -40,7 +40,7 @@ class Items extends Model {
         allowNull: false
       },
       quantity: {
-        type: DataTypes.DECIMAL,
+        type: DataTypes.DECIMAL(10, 2),
         default: 0,
         allowNull: true
       },
@@ -49,7 +49,7 @@ class Items extends Model {
         allowNull: true
       },
       price: {
-        type: DataTypes.DECIMAL,
+        type: DataTypes.DECIMAL(10, 2),
         allowNull: false
       },
       image: {
@@ -67,10 +67,11 @@ class Items extends Model {
   }
 
   static associate({
-    InvoiceItem, Invoice, ProductionItem, Production
+    InvoiceItem, Invoice, ProductionItem, Production, FeedProduction, FeedProductionItem
   }) {
     Items.invoices = Items.belongsToMany(Invoice, { through: InvoiceItem, foreignKey: 'item_id' });
     Items.production = Items.belongsToMany(Production, { through: ProductionItem, foreignKey: 'item_id' });
+    Items.feedProduction = Items.belongsToMany(FeedProduction, { through: FeedProductionItem, foreignKey: 'item_id' });
   }
 }
 

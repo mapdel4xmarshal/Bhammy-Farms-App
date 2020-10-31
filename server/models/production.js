@@ -34,7 +34,7 @@ class Productions extends Model {
         allowNull: true
       },
       water: {
-        type: DataTypes.DECIMAL,
+        type: DataTypes.DECIMAL(10, 2),
         allowNull: true
       },
       note: {

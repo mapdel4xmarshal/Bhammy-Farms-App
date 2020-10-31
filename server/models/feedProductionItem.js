@@ -2,13 +2,13 @@
 
 const { Model, DataTypes } = require('sequelize');
 
-class ProductionItems extends Model {
+class FeedProductionItem extends Model {
   static get tblName() {
-    return 'production_items';
+    return 'feed_production_item';
   }
 
   static get modelName() {
-    return 'ProductionItem';
+    return 'FeedProductionItem';
   }
 
   static get schema() {
@@ -32,11 +32,11 @@ class ProductionItems extends Model {
 }
 
 module.exports = (sequelize) => {
-  ProductionItems.init(ProductionItems.schema, {
+  FeedProductionItem.init(FeedProductionItem.schema, {
     sequelize,
-    modelName: ProductionItems.modelName,
-    tableName: ProductionItems.tblName
+    modelName: FeedProductionItem.modelName,
+    tableName: FeedProductionItem.tblName
   });
 
-  return ProductionItems;
+  return FeedProductionItem;
 };

@@ -29,11 +29,11 @@ class Salaries extends Model {
         allowNull: false
       },
       amount: {
-        type: DataTypes.DECIMAL,
+        type: DataTypes.DECIMAL(10, 2),
         allowNull: false
       },
       loan_payment: {
-        type: DataTypes.DECIMAL,
+        type: DataTypes.DECIMAL(10, 2),
         allowNull: false
       },
       status: {

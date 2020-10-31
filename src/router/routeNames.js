@@ -9,7 +9,7 @@ const ROUTES = {
   EMPLOYEE: 'Employee',
   EMPLOYEES: 'Employees',
   EXPENSES: 'Expenses',
-  FEEDS: 'Feeds',
+  FEEDS: 'Feed Mill',
   INCOME: 'Income',
   INCOME_DETAIL: 'IncomeDetail',
   NEW_INCOME: 'NewIncome',

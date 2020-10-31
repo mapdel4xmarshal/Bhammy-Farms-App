@@ -24,6 +24,7 @@
         rounded
         class="pr-0"
         v-model="mode"
+        mandatory
       >
         <v-btn>
           Performance

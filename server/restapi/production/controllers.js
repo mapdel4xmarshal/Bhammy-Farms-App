@@ -10,8 +10,8 @@ const ProductionSummary = require('./productionSummary');
 
 class Controller {
   async getProductions({
-                         batchId, before, after, date
-                       }) {
+    batchId, before, after, date
+  }) {
     const where = [];
     if (batchId) where.push(`batches.batch_id = '${batchId}'`);
     if (before) where.push(`productions.date <= '${before}'`);
@@ -131,11 +131,11 @@ class Controller {
         attributes: ['item_id', 'price'],
         where: {
           item_id: {
-            [Op.in]: productItems.map(item => item.id)
+            [Op.in]: productItems.map((item) => item.id)
           }
         }
       })
-        .then(items => new Map(items.map(item => [item.item_id, item.price])));
+        .then((items) => new Map(items.map((item) => [item.item_id, item.price])));
 
       await ProductionItem.bulkCreate(productItems.map((item) => ({
         quantity: item.quantity,
@@ -148,7 +148,7 @@ class Controller {
         resourceId: 'id'
       });
 
-      production.eggs.forEach(async (egg) => {
+      for (const egg of production.eggs) {
         await Item.increment('quantity', {
           by: Number(egg.quantity),
           where: { item_id: egg.id },
@@ -156,9 +156,9 @@ class Controller {
           user,
           resourceId: 'item_id'
         });
-      });
+      }
 
-      production.feeds.forEach(async (feed) => {
+      for (const feed of production.feeds) {
         await Item.decrement('quantity', {
           by: Number(feed.quantity),
           where: { item_id: feed.id },
@@ -166,7 +166,7 @@ class Controller {
           user,
           resourceId: 'item_id'
         });
-      });
+      }
 
       await Mortality.bulkCreate(production.mortality.map((mortality) => ({
         time: mortality.time,
@@ -190,7 +190,7 @@ class Controller {
 
       // Push notify
       new Notification().send('Production',
-        `A new production record was added by ${user.displayName}`, `productions/${newProduction.id}`);
+        `A new production record was added by ${user.displayName}`, `batches/${newProduction.batch_id}`);
 
       return newProduction;
     } catch (error) {

@@ -27,7 +27,7 @@ class Expenses extends Model {
         allowNull: false
       },
       quantity: {
-        type: DataTypes.DECIMAL,
+        type: DataTypes.DECIMAL(10, 2),
         allowNull: true
       },
       invoice_number: {
@@ -35,11 +35,11 @@ class Expenses extends Model {
         allowNull: true
       },
       price: {
-        type: DataTypes.DECIMAL,
+        type: DataTypes.DECIMAL(10, 2),
         allowNull: true
       },
       amount: {
-        type: DataTypes.DECIMAL,
+        type: DataTypes.DECIMAL(10, 2),
         allowNull: true
       },
       proof_of_payment: {
