@@ -142,8 +142,11 @@
             </v-chip>
             <div v-for="(item, index) in treatment" :key="index">
               <div :key="index">
-                <strong class="text-uppercase body-2">{{ item.type }}</strong>   <br>
-                <span class="caption">{{ item.vaccineName }}, {{ item.vaccineBrand }}</span>
+                <strong class="text-uppercase body-2">{{ item.type }}</strong><br>
+                <span class="caption" v-if="item.vaccineName">{{ item.vaccineName }}, {{ item.vaccineBrand }}</span>
+                <span class="caption" v-else>{{ item.medicamentName }}, {{ item.medicamentBrand }}</span><br>
+                <span class="caption">DOSAGE - {{ item.totalDosage }}</span><br>
+                <span class="caption" v-if="item.note">REASON - {{ item.note }}</span>
                 <v-divider
                   class="my-4"
                   v-if="index < treatment.length - 1"

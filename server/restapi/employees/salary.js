@@ -40,7 +40,9 @@ class Salary {
       const start = moment(new Date(), "YYYY-MM-DD");
       const end = moment(this._loanPaymentDate, "YYYY-MM-DD");
 
-      return (this.outstandingLoanAmount / Math.ceil(moment.duration(end.diff(start)).asMonths())).toFixed(2);
+      const monthsRemaining = Math.max(1, Math.ceil(moment.duration(end.diff(start)).asMonths()));
+
+      return (this.outstandingLoanAmount / monthsRemaining).toFixed(2);
     }
     return 0;
   }
@@ -78,7 +80,7 @@ class Salary {
       }
       date.estSalary = ((this.base / date.days) * date.workedDays).toFixed(2);
     });
-    
+
     return owedMonths;
   }
 

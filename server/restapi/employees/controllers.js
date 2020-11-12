@@ -275,17 +275,18 @@ class Controller {
       }
     }) || {};
 
-    Expense.create({
+    await Expense.create({
       category: 'salary',
       amount: loan.amount,
       date: loan.date,
       provider: employee.name,
       description: 'Loan',
       location_id: employee.location,
-      house_id: employee.house,
+      house_id: employee.house == 'null' ? null : employee.house,
       batch_id: batchInfo.batch
     }, {
       transaction,
+      logging: false,
       user,
       resourceId: 'expense_id'
     });
@@ -300,6 +301,7 @@ class Controller {
     }, {
       transaction,
       user,
+      logging: false,
       resourceId: 'id'
     });
 
@@ -592,17 +594,13 @@ class Controller {
     Expense.create({
         category: 'salary',
         amount: Math.floor(transferInfo.data.amount / 100),
-        date: transferInfo.data.amount.created_at.substr(0, 10),
+        date: transferInfo.data.created_at.substr(0, 10),
         invoice_number: transferInfo.data.transfer_code,
         provider: employee.Party.name,
         description: transferInfo.data.reason,
         location_id: employee.location_id,
         house_id: employee.house_id,
         batch_id: batchInfo.batch_id
-      },
-      {
-        user,
-        resourceId: 'expense_id'
       });
   }
 

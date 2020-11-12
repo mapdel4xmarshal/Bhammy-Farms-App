@@ -232,6 +232,13 @@ export default {
         .finally(() => {
           this.getExpenses();
           this.$refs.form.reset();
+          this.expense = {
+            category: '',
+            type: '',
+            farm: '',
+            pen: null,
+            updateStoreInventory: true
+          };
           this.busy = false;
         });
     },

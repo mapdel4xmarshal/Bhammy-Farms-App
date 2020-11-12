@@ -80,7 +80,7 @@
     </v-row>
     <v-row>
       <v-col cols="12" md="8">
-        <span>{{ invoice.note }}</span>
+        <span>{{ invoice.notes }}</span>
       </v-col>
       <v-col cols="12" md="4">
         <div class="income__summary">

@@ -60,7 +60,7 @@ class SalaryScheduler {
           }
         ],
         where
-      }, { transaction })
+      }, { transaction, logging: false })
         .catch((error) => {
           console.log(error);
         });
@@ -93,6 +93,7 @@ class SalaryScheduler {
           }, {
             transaction,
             user,
+            logging: false,
             resourceId: 'id'
           });
         }
