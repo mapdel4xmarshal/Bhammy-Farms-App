@@ -6,10 +6,12 @@ const {
 const BatchProduction = require('./BatchProduction');
 
 class Controller {
-  async getBatches({ house, batch }) {
+  async getBatches({ house, batch, status }) {
+    const allowedStatus = { retired: 0, active: 1 };
     let where = {};
     if (house) where = { house_id: house };
     if (batch) where = { batch_id: batch };
+    if (status) where = { is_active: allowedStatus[status.toLowerCase()] };
 
     return Batch.findAll({
       where,
@@ -18,7 +20,7 @@ class Controller {
         [col('`House->location`.name'), 'farm'],
         [fn('date_format', col('move_in_date'), '%Y-%m-%d'), 'moveInDate'],
         [fn('date_format', col('move_out_date'), '%Y-%m-%d'), 'moveOutDate'],
-        ['move_in_age', 'moveInAge'], [literal('DATEDIFF(NOW(), move_in_date) + move_in_age'), 'currentAge'],
+        ['move_in_age', 'moveInAge'], [literal('DATEDIFF(LEAST(NOW(), move_out_date), move_in_date) + move_in_age'), 'currentAge'],
         [literal('Breed.name'), 'breed'], [literal('Breed.type'), 'category'], ['initial_stock_count', 'initialStock'],
         [literal('initial_stock_count - "Productions->Mortalities.count"'), 'currentStock'], ['supplier_id', 'supplier'],
         ['source_id', 'source'], ['cost_per_unit', 'costPerUnit'], ['total_cost', 'totalCost'], ['description', 'batchNote'],

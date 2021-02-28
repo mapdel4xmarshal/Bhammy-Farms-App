@@ -4,13 +4,13 @@ const controllers = require('./controllers');
 const router = express.Router();
 
 router.get('/', async (req, res) => {
-  const locations = await controllers.getLocations();
-  res.json(locations);
+  const houses = await controllers.getHouses();
+  res.json(houses);
 });
 
-router.get('/:locationId', async (req, res) => {
-  const location = await controllers.getLocationById(req.params.locationId);
-  res.json(location);
+router.get('/:houseId', async (req, res) => {
+  const house = await controllers.getHouseById(req.params.houseId);
+  res.json(house);
 });
 
 module.exports = router;

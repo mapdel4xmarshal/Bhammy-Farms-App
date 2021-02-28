@@ -75,22 +75,52 @@
       </v-col>
     </v-row>
 
-    <v-row>
-      <v-col cols="12" md="3">
+    <v-toolbar class="pa-0" color="transparent elevation-0" dense>
+      <v-spacer/>
+      <v-btn-toggle
+        dense
+        rounded
+        class="pr-0"
+        v-model="mode"
+        mandatory
+      >
+        <v-btn small>
+          Summary
+        </v-btn>
+        <v-btn small>
+          Breakdown
+        </v-btn>
+      </v-btn-toggle>
+    </v-toolbar>
+
+    <v-row v-if="!mode">
+      <v-col>
         <metric-card title="Eggs Produced" :value="totalEggs" unit="crates" img="img/egg.png"/>
       </v-col>
 
-      <v-col cols="12" md="3">
+      <v-col>
         <metric-card title="Birds" :value="totalBirds" unit="birds" img="img/hen.png"/>
       </v-col>
 
-      <v-col cols="12" md="3">
+      <v-col>
         <metric-card title="Feeds Consumed" :value="totalFeeds" unit="kg" img="img/feed.png"/>
       </v-col>
 
-      <v-col cols="12" md="3">
+      <v-col>
         <metric-card title="Morality" :value="totalMortality" unit="bird(s)" img="img/dead.png"/>
       </v-col>
+    </v-row>
+    <v-row v-else>
+      <template v-for="(value, type) in eggTypes">
+        <v-col :key="type">
+          <metric-card :title="type" :value="value / 30" unit="crates" img="img/egg.png"/>
+        </v-col>
+      </template>
+      <template v-for="(value, type) in feedTypes">
+        <v-col :key="type">
+          <metric-card :title="type" :value="value / 25" unit="bags" img="img/feed.png"/>
+        </v-col>
+      </template>
     </v-row>
     <v-data-table
       :headers="headers"
@@ -102,7 +132,11 @@
       @click:row="selectProduction"
     >
       <template v-slot:item.eggs="{ item }">
-        {{ Number.parseInt(item.eggs / item.eggPackagingSize ) }}
+        {{ (item.eggs / item.eggPackagingSize ).toFixed(2) }}
+      </template>
+
+      <template v-slot:item.eggCount="{ item }">
+        {{ item.eggs | normalizeNumber }}
       </template>
 
       <template v-slot:item.profit="{ item }">
@@ -130,6 +164,9 @@ export default {
       batches: [],
       dateMenu: false,
       date: [],
+      mode: 0,
+      eggTypes: {},
+      feedTypes: {},
       menu: false,
       search: '',
       batch: '',
@@ -144,6 +181,7 @@ export default {
         { text: 'Type', value: 'type' },
         { text: 'Population', value: 'flockCount' },
         { text: 'Eggs (crates)', value: 'eggs' },
+        { text: 'Eggs', value: 'eggCount' },
         { text: 'Production %', value: 'productionPercent' },
         { text: 'Feed (kg)', value: 'feeds' },
         { text: 'Feed/animal (g)', value: 'feedPerAnimal' },
@@ -169,7 +207,7 @@ export default {
       this.$router.push({ name: ROUTES.NEW_PRODUCTION });
     },
     getProduction() {
-      const filters = [];
+      const filters = ['isActive=1'];
       if (this.batch) filters.push(`batchId=${this.batch.batchId}`);
       if (this.date.length === 1) filters.push(`date=${this.date[0]}`);
       if (this.date.length === 2) filters.push(`after=${this.date[0]}&before=${this.date[1]}`);
@@ -180,7 +218,7 @@ export default {
         });
     },
     getBatches() {
-      axios.get('/batches')
+      axios.get('/batches?status=active')
         .then(({ data }) => {
           this.batches = data;
         });
@@ -190,16 +228,33 @@ export default {
       this.totalEggs = 0;
       this.totalMortality = 0;
       this.totalBirds = 0;
+      this.eggTypes = {};
+      this.feedTypes = {};
       const flockMap = new Map();
       productions.forEach((production) => {
         this.totalFeeds += production.feeds;
-        this.totalEggs += Number.parseInt(production.eggs / production.eggPackagingSize, 10);
+        this.totalEggs += Number.parseFloat(production.eggs / production.eggPackagingSize);
+
         this.totalMortality += production.mortality;
         flockMap.set(production.batch, production.initialPopulation);
+        this.processTypes(production);
       });
+
+      this.totalEggs = this.totalEggs.toFixed(2);
 
       this.totalBirds = Array.from(flockMap.values())
         .reduce((totalFlock, flock) => totalFlock + flock, 0) - this.totalMortality;
+    },
+    processTypes(production) {
+      production.eggTypes.forEach((type) => {
+        if (!this.eggTypes[type.name]) this.eggTypes[type.name] = 0;
+        this.eggTypes[type.name] += +type.quantity;
+      });
+
+      production.feedTypes.forEach((type) => {
+        if (!this.feedTypes[type.name]) this.feedTypes[type.name] = 0;
+        this.feedTypes[type.name] += +type.quantity;
+      });
     },
     updateDate() {
       this.$refs.menu.save(this.date);

@@ -47,7 +47,7 @@
                   v-on="on"
                 ></v-text-field>
               </template>
-              <v-date-picker v-model="invoiceDate" no-title @input="invoiceDateMenu = false"></v-date-picker>
+              <v-date-picker v-model="invoiceDate" no-title @input="selectInvoiceDate"></v-date-picker>
             </v-menu>
             </v-col>
             <v-col cols="6">
@@ -144,6 +144,18 @@
         <template v-slot:item.price="{ item }">
           ₦{{ item.price | toMoney }}
         </template>
+        <template v-slot:item.actions="{ item }">
+          <v-btn
+            outlined
+            rounded
+            text
+            small
+            color="primary"
+            class="ml-2"
+            @click="() => { removeItem(item.index); }">
+            <v-icon small>mdi-delete</v-icon>
+          </v-btn>
+        </template>
       </v-data-table>
       <v-card-actions>
       </v-card-actions>
@@ -207,17 +219,17 @@ export default {
   data() {
     return {
       busy: false,
-      farm: {},
       feedbackMessage: '',
       snackbar: false,
       totalAmount: 0,
+      selectedFarm: null,
       discount: 0,
       showItemDialog: false,
       itemIndex: 0,
       invoiceDateMenu: false,
       paymentDateMenu: false,
       fulfilmentStatus: 'Fulfilled',
-      paymentStatus: 'Unpaid',
+      paymentStatus: 'Paid',
       paymentDate: '',
       invoiceDate: '',
       notes: '',
@@ -234,6 +246,7 @@ export default {
         { text: 'Price', value: 'price' },
         { text: 'Discount', value: 'discount' },
         { text: 'Amount', value: 'amount' },
+        { text: '', value: 'actions' }
       ],
       items: []
     };
@@ -241,9 +254,21 @@ export default {
   computed: {
     ...mapGetters({
       farmLocations: GETTER_TYPES.FARM_LOCATIONS,
-    })
+    }),
+    farm: {
+      set(farm) {
+        this.selectedFarm = farm;
+      },
+      get() {
+        return !this.selectedFarm ? this.farmLocations[1] : this.selectedFarm;
+      }
+    }
   },
   methods: {
+    selectInvoiceDate() {
+      this.invoiceDateMenu = false;
+      if (this.paymentDate === '') this.paymentDate = this.invoiceDate;
+    },
     save() {
       if (!this.busy && this.$refs.invoiceForm.validate()) {
         this.busy = true;
@@ -287,6 +312,10 @@ export default {
       this.items.splice(this.itemIndex, 1, item);
       this.calculateValues();
     },
+    removeItem(index) {
+      this.items.splice(index, 1);
+      this.calculateValues();
+    },
     calculateValues() {
       this.totalAmount = 0;
       this.discount = 0;
@@ -315,9 +344,11 @@ export default {
 <style scoped>
   .item__table {
     margin-top: 30px;
+    margin-bottom: 10px;
   }
 
   .item__action {
+    margin-top: 10px;
     padding: 10px;
   }
 

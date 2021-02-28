@@ -101,6 +101,7 @@ class ProductionSummary {
   set feeds(feeds) {
     this._production.feeds = feeds.reduce((totalFeed, feed) => totalFeed + Number.parseInt(feed.quantity), 0);
     this._production.feedPackagingSize = feeds[0].packagingSize;
+    this._production.feedTypes = feeds.map(({ name, quantity }) => ({ name, quantity }));
   }
 
   get eggs() {
@@ -110,6 +111,7 @@ class ProductionSummary {
   set eggs(eggs) {
     this._production.eggs = eggs.reduce((totalEggs, egg) => totalEggs + Number.parseInt(egg.quantity), 0);
     this._production.eggPackagingSize = eggs[0].packagingSize;
+    this._production.eggTypes = eggs.map(({ name, quantity }) => ({ name, quantity }));
   }
 
   get feedPerAnimal() {
@@ -145,7 +147,7 @@ class ProductionSummary {
       effect: '',
       description: ''
     };
-    const temperature = this._production.temperature;
+    const { temperature } = this._production;
 
     if (Number.isNaN(temperature) || temperature === null) {
       climateEffect.effect = null;
@@ -180,58 +182,58 @@ class ProductionSummary {
     age = Math.floor(Number(age) / 7);
     let productivity = 0;
     switch (age) {
-      case 21 : {
+      case 21: {
         productivity = 5;
         break;
       }
-      case 22 : {
+      case 22: {
         productivity = 10;
         break;
       }
-      case 23 : {
+      case 23: {
         productivity = 18;
         break;
       }
-      case 24 : {
+      case 24: {
         productivity = 34;
         break;
       }
-      case 25 : {
+      case 25: {
         productivity = 52;
         break;
       }
-      case 26 : {
+      case 26: {
         productivity = 65;
         break;
       }
-      case 27 : {
+      case 27: {
         productivity = 74;
         break;
       }
-      case 28 : {
+      case 28: {
         productivity = 84;
         break;
       }
-      case 29 : {
+      case 29: {
         productivity = 88;
         break;
       }
-      case 30 : {
+      case 30: {
         productivity = 92;
         break;
       }
-      case 31 : {
+      case 31: {
         productivity = 94;
         break;
       }
-      default : {
+      default: {
         if (age < 21) productivity = 0;
         else if (age >= 32 && age <= 39) productivity = 88;
         else if (age >= 40 && age <= 47) productivity = 83;
         else if (age >= 48 && age <= 59) productivity = 77;
         else if (age >= 60 && age <= 64) productivity = 73;
         else if (age >= 65 && age <= 70) productivity = 70;
-        else productivity =  60;
+        else productivity = 60;
         break;
       }
     }

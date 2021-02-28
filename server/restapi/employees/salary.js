@@ -27,7 +27,7 @@ class Salary {
       const start = moment(absence.start_date, "YYYY-MM-DD");
       const end = moment(absence.end_date, "YYYY-MM-DD");
 
-      this._absenceMap.set(absence.start_date.substr(0,7), moment.duration(end.diff(start)).asDays());
+      this._absenceMap.set(absence.start_date.substr(0,7), (moment.duration(end.diff(start)).asDays()) + 1);
     });
   }
 
@@ -49,12 +49,15 @@ class Salary {
 
   get nextSalary() {
     if (this.unpaidSalaries.length === 0) return { amount: 0, period: null };
+    const periodLen = this.unpaidSalaries.length;
     return {
       amount: (this.unpaidSalaries
         .reduce((totalSalary, month) => (totalSalary + +month.estSalary), 0) - this.nextRepaymentAmount).toFixed(2),
-      period: this.unpaidSalaries.length > 1 ?
-        `${this.unpaidSalaries[0].month} to ${this.unpaidSalaries[this.unpaidSalaries.length - 1].month}`
-        : this.unpaidSalaries[0].month
+      period: periodLen > 1 ?
+        `${this.unpaidSalaries[0].month} to ${this.unpaidSalaries[periodLen - 1].month}`
+        : this.unpaidSalaries[0].month,
+      start: `${this.unpaidSalaries[0].month}-01`,
+      end: `${new Date(...this.unpaidSalaries[periodLen - 1].month.split('-'))}`
     }
   }
 

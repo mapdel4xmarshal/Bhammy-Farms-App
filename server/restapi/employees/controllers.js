@@ -97,7 +97,7 @@ class Controller {
       ],
       logging: false
     })
-      .then(employee => {
+      .then((employee) => {
         employee = employee && employee.toJSON();
         const salaryInfo = new SalaryClass(employee);
         employee.unPaidSalary = +salaryInfo.nextSalary.amount;
@@ -119,7 +119,7 @@ class Controller {
       group: ['position']
     })
       .then((positions) => positions.map((position) => position.position))
-      .catch(error => {
+      .catch((error) => {
         console.log(error);
         return {
           error: 'Unable to process request. Please try again later!',
@@ -134,7 +134,7 @@ class Controller {
       group: ['department']
     })
       .then((departments) => departments.map((department) => department.department))
-      .catch(error => {
+      .catch((error) => {
         console.log(error);
         return {
           error: 'Unable to process request. Please try again later!',
@@ -162,7 +162,7 @@ class Controller {
 
   async createRecipient(recipient) {
     return new Promise((resolve) => {
-      const url = `https://api.paystack.co/transferrecipient`;
+      const url = 'https://api.paystack.co/transferrecipient';
       request.post({
         url,
         json: recipient
@@ -234,22 +234,20 @@ class Controller {
               message: 'unable to create bank-detail. Please try again or contact us.'
             };
           });
-      } else {
-        return {
-          status: 500,
-          message: 'Unable to create recipient bank detail'
-        };
       }
-    } else {
       return {
-        status: 400,
-        message: 'Invalid bank details'
+        status: 500,
+        message: 'Unable to create recipient bank detail'
       };
     }
+    return {
+      status: 400,
+      message: 'Invalid bank details'
+    };
   }
 
   async addLoan(employeeId, loan, user) {
-    let employee = await this.getEmployee(employeeId);
+    const employee = await this.getEmployee(employeeId);
 
     if (!employee || (employee && !employee.id)) {
       return {
@@ -311,7 +309,7 @@ class Controller {
   }
 
   async addLeave(employeeId, leave, user) {
-    let employee = await this.getEmployee(employeeId);
+    const employee = await this.getEmployee(employeeId);
 
     if (!employee || (employee && !employee.id)) {
       return {
@@ -320,7 +318,7 @@ class Controller {
       };
     }
 
-    let overlappingLeaves = await sequelize.query(`
+    const overlappingLeaves = await sequelize.query(`
         SELECT COUNT(*) AS count FROM absences 
         WHERE ('${leave.startDate}' BETWEEN start_date AND end_date) 
         OR ('${leave.endDate}' BETWEEN start_date AND end_date); 
@@ -340,7 +338,7 @@ class Controller {
       type: leave.type,
       comment: leave.comment,
       employee_id: employeeId,
-      approved_by: user.displayName || ""
+      approved_by: user.displayName || ''
     }, {
       user,
       resourceId: 'id'
@@ -390,12 +388,11 @@ class Controller {
             message: 'unable to update bank-detail. Please try again or contact us.'
           };
         });
-    } else {
-      return {
-        status: 400,
-        message: bankInfo.message
-      };
     }
+    return {
+      status: 400,
+      message: bankInfo.message
+    };
   }
 
   async addEmployee(req) {
@@ -503,21 +500,22 @@ class Controller {
             where: {
               employee_id: employee.id
             }
-          });
+          }
+        );
 
         await Party.update({
-            name: employee.name,
-            address: employee.address,
-            state: employee.state,
-            email: employee.email,
-            phone: employee.phone,
-            alt_phone: employee.altPhone
-          },
-          {
-            where: {
-              party_id: existingEmployee.toJSON().party_id
-            }
-          });
+          name: employee.name,
+          address: employee.address,
+          state: employee.state,
+          email: employee.email,
+          phone: employee.phone,
+          alt_phone: employee.altPhone
+        },
+        {
+          where: {
+            party_id: existingEmployee.toJSON().party_id
+          }
+        });
 
         resolve(existingEmployee);
       });
@@ -541,8 +539,8 @@ class Controller {
   }
 
   async updateSalaryStatus(transferInfo) {
-    let where = {},
-      bankDetailWhere = {};
+    let where = {};
+    let bankDetailWhere = {};
     if (transferInfo.data.recipient.metadata) {
       where = { employee_id: transferInfo.data.recipient.metadata };
     } else {
@@ -581,8 +579,6 @@ class Controller {
       employee.salaries[salariesLen].save();
     }
 
-    mailer.sendNotification('Salary Process Update', JSON.stringify(transferInfo));
-
     const batchInfo = await Batch.findOne({
       attributes: ['batch_id'],
       where: {
@@ -591,17 +587,23 @@ class Controller {
       }
     }) || {};
 
-    Expense.create({
-        category: 'salary',
-        amount: Math.floor(transferInfo.data.amount / 100),
-        date: transferInfo.data.created_at.substr(0, 10),
-        invoice_number: transferInfo.data.transfer_code,
-        provider: employee.Party.name,
-        description: transferInfo.data.reason,
-        location_id: employee.location_id,
-        house_id: employee.house_id,
-        batch_id: batchInfo.batch_id
-      });
+    await Expense.create({
+      category: 'salary',
+      amount: Math.floor(transferInfo.data.amount / 100),
+      date: transferInfo.data.created_at.substr(0, 10),
+      invoice_number: transferInfo.data.transfer_code,
+      provider: employee.Party.name,
+      description: transferInfo.data.reason,
+      location_id: employee.location_id,
+      house_id: employee.house_id,
+      batch_id: batchInfo.batch_id
+    });
+
+    try {
+      mailer.sendNotification('Salary Process Update', JSON.stringify(transferInfo));
+    } catch (e) {
+      console.log('Unable to send notification', e);
+    }
   }
 
   async paySalary(employeeId, user) {

@@ -2,7 +2,7 @@
   <v-form ref="form">
       <v-row>
         <v-col cols="12">
-          <v-select
+          <v-autocomplete
             :items="eggTypes"
             label="Size*"
             :rules="[v => !!v || 'Select egg size/type.']"
@@ -11,7 +11,21 @@
             v-model="value.id"
             @change="updateName"
             required
-          ></v-select>
+          >
+            <template v-slot:item="{ item }">
+              <v-list-item-avatar tile>
+                <v-img :src="`/${item.image}`"></v-img>
+              </v-list-item-avatar>
+              <v-list-item-content>
+                <v-list-item-title>{{ item.name }}</v-list-item-title>
+                <v-list-item-subtitle>
+                  <div style="text-transform: capitalize">
+                  {{ item.category }} {{ item.brand ? `| ${item.brand}` : '' }}
+                  </div>
+                </v-list-item-subtitle>
+              </v-list-item-content>
+            </template>
+          </v-autocomplete>
         </v-col>
         <v-col cols="12" md="6">
           <v-text-field label="Total crates*"
@@ -30,6 +44,7 @@
             label="Total pieces*"
             v-model="value.pieces"
             suffix="pieces"
+            :value="value.pieces"
             required
             @keyup.enter.native="$emit('enter', true)"
             @change="update">
@@ -53,7 +68,6 @@ export default {
         (v) => v >= 0 || 'Crate should be zero (0) or more.'
       ],
       pieceRules: [
-        (v) => !!v || 'Please enter total crate of eggs collected.',
         (v) => v >= 0 || 'Pieces should be zero (0) or more.',
         (v) => v <= 29 || 'Pieces should be less than 30',
       ]
@@ -76,6 +90,7 @@ export default {
     },
     reset() {
       this.$refs.form.reset();
+      this.value.pieces = 0;
     },
     getEggTypes() {
       axios.get('/items?category=egg')
@@ -85,6 +100,7 @@ export default {
     }
   },
   created() {
+    this.value.pieces = 0;
     this.getEggTypes();
   }
 };

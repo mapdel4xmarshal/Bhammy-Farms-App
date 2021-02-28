@@ -1,14 +1,14 @@
-const Location = require('../../models/house');
+const { House } = require('../../models');
 
 class Controller {
-  async getLocations() {
-    return Location.findAll({ attributes: { exclude: ['createdAt', 'updatedAt'] } })
-      .then((locations) => locations);
+  async getHouses() {
+    return House.findAll({ attributes: { exclude: ['createdAt', 'updatedAt'] } })
+      .then((houses) => houses);
   }
 
-  async getLocationById(locationId) {
-    return Location.findOne({ where: { id: locationId }, attributes: { exclude: ['createdAt', 'updatedAt'] } })
-      .then((location) => location);
+  async getHouseById(houseId) {
+    return House.findOne({ where: { id: houseId }, attributes: { exclude: ['createdAt', 'updatedAt'] } })
+      .then((house) => house);
   }
 }
 

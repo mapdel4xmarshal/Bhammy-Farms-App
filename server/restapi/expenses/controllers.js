@@ -7,17 +7,17 @@ const { fileUploadPath } = require('../../configs');
 
 class Controller {
   async getExpenses({
-                      type: name, category, after, before, date
-                    }) {
+    type: name, category, after, before, date, house
+  }) {
     const where = {};
-    const
-      expenseTypeWhere = {};
+    const expenseTypeWhere = {};
     if (category) where.category = category;
     if (name) expenseTypeWhere.name = name;
     if (before || after) where.date = {};
     if (before) where.date[Sequelize.Op.lte] = before;
     if (after) where.date[Sequelize.Op.gte] = after;
     if (date) where.date = date;
+    if (house) where.house_id = house;
 
     return Expense.findAll({
       attributes: [
@@ -41,24 +41,24 @@ class Controller {
         model: Item,
         attributes: []
       },
-        {
-          model: ExpenseType,
-          attributes: [],
-          required: false,
-          where: expenseTypeWhere
-        },
-        {
-          model: Batch,
-          attributes: []
-        },
-        {
-          model: Location,
-          attributes: []
-        },
-        {
-          model: House,
-          attributes: []
-        }],
+      {
+        model: ExpenseType,
+        attributes: [],
+        required: false,
+        where: expenseTypeWhere
+      },
+      {
+        model: Batch,
+        attributes: []
+      },
+      {
+        model: Location,
+        attributes: []
+      },
+      {
+        model: House,
+        attributes: []
+      }],
       raw: true,
       where
     })
@@ -93,7 +93,7 @@ class Controller {
         if (err) reject(err);
 
         const attachment = files.attachment ? files.attachment.path.replace(`${fileUploadPath}${path.sep}`, '') : null;
-        let expenseData = {
+        const expenseData = {
           date: expense.date,
           category: expense.category,
           location_id: expense.farm,
@@ -158,7 +158,7 @@ class Controller {
   async updateExpense(req, expense) {
     const { user } = req;
 
-    let expenseData = {
+    const expenseData = {
       date: expense.date,
       category: expense.category,
       location_id: expense.farm,
@@ -220,7 +220,6 @@ class Controller {
           transaction.commit();
           return updatedExpense;
         });
-
     } catch (e) {
       console.log(e);
       await transaction.rollback();

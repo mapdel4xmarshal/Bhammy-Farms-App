@@ -80,7 +80,15 @@
     </v-row>
     <v-row>
       <v-col cols="12" md="8">
-        <span>{{ invoice.notes }}</span>
+        <v-textarea
+          outlined
+          height="100px"
+          v-model="invoice.notes"
+          label="Note"
+          hint="Note"
+          readonly
+          persistent-hint
+        ></v-textarea>
       </v-col>
       <v-col cols="12" md="4">
         <div class="income__summary">

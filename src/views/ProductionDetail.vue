@@ -44,10 +44,10 @@
             hint="Farm where the expense is incurred."
             persistent-hint
             return-object
-            @blur="updateBatchList"
+            @change="updateBatchList"
             required
             :rules="[v => !!v || 'Please select a farm location.']"
-            v-model="production.farm"
+            v-model="farm"
             item-text="name"
             item-value="name"
             :items="farmLocations"
@@ -62,7 +62,7 @@
             required
             return-object
             v-model="production.batch"
-            :disabled="!production.farm"
+            :disabled="!farm"
             item-text="name"
             no-data-text="No batch found."
             :rules="[v => !!v || 'Please select a batch.']"
@@ -182,51 +182,6 @@
               <v-expansion-panel>
                 <v-expansion-panel-header>
                   <v-row no-gutters align="center">
-                    <v-col cols="12"><div :class="{'error-state': sectionErrors['mortality']}">
-                      <v-icon>mdi-skull-crossbones</v-icon> Mortality</div></v-col>
-                  </v-row>
-                </v-expansion-panel-header>
-                <v-expansion-panel-content>
-                  <v-row no-gutters>
-                    <v-col cols="12" md="9">
-                      <v-data-table
-                        disable-sort
-                        hide-default-footer
-                        no-data-text="No mortality recorded."
-                        :headers="mortalityHeaders"
-                        :items="production.mortality"
-                      >
-                        <template v-slot:item.actions="{ item }">
-                          <TableAction id="Mortality"
-                                       :item="item"
-                                       :edit-item="editItem"
-                                       :delete-item="deleteItem"
-                          />
-                        </template>
-                      </v-data-table>
-
-                      <v-btn
-                        class="float-right mt-6"
-                        outlined
-                        color="primary"
-                        tile
-                        @click="addItem('Mortality')"
-                      >
-                        Add item
-                      </v-btn>
-                    </v-col>
-
-                    <v-divider
-                      vertical
-                      class="mx-4"
-                    ></v-divider>
-                  </v-row>
-                </v-expansion-panel-content>
-              </v-expansion-panel>
-
-              <v-expansion-panel>
-                <v-expansion-panel-header>
-                  <v-row no-gutters align="center">
                     <v-col cols="12"><div :class="{'error-state': sectionErrors['water']}">
                       <v-icon :color="iconColor">mdi-water</v-icon> Water consumed</div>
                     </v-col>
@@ -260,6 +215,51 @@
                         color="primary"
                         tile
                         @click="addItem('WaterConsumed')"
+                      >
+                        Add item
+                      </v-btn>
+                    </v-col>
+
+                    <v-divider
+                      vertical
+                      class="mx-4"
+                    ></v-divider>
+                  </v-row>
+                </v-expansion-panel-content>
+              </v-expansion-panel>
+
+              <v-expansion-panel>
+                <v-expansion-panel-header>
+                  <v-row no-gutters align="center">
+                    <v-col cols="12"><div :class="{'error-state': sectionErrors['mortality']}">
+                      <v-icon>mdi-skull-crossbones</v-icon> Mortality</div></v-col>
+                  </v-row>
+                </v-expansion-panel-header>
+                <v-expansion-panel-content>
+                  <v-row no-gutters>
+                    <v-col cols="12" md="9">
+                      <v-data-table
+                        disable-sort
+                        hide-default-footer
+                        no-data-text="No mortality recorded."
+                        :headers="mortalityHeaders"
+                        :items="production.mortality"
+                      >
+                        <template v-slot:item.actions="{ item }">
+                          <TableAction id="Mortality"
+                                       :item="item"
+                                       :edit-item="editItem"
+                                       :delete-item="deleteItem"
+                          />
+                        </template>
+                      </v-data-table>
+
+                      <v-btn
+                        class="float-right mt-6"
+                        outlined
+                        color="primary"
+                        tile
+                        @click="addItem('Mortality')"
                       >
                         Add item
                       </v-btn>
@@ -368,6 +368,7 @@
         <v-col cols="12">
           <v-btn color="primary"
                  class="float-right"
+                 :loading="saving"
                  @click="saveProduction"
                  tile>
             {{ actionButtonTitle }}
@@ -424,6 +425,8 @@ export default {
   name: 'ProductionDetail',
   data() {
     return {
+      selectedFarm: '',
+      saving: false,
       message: '',
       snackbar: false,
       batchList: [],
@@ -448,7 +451,7 @@ export default {
         },
         FeedConsumed: {
           id: 'feeds',
-          key: 'type',
+          key: 'name',
           title: 'Feed consumed'
         },
         Mortality: {
@@ -540,19 +543,27 @@ export default {
     ...mapGetters({
       farmLocations: GETTER_TYPES.FARM_LOCATIONS
     }),
+    farm: {
+      set(farm) {
+        this.selectedFarm = farm;
+      },
+      get() {
+        return !this.selectedFarm ? this.updateBatchList() && this.farmLocations[1] : this.selectedFarm;
+      }
+    },
     actionButtonTitle() {
       let title = 'Save production';
       if (this.$mq.phone) title = 'Save';
       return this.validProduction ? title : 'Continue';
     },
     batches() {
-      return this.batchList.filter((batch) => batch.farm === this.production.farm.name);
+      return this.batchList.filter((batch) => batch.farm === this.farm.name);
     }
   },
   methods: {
     updateBatchList() {
       this.batchList = [];
-      axios.get('/batches?status=active')
+      return axios.get('/batches?status=active')
         .then(({ data }) => {
           this.batchList = data;
         });
@@ -574,15 +585,19 @@ export default {
       this.production[sectionInfo.id].splice(itemIndex, 1);
     },
     saveProduction() {
-      if (this.validProduction) {
+      if (this.validProduction && !this.saving) {
         if (this.validateSections()) {
+          this.saving = true;
           axios.post('productions', this.formatProduction())
             .then(() => {
               this.$router.push('/productions');
             })
             .catch(({ response: data }) => {
-              this.message = data.error;
+              this.message = data.error || data.data.error;
               this.snackbar = true;
+            })
+            .finally(() => {
+              this.saving = false;
             });
         }
       } else if (this.$refs.form.validate()) {

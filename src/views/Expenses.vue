@@ -19,7 +19,7 @@
     </v-toolbar>
     <v-divider></v-divider>
     <v-row>
-      <v-col cols="12" md="3">
+      <v-col>
         <v-menu
           ref="menu"
           :close-on-content-click="false"
@@ -46,12 +46,27 @@
           </v-date-picker>
         </v-menu>
       </v-col>
-      <v-col cols="12" md="3">
+      <v-col>
+        <v-select
+          label="Pen"
+          hide-details
+          :items="houses"
+          v-model="house"
+          clearable
+          @change="changeHouse"
+          @click:clear="resetHouse"
+          item-value="house_id"
+          item-text="name"
+          required
+        >
+        </v-select>
+      </v-col>
+      <v-col>
         <v-select
           label="Expense category"
           hide-details
           :items="['Purchase', 'Service']"
-          v-model="category"
+          v-model="house"
           clearable
           @change="changeCategory"
           @click:clear="resetCategory"
@@ -60,7 +75,7 @@
         >
         </v-select>
       </v-col>
-      <v-col cols="12" md="3">
+      <v-col>
         <v-select
           label="Expense type"
           :items="expenseTypes"
@@ -76,11 +91,12 @@
         </v-select>
       </v-col>
       <v-spacer></v-spacer>
-      <v-col cols="12" md="3">
+      <v-col>
         <v-text-field
           append-icon="mdi-magnify"
           label="Search"
           hide-details
+          clearable
           v-model="search"
           width='100'
         ></v-text-field>
@@ -172,6 +188,7 @@ export default {
       search: '',
       snackbar: false,
       category: '',
+      house: '',
       type: '',
       title: '',
       busy: false,
@@ -255,12 +272,19 @@ export default {
     resetCategory() {
       this.category = null;
     },
+    changeHouse() {
+      this.getExpenses();
+    },
+    resetHouse() {
+      this.house = null;
+    },
     getExpenses() {
       const filters = [];
       if (this.date && this.date.length === 1) filters.push(`date=${this.date[0]}`);
       if (this.date && this.date.length === 2) filters.push(`after=${this.date[0]}&before=${this.date[1]}`);
       if (this.category) filters.push(`category=${this.category}`);
       if (this.type) filters.push(`type=${this.type}`);
+      if (this.house) filters.push(`house=${this.house}`);
 
       this.purchaseExpenses = 0;
       this.serviceExpenses = 0;
@@ -285,6 +309,12 @@ export default {
           this.expenseTypes = data;
         });
     },
+    getHouses() {
+      axios.get('houses')
+        .then(({ data }) => {
+          this.houses = data;
+        });
+    },
     updateDate() {
       this.$refs.menu.save(this.date);
       this.getExpenses();
@@ -297,6 +327,7 @@ export default {
     }
   },
   created() {
+    this.getHouses();
     this.getExpenses();
     this.getTypes();
     this.$store.dispatch(ACTION_TYPES.GET_SUPPLIERS);

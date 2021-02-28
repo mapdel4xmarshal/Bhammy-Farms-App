@@ -10,6 +10,7 @@ const auth = require('./restapi/auth/index');
 
 const activityLogs = require('./restapi/activityLogs/routes');
 const locations = require('./restapi/locations/routes');
+const houses = require('./restapi/houses/routes');
 const batches = require('./restapi/batches/routes');
 const parties = require('./restapi/parties/routes');
 const expenses = require('./restapi/expenses/routes');
@@ -95,6 +96,7 @@ app.use('/api/v1/activities', protect(), activities);
 app.use('/api/v1/productions', protect(), production);
 app.use('/api/v1/feed-productions', protect(), feedProduction);
 app.use('/api/v1/activity-logs', protect(), activityLogs);
+app.use('/api/v1/houses', protect(), houses);
 app.use('/api/v1/employees', protect({
   skip: '/webhook/salary'
 }), employees);

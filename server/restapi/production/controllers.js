@@ -10,9 +10,10 @@ const ProductionSummary = require('./productionSummary');
 
 class Controller {
   async getProductions({
-    batchId, before, after, date
+    batchId, before, after, date, isActive
   }) {
     const where = [];
+    if (isActive !== null && isActive !== undefined) where.push(`batches.is_active = '${isActive}'`);
     if (batchId) where.push(`batches.batch_id = '${batchId}'`);
     if (before) where.push(`productions.date <= '${before}'`);
     if (after) where.push(`productions.date >= '${after}'`);

@@ -1,7 +1,9 @@
 const schedule = require('node-schedule');
 const request = require('request');
 const mailer = require('../../mailer/mailer');
-const { Employee, BankDetail, Salary, Deductible, Absence, sequelize } = require('../../models');
+const {
+  Employee, BankDetail, Salary, Deductible, Absence, sequelize
+} = require('../../models');
 const SalaryClass = require('./salary');
 
 class SalaryScheduler {
@@ -83,8 +85,8 @@ class SalaryScheduler {
           });
 
           await employee.createSalary({
-            period_start: new Date(),
-            period_end: new Date(),
+            period_start: salary.nextSalary.start || new Date(),
+            period_end: salary.nextSalary.end || new Date(),
             payment_date: new Date(),
             amount: salary.nextSalary.amount,
             loan_payment: salary.nextRepaymentAmount,
@@ -101,13 +103,13 @@ class SalaryScheduler {
 
       if (recipients.transfers.length === 0 && employeeId) {
         return resolve({
-           message: 'Ensure bank detail is accurate and salary is greater than zero (0)',
-           status: 400,
-           error: 'Salary should be greater than zero (0)'
-         });
+          message: 'Ensure bank detail is accurate and salary is greater than zero (0)',
+          status: 400,
+          error: 'Salary should be greater than zero (0)'
+        });
       }
 
-      const url = `https://api.paystack.co/transfer/bulk`;
+      const url = 'https://api.paystack.co/transfer/bulk';
       request.post({
         url,
         json: recipients
