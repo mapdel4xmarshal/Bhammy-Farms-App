@@ -19,7 +19,7 @@ router.get('/departments', async (req, res) => {
 });
 
 router.get('/:employeeId', async (req, res) => {
-  const employee = await controllers.getEmployee(req.params.employeeId);
+  const employee = await controllers.getEmployee(req.params.employeeId, req.query.fullMonthsOnly);
   res.json(employee);
 });
 
@@ -54,7 +54,7 @@ router.patch('/:employeeId/bank-detail', async (req, res) => {
 });
 
 router.post('/:employeeId/process-payment', async (req, res) => {
-  const salary = await controllers.paySalary(req.params.employeeId, req.user);
+  const salary = await controllers.paySalary(req.params.employeeId, req.user, req.body.fullMonthsOnly);
   res.status(salary.status === true ? 200 : salary.status).json(salary);
 });
 

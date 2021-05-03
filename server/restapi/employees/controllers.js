@@ -62,7 +62,7 @@ class Controller {
       });
   }
 
-  getEmployee(employeeId) {
+  getEmployee(employeeId, fullMonthsOnly) {
     return Employee.findByPk(employeeId, {
       attributes: [['date_of_birth', 'dateOfBirth'], ['day_off', 'dayOff'], 'department',
         ['employment_date', 'employmentDate'], 'gender', ['house_id', 'house'], ['is_active', 'isActive'],
@@ -100,12 +100,13 @@ class Controller {
     })
       .then((employee) => {
         employee = employee && employee.toJSON();
-        const salaryInfo = new SalaryClass(employee);
+        const salaryInfo = new SalaryClass(employee, fullMonthsOnly);
         employee.unPaidSalary = +salaryInfo.nextSalary.amount;
         employee.unPaidLoan = +salaryInfo.outstandingLoanAmount;
         employee.totalLoan = +salaryInfo.totalLoan;
         employee.paidSalary = +salaryInfo.paidSalaries;
         employee.absences = [...employee.Absences];
+        employee.deductibles = employee.deductibles.sort((a,b) => b.id - a.id);
         employee = { ...employee, ...employee.Party };
         employee.bankDetail = employee.bankDetail[0];
         delete employee.Absences;
@@ -626,9 +627,9 @@ class Controller {
     }
   }
 
-  async paySalary(employeeId, user) {
+  async paySalary(employeeId, user, fullMonthsOnly) {
     const salaryScheduler = new SalaryScheduler();
-    return salaryScheduler.process(employeeId, user)
+    return salaryScheduler.process(employeeId, user, fullMonthsOnly)
       .catch((error) => {
         console.log(error);
         return {

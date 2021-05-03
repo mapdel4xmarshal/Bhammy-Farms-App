@@ -4,7 +4,8 @@ class Salary {
   static LOAN = 'loan';
   static ABSENCE = 'unapproved';
 
-  constructor(employee) {
+  constructor(employee, fullMonthsOnly = false) {
+    this._fullMonthsOnly = fullMonthsOnly;
     this._salary = employee.salaries;
     this.base = employee.salary;
     this.totalRepayment = employee.salaries;
@@ -48,9 +49,12 @@ class Salary {
   }
 
   get nextSalary() {
+    if (this._fullMonthsOnly) return this.nextFullMonthSalary;
     if (this.unpaidSalaries.length === 0) return { amount: 0, period: null };
     const periodLen = this.unpaidSalaries.length;
     const lastUnpaid = {...this.unpaidSalaries[periodLen - 1]};
+    const endDay = Math.min(lastUnpaid.days, new Date().getDate());
+
     return {
       amount: (this.unpaidSalaries
         .reduce((totalSalary, month) => (totalSalary + +month.estSalary), 0) - this.nextRepaymentAmount).toFixed(2),
@@ -58,12 +62,29 @@ class Salary {
         `${this.unpaidSalaries[0].month} to ${this.unpaidSalaries[periodLen - 1].month}`
         : this.unpaidSalaries[0].month,
       start: `${this.unpaidSalaries[0].month}-01`,
-      end: `${lastUnpaid.month}-${Math.min(lastUnpaid.days, new Date().getDate())}`
+      end: `${lastUnpaid.month}-${endDay.toString(10).padStart(2, '0')}`
     }
   }
 
   get nextFullMonthSalary() {
+    let unpaidSalaries = this.unpaidSalaries;
+    if (unpaidSalaries[this.unpaidSalaries.length - 1].days > new Date().getDate()) {
+      unpaidSalaries = this.unpaidSalaries.slice(0, this.unpaidSalaries.length - 1);
+    }
+    if (unpaidSalaries.length === 0) return { amount: 0, period: null };
 
+    const periodLen = unpaidSalaries.length;
+    const lastUnpaid = {...unpaidSalaries[periodLen - 1]};
+    const endDay = Math.min(lastUnpaid.days, new Date().getDate());
+
+    return {
+      amount: (unpaidSalaries
+        .reduce((totalSalary, month) => (totalSalary + +month.estSalary), 0) - this.nextRepaymentAmount).toFixed(2),
+      period: periodLen > 1 ?
+        `${unpaidSalaries[0].month} to ${unpaidSalaries[periodLen - 1].month}` : unpaidSalaries[0].month,
+      start: `${unpaidSalaries[0].month}-01`,
+      end: `${lastUnpaid.month}-${endDay.toString(10).padStart(2, '0')}`
+    }
   }
 
   get unpaidSalaries() {
