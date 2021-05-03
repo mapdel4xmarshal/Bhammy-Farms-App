@@ -13,10 +13,11 @@ class Mailer {
   }
 
   sendMail(mailOptions) {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       this._transporter.sendMail(mailOptions, (error, info) => {
         if (error) {
-          reject(error);
+          console.log(error);
+          resolve(error);
         } else {
           resolve(info.response);
         }
@@ -37,7 +38,3 @@ class Mailer {
 }
 
 module.exports = new Mailer();
-
-
-
-

@@ -76,8 +76,8 @@ class Controller {
           unit: item.unit.toLowerCase(),
           price: item.price,
           image: attachment,
-          is_produced: item.isProduced,
-          description: item.description
+          is_produced: item.isProduced == 'undefined' ? false : item.isProduced,
+          description: item.description == 'undefined' ? '' : item.description
         }, { user, resourceId: 'item_id' })
           .then(resolve)
           .catch(reject);

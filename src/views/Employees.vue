@@ -109,7 +109,7 @@ export default {
   },
   methods: {
     getEmployees() {
-      axios.get('/employees')
+      axios.get('/employees?status=active')
         .then(({ data }) => {
           this.employees = data;
         });

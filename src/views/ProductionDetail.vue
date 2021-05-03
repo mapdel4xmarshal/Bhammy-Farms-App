@@ -41,7 +41,7 @@
         <v-col cols="12" md="4">
           <v-select
             label="Farm*"
-            hint="Farm where the expense is incurred."
+            hint="Farm where the flock is housed."
             persistent-hint
             return-object
             @change="updateBatchList"
@@ -57,7 +57,7 @@
         <v-col cols="12" md="4">
           <v-select
             label="Batch"
-            hint="Flock/Batch this expense applied to."
+            hint="Flock/Batch this record applies to."
             persistent-hint
             required
             return-object
@@ -81,7 +81,8 @@
                 <v-expansion-panel-header>
                   <v-row no-gutters align="center">
                     <v-col cols="12"><div :class="{'error-state': sectionErrors['eggs']}">
-                      <v-icon :color="iconColor">mdi-egg</v-icon> Eggs collected</div></v-col>
+                      <v-icon :color="(sectionErrors['eggs'] && iconColor) || ''">
+                        mdi-egg</v-icon> Eggs collected</div></v-col>
                   </v-row>
                 </v-expansion-panel-header>
                 <v-expansion-panel-content>
@@ -129,7 +130,7 @@
                 <v-expansion-panel-header>
                   <v-row no-gutters align="center">
                     <v-col cols="4"><div :class="{'error-state': sectionErrors['feeds']}">
-                      <v-icon :color="iconColor">mdi-barley</v-icon>
+                      <v-icon :color="(sectionErrors['feeds'] && iconColor) || ''">mdi-barley</v-icon>
                       Feed consumed</div></v-col>
                   </v-row>
                 </v-expansion-panel-header>
@@ -183,7 +184,8 @@
                 <v-expansion-panel-header>
                   <v-row no-gutters align="center">
                     <v-col cols="12"><div :class="{'error-state': sectionErrors['water']}">
-                      <v-icon :color="iconColor">mdi-water</v-icon> Water consumed</div>
+                      <v-icon :color="(sectionErrors['water'] && iconColor) || ''">
+                        mdi-water</v-icon> Water consumed</div>
                     </v-col>
                   </v-row>
                 </v-expansion-panel-header>
@@ -511,7 +513,6 @@ export default {
       vaccinationHeaders: [
         { text: 'Vaccine', value: 'vaccine.name' },
         { text: 'Vaccine batch no.', value: 'vaccineBatchNo' },
-        { text: 'Dosage/bird', value: 'dosage' },
         { text: 'Total dosage', value: 'totalDosage' },
         { text: 'Method', value: 'vaccinationMethod' },
         { text: 'Administered by', value: 'administeredBy' },
@@ -521,7 +522,6 @@ export default {
       medicationHeaders: [
         { text: 'Medicament', value: 'medicament.name' },
         { text: 'Medicament batch no.', value: 'medicamentBatchNo' },
-        { text: 'Dosage/bird', value: 'dosage' },
         { text: 'Total dosage', value: 'totalDosage' },
         { text: 'Method', value: 'medicamentMethod' },
         { text: 'Administered by', value: 'administeredBy' },
@@ -648,7 +648,7 @@ export default {
 
         this.production[sectionInfo.id] = [...this.production[sectionInfo.id]];
         this.$refs[this.activeSection].reset();
-        this.sectionData.quantity = '';
+        this.sectionData = {};
         this.dialog = false;
       }
     },

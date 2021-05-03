@@ -125,11 +125,10 @@
     <v-data-table
       :headers="headers"
       :items="productions"
-      no-data-text="No production available."
+      no-data-text="No productions available."
       multi-sort
       :search="search"
-      class="elevation-1 table-cursor"
-      @click:row="selectProduction"
+      class="elevation-1"
     >
       <template v-slot:item.eggs="{ item }">
         {{ (item.eggs / item.eggPackagingSize ).toFixed(2) }}
@@ -143,7 +142,64 @@
         <strong :style="{color: item.profit < 0? 'red' : 'green'}">
           ₦{{ Math.abs(item.profit) | normalizeNumber }} </strong>
       </template>
+
+      <template v-slot:item.actions="{ item }">
+        <TableAction id="EggCollection"
+                     :item="item"
+                     :edit-item="''"
+                     :delete-item="confirmDelete"
+        />
+      </template>
     </v-data-table>
+
+    <v-dialog
+      v-model="dialog"
+      max-width="400"
+    >
+      <v-card>
+        <v-card-title class="headline">
+          Deleting a production record?
+        </v-card-title>
+
+        <v-card-text>
+          The selected production record will be permanently removed from the system.
+        </v-card-text>
+
+        <v-card-actions>
+          <v-btn
+            color="green darken-1"
+            text
+            @click="dialog = false"
+          >
+            cancel
+          </v-btn>
+          <v-spacer></v-spacer>
+          <v-btn
+            color="red darken-1"
+            text
+            depressed
+            @click="deleteItem"
+          >
+            Delete record
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <v-snackbar
+      v-model="snackbar"
+      :timeout="3000"
+      absolute
+    >
+      {{ message }}
+      <v-btn
+        :color="snackbarColor"
+        text
+        @click="snackbar = false"
+      >
+        Close
+      </v-btn>
+    </v-snackbar>
   </section>
 </template>
 
@@ -151,11 +207,17 @@
 import axios from '../plugins/axios';
 import ROUTES from '../router/routeNames';
 import MetricCard from '../components/MetricCard.vue';
+import TableAction from '../components/TableAction.vue';
 
 export default {
   name: 'Production',
   data() {
     return {
+      dialog: false,
+      selectedId: '',
+      snackbar: false,
+      snackbarColor: 'red',
+      message: '',
       productions: [],
       totalFeeds: 0,
       totalEggs: 0,
@@ -188,11 +250,13 @@ export default {
         { text: 'Mortality', value: 'mortality' },
         { text: 'Mortality %', value: 'mortalityRate' },
         { text: 'Est. Profit', value: 'profit' },
+        { text: '', value: 'actions' }
       ]
     };
   },
   components: {
-    MetricCard
+    MetricCard,
+    TableAction
   },
   computed: {
     dateRangeText() {
@@ -200,9 +264,6 @@ export default {
     }
   },
   methods: {
-    selectProduction(data) {
-      this.$router.push({ name: ROUTES.PRODUCTION, params: { id: data.id } });
-    },
     createNew() {
       this.$router.push({ name: ROUTES.NEW_PRODUCTION });
     },
@@ -222,6 +283,38 @@ export default {
         .then(({ data }) => {
           this.batches = data;
         });
+    },
+    deleteItem() {
+      axios.delete(`/productions/${this.selectedId}`)
+        .then(({ data }) => {
+          if (data.error) {
+            this.snackbar = true;
+            this.message = data.error;
+          } else {
+            this.successAlert();
+            this.message = 'Production record deleted successfully.';
+            this.getProduction();
+          }
+        })
+        .catch(({ response: { data } }) => {
+          this.errorAlert();
+          this.message = data;
+        })
+        .finally(() => {
+          this.dialog = false;
+        });
+    },
+    successAlert() {
+      this.snackbar = true;
+      this.snackbarColor = 'green';
+    },
+    errorAlert() {
+      this.snackbar = true;
+      this.snackbarColor = 'red';
+    },
+    confirmDelete(record, { id }) {
+      this.selectedId = id;
+      this.dialog = true;
     },
     computeSummary(productions) {
       this.totalFeeds = 0;

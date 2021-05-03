@@ -50,6 +50,7 @@ class Salary {
   get nextSalary() {
     if (this.unpaidSalaries.length === 0) return { amount: 0, period: null };
     const periodLen = this.unpaidSalaries.length;
+    const lastUnpaid = {...this.unpaidSalaries[periodLen - 1]};
     return {
       amount: (this.unpaidSalaries
         .reduce((totalSalary, month) => (totalSalary + +month.estSalary), 0) - this.nextRepaymentAmount).toFixed(2),
@@ -57,8 +58,12 @@ class Salary {
         `${this.unpaidSalaries[0].month} to ${this.unpaidSalaries[periodLen - 1].month}`
         : this.unpaidSalaries[0].month,
       start: `${this.unpaidSalaries[0].month}-01`,
-      end: `${new Date(...this.unpaidSalaries[periodLen - 1].month.split('-'))}`
+      end: `${lastUnpaid.month}-${Math.min(lastUnpaid.days, new Date().getDate())}`
     }
+  }
+
+  get nextFullMonthSalary() {
+
   }
 
   get unpaidSalaries() {

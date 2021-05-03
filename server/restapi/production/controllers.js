@@ -10,7 +10,7 @@ const ProductionSummary = require('./productionSummary');
 
 class Controller {
   async getProductions({
-    batchId, before, after, date, isActive
+    batchId, before, after, date, isActive, productionId
   }) {
     const where = [];
     if (isActive !== null && isActive !== undefined) where.push(`batches.is_active = '${isActive}'`);
@@ -18,26 +18,27 @@ class Controller {
     if (before) where.push(`productions.date <= '${before}'`);
     if (after) where.push(`productions.date >= '${after}'`);
     if (date) where.push(`productions.date = '${date}'`);
+    if (productionId) where.push(`productions.production_id = '${productionId}'`);
 
     return sequelize.query(`
     SELECT productions.production_id AS id, productions.water, mortality.id AS mortalityId, mortality.count AS mortalityCount, productions.date,
       production_items.quantity AS itemQuantity, production_items.price AS itemPrice, batches.initial_stock_count AS initialFlockCount,
       batches.name AS batch, batches.initial_stock_count AS flockCount, batches.is_active AS isActive, breeds.type AS batchType,
       items.item_id AS itemId, items.item_name AS itemName, items.category AS itemCategory, items.packaging_size AS packagingSize, items.unit AS itemUnit,
-      production_items.id AS productionItemsId, productions.humidity AS humidity, productions.temperature AS temperature, 
-      vaccinations.administered_by AS vaccineAdministrator, vaccinations.notes AS vaccinationNotes, 
+      production_items.id AS productionItemsId, productions.humidity AS humidity, productions.temperature AS temperature,
+      vaccinations.administered_by AS vaccineAdministrator, vaccinations.notes AS vaccinationNotes,
       vaccinations.vaccination_id AS vaccinationId, vaccinations.vaccine_batch_no AS vaccineBatchNo,
-      vaccinations.method AS vaccinationMethod, vaccinations.vaccine_id AS vaccineId, 
-      vaccinations.dosage AS vaccineDosage, vaccinations.dosage_unit AS vaccineDosageUnit, 
+      vaccinations.method AS vaccinationMethod, vaccinations.vaccine_id AS vaccineId,
+      vaccinations.dosage AS vaccineDosage, vaccinations.dosage_unit AS vaccineDosageUnit,
       vaccinations.total_dosage AS vaccineTotalDosage, vaccinations.no_of_birds AS vaccinatedBirds,
-      
-      medication.administered_by AS medicamentAdministrator, medication.notes AS medicationNotes, 
+
+      medication.administered_by AS medicamentAdministrator, medication.notes AS medicationNotes,
       medication.medication_id AS medicationId, medication.medicament_batch_no AS medicamentBatchNo,
-      medication.method AS medicationMethod, medication.medicament_id AS medicamentId, medication.dosage AS medicamentDosage, 
-      medication.dosage_unit AS medicamentDosageUnit,
-         
+      medication.method AS medicationMethod, medication.medicament_id AS medicamentId, medication.dosage AS medicamentDosage,
+      medication.dosage_unit AS medicamentDosageUnit, medication.total_dosage AS medicamentTotalDosage, medication.no_of_birds AS medicatedBirds,
+
       DATEDIFF(productions.date, batches.move_in_date) + batches.move_in_age AS batchAge
-    FROM productions 
+    FROM productions
     JOIN batches ON productions.batch_id = batches.batch_id
     JOIN breeds ON batches.breed_id = breeds.breed_id
     LEFT JOIN mortality ON productions.production_id = mortality.production_id
@@ -182,8 +183,8 @@ class Controller {
       });
 
 
-      await this.processTreatment('vaccination', production.vaccinations, productionId, transaction, user);
-      await this.processTreatment('medication', production.medications, productionId, transaction, user);
+      await this.processTreatment('vaccination', production.vaccinations, productionId, transaction, user, activeBatch);
+      await this.processTreatment('medication', production.medications, productionId, transaction, user, activeBatch);
 
       // If the execution reaches this line, no errors were thrown.
       // We commit the transaction.
@@ -204,7 +205,7 @@ class Controller {
     }
   }
 
-  async processTreatment(type, treatments, productionId, transaction, user) {
+  async processTreatment(type, treatments, productionId, transaction, user, activeBatch) {
     const medType = type === 'vaccination' ? 'vaccine' : 'medicament';
     const modelType = type === 'vaccination' ? 'Vaccination' : 'Medication';
 
@@ -212,10 +213,10 @@ class Controller {
       production_id: productionId,
       [`${medType}_id`]: treatment[medType].id,
       [`${medType}_batch_no`]: treatment[`${medType}BatchNo`],
-      dosage: treatment.dosage,
-      dosage_unit: treatment.dosageUnit,
+      dosage: treatment.dosage || 0,
+      dosage_unit: treatment.dosageUnit || 'N/A',
       total_dosage: treatment.totalDosage,
-      no_of_birds: treatment.noOfBirds,
+      no_of_birds: treatment.noOfBirds || activeBatch.initial_stock_count,
       method: treatment[`${type}Method`],
       administered_by: treatment.administeredBy,
       notes: treatment.reason
@@ -241,11 +242,12 @@ class Controller {
   }
 
   async getWeatherInfo(coordinate, date) {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       request.get(`http://api.weatherapi.com/v1/history.json?key=aa5f3c747bb140be95f230031202507&q=${
         coordinate}&dt=${date}`, (error, resp, data) => {
         if (error) {
-          reject(error);
+          console.log(error);
+          resolve({ error });
         } else {
           resolve(JSON.parse(data));
         }
@@ -306,6 +308,7 @@ class Controller {
       const productionGroup = productionMap.get(production.id);
 
       productionGroup.mortality.set(production.mortalityId, { count: production.mortalityCount });
+
       if (production.vaccinationId) {
         productionGroup.vaccinations.set(production.vaccinationId, {
           batchNo: production.vaccineBatchNo,
@@ -315,12 +318,27 @@ class Controller {
           vaccineId: production.vaccineId,
           vaccinationId: production.vaccinationId,
           vaccinationMethod: production.vaccinationMethod,
-          vaccinationNo: production.vaccinationNo,
           administrator: production.vaccineAdministrator,
           note: production.vaccinationNotes,
           noOfBirds: production.vaccinatedBirds
         });
       }
+
+      if (production.medicationId) {
+        productionGroup.medications.set(production.medicationId, {
+          batchNo: production.medicamentBatchNo,
+          dosage: production.medicamentDosage,
+          dosageUnit: production.medicamentDosageUnit,
+          totalDosage: production.medicamentTotalDosage,
+          medicamentId: production.medicamentId,
+          medicationId: production.medicationId,
+          medicationMethod: production.medicationMethod,
+          administrator: production.medicamentAdministrator,
+          note: production.medicationNotes,
+          noOfBirds: production.medicatedBirds
+        });
+      }
+
       productionGroup.items.set(production.productionItemsId, {
         id: production.itemId,
         name: production.itemName,
@@ -333,6 +351,80 @@ class Controller {
     });
 
     return Array.from(productionMap.values());
+  }
+
+  async deleteProduction(productionId, user) {
+    const productions = await this.getProductions({ productionId });
+    const production = productions[0] || null;
+
+    if (!production) {
+      return {
+        error: `No production found with id ${productionId}`,
+        status: 400
+      };
+    }
+
+    const transaction = await sequelize.transaction(); console.log('v', production);
+
+    // Reverse eggs
+    for (const egg of production.eggTypes) {
+      await Item.decrement('quantity', {
+        by: Number(egg.quantity),
+        where: { item_id: egg.id },
+        transaction,
+        user,
+        resourceId: 'item_id'
+      });
+    }
+
+    // Reverse feeds
+    for (const feed of production.feedTypes) {
+      await Item.increment('quantity', {
+        by: Number(feed.quantity),
+        where: { item_id: feed.id },
+        transaction,
+        user,
+        resourceId: 'item_id'
+      });
+    }
+
+    // Reverse medications
+    for (const medication of production.medications) {
+      await Item.increment('quantity', {
+        by: Number(medication.totalDosage),
+        where: { item_id: medication.medicamentId },
+        transaction,
+        user,
+        resourceId: 'item_id'
+      });
+    }
+
+    // Reverse vaccination
+    for (const vaccination of production.vaccinations) {
+      await Item.increment('quantity', {
+        by: Number(vaccination.totalDosage),
+        where: { item_id: vaccination.vaccineId },
+        transaction,
+        user,
+        resourceId: 'item_id'
+      });
+    }
+
+    // Reverse mortality
+    await Mortality.destroy({
+      where: {
+        production_id: production.id
+      }
+    });
+
+    // Delete production
+    await Production.destroy({
+      where: {
+        production_id: production.id
+      }
+    });
+
+    await transaction.commit();
   }
 }
 

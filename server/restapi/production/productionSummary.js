@@ -63,16 +63,16 @@ class ProductionSummary {
 
   set medications(medications) {
     this._production.medications = medications.map((medication) => ({
-      id: medication.medication_id,
-      medicamentBatchNo: medication.medicament_batch_no,
+      id: medication.medicationId,
+      medicamentBatchNo: medication.batchNo,
       dosage: medication.dosage,
-      dosageUnit: medication.dosage_unit,
-      totalDosage: medication.total_dosage,
-      noOfBirds: medication.no_of_birds,
-      medicationMethod: medication.method,
-      administeredBy: medication.administered_by,
+      dosageUnit: medication.dosageUnit,
+      totalDosage: medication.totalDosage,
+      noOfBirds: medication.noOfBirds,
+      medicationMethod: medication.medicationMethod,
+      administeredBy: medication.administrator,
       reason: medication.notes,
-      medicamentId: medication.medicament_id
+      medicamentId: medication.medicamentId
     }));
   }
 
@@ -101,7 +101,7 @@ class ProductionSummary {
   set feeds(feeds) {
     this._production.feeds = feeds.reduce((totalFeed, feed) => totalFeed + Number.parseInt(feed.quantity), 0);
     this._production.feedPackagingSize = feeds[0].packagingSize;
-    this._production.feedTypes = feeds.map(({ name, quantity }) => ({ name, quantity }));
+    this._production.feedTypes = feeds.map(({ id, name, quantity }) => ({ id, name, quantity }));
   }
 
   get eggs() {
@@ -111,7 +111,7 @@ class ProductionSummary {
   set eggs(eggs) {
     this._production.eggs = eggs.reduce((totalEggs, egg) => totalEggs + Number.parseInt(egg.quantity), 0);
     this._production.eggPackagingSize = eggs[0].packagingSize;
-    this._production.eggTypes = eggs.map(({ name, quantity }) => ({ name, quantity }));
+    this._production.eggTypes = eggs.map(({ id, name, quantity }) => ({ id, name, quantity }));
   }
 
   get feedPerAnimal() {

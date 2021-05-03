@@ -25,4 +25,9 @@ router.patch('/:productionId', async (req, res) => {
   res.json(production);
 });
 
+router.delete('/:productionId', async (req, res) => {
+  const production = await controllers.deleteProduction(req.params.productionId, req.user);
+  res.json(production);
+});
+
 module.exports = router;

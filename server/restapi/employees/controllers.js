@@ -27,9 +27,10 @@ class Controller {
     salaryScheduler.schedule();
   }
 
-  async getEmployees(id) {
+  async getEmployees(id, status) {
     const where = {};
     if (id) where.employee_id = id;
+    if (status) where.is_active = { active: true, inactive: false }[status];
 
     return Employee[id ? 'findOne' : 'findAll']({
       include: [
@@ -319,9 +320,9 @@ class Controller {
     }
 
     const overlappingLeaves = await sequelize.query(`
-        SELECT COUNT(*) AS count FROM absences 
-        WHERE ('${leave.startDate}' BETWEEN start_date AND end_date) 
-        OR ('${leave.endDate}' BETWEEN start_date AND end_date); 
+        SELECT COUNT(*) AS count FROM absences
+        WHERE ('${leave.startDate}' BETWEEN start_date AND end_date)
+        OR ('${leave.endDate}' BETWEEN start_date AND end_date);
     `)
       .then(async ([leaves]) => leaves[0].count);
 
@@ -369,25 +370,43 @@ class Controller {
     }
 
     const bankInfo = await this.getBank(bankDetail.accountNumber, bankDetail.bankCode);
+
     if (bankInfo && bankInfo.status) {
-      return BankDetail.update({
-        account_number: bankDetail.accountNumber,
-        account_name: bankDetail.accountName,
-        bank_code: bankDetail.bankCode
-      }, {
-        user,
-        resourceId: 'id',
-        where: {
-          employee_id: employeeId
-        }
-      })
-        .catch((error) => {
-          console.log(error);
-          return {
-            status: 500,
-            message: 'unable to update bank-detail. Please try again or contact us.'
-          };
-        });
+      const recipient = await this.createRecipient({
+        type: 'nuban',
+        name: bankInfo.data.account_name,
+        account_number: bankInfo.data.account_number,
+        bank_code: bankDetail.bankCode,
+        metadata: employee.employee_id,
+        currency: 'NGN'
+      });
+
+      if (recipient && recipient.status) {
+        return BankDetail.update({
+          account_number: bankDetail.accountNumber,
+          account_name: bankDetail.accountName,
+          bank_code: bankDetail.bankCode,
+          intermediary_id: recipient.data.recipient_code,
+        }, {
+          user,
+          resourceId: 'id',
+          where: {
+            employee_id: employeeId
+          }
+        })
+          .catch((error) => {
+            console.log(error);
+            return {
+              status: 500,
+              message: 'unable to update bank-detail. Please try again or contact us.'
+            };
+          });
+      }
+
+      return {
+        status: 500,
+        message: 'unable to update bank-detail with upstream server. Please try again or contact us.'
+      };
     }
     return {
       status: 400,
@@ -534,6 +553,7 @@ class Controller {
       .update(JSON.stringify(req.body))
       .digest('hex');
     if (hash === req.headers['x-paystack-signature'] && req.body.event.startsWith('transfer.')) {
+      console.info('Received salary webhook', req.body);
       this.updateSalaryStatus(req.body);
     }
   }
@@ -595,8 +615,8 @@ class Controller {
       provider: employee.Party.name,
       description: transferInfo.data.reason,
       location_id: employee.location_id,
-      house_id: employee.house_id,
-      batch_id: batchInfo.batch_id
+      house_id: employee.house_id || null,
+      batch_id: batchInfo.batch_id || null
     });
 
     try {

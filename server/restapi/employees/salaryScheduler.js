@@ -2,7 +2,7 @@ const schedule = require('node-schedule');
 const request = require('request');
 const mailer = require('../../mailer/mailer');
 const {
-  Employee, BankDetail, Salary, Deductible, Absence, sequelize
+  Employee, BankDetail, Salary, Deductible, Absence, sequelize, Party
 } = require('../../models');
 const SalaryClass = require('./salary');
 
@@ -59,7 +59,11 @@ class SalaryScheduler {
           {
             model: Absence,
             required: false
-          }
+          },
+          {
+            model: Party,
+            attributes: ['name']
+          },
         ],
         where
       }, { transaction, logging: false })
@@ -75,29 +79,31 @@ class SalaryScheduler {
 
       employees.forEach(async (employee) => {
         const employeeData = employee.toJSON();
-        const salary = new SalaryClass(employeeData);
-        if (salary.nextSalary.amount > 0 && employeeData.bankDetail) {
-          recipients.transfers.push({
-            amount: Math.floor(salary.nextSalary.amount) * 100,
-            reason: `BHAMMYFARMS: SALARY ${salary.nextSalary.period}`,
-            recipient: employeeData.bankDetail[0].intermediary_id,
-            reference: employeeData.id
-          });
+        if (employeeData.is_active) {
+          const salary = new SalaryClass(employeeData);
+          if (salary.nextSalary.amount > 0 && employeeData.bankDetail) {
+            recipients.transfers.push({
+              amount: Math.floor(salary.nextSalary.amount) * 100,
+              reason: `${employeeData.Party.name}-SALARY ${salary.nextSalary.period}`,
+              recipient: employeeData.bankDetail[0]?.intermediary_id,
+              reference: employeeData.employee_id
+            });
 
-          await employee.createSalary({
-            period_start: salary.nextSalary.start || new Date(),
-            period_end: salary.nextSalary.end || new Date(),
-            payment_date: new Date(),
-            amount: salary.nextSalary.amount,
-            loan_payment: salary.nextRepaymentAmount,
-            status: 'processing',
-            comment: `base: ${salary.base}, ${salary.nextSalary.period}`
-          }, {
-            transaction,
-            user,
-            logging: false,
-            resourceId: 'id'
-          });
+            await employee.createSalary({
+              period_start: salary.nextSalary.start || new Date(),
+              period_end: salary.nextSalary.end || new Date(),
+              payment_date: new Date(),
+              amount: salary.nextSalary.amount,
+              loan_payment: salary.nextRepaymentAmount,
+              status: 'processing',
+              comment: `base: ${salary.base}, ${salary.nextSalary.period}`
+            }, {
+              transaction,
+              user,
+              logging: false,
+              resourceId: 'id'
+            });
+          }
         }
       });
 
@@ -125,7 +131,7 @@ class SalaryScheduler {
         } else {
           await transaction.commit();
           const title = detail.status ? 'Processing Salaries' : 'Processing Salaries Failed';
-          mailer.sendNotification(title, JSON.stringify(detail));
+          await mailer.sendNotification(title, JSON.stringify(detail));
           resolve(detail);
         }
       })

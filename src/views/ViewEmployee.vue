@@ -6,7 +6,29 @@
       </v-btn>
       <v-spacer/>
       <v-btn text color="primary" class="mr-2" @click="dialog = loanDialog = true">Loan</v-btn>
-      <v-btn color="primary" tile @click="paySalary" :loading="paymentInProgress">Pay salary</v-btn>
+      <v-expand-transition>
+        <v-menu offset-y rounded="0" :nudge-bottom="2">
+          <template v-slot:activator="{ on, attrs }">
+            <v-btn
+              color="primary"
+              dark
+              tile
+              v-bind="attrs"
+              v-on="on"
+            >
+              Pay Salary
+            </v-btn>
+          </template>
+          <v-list>
+            <v-list-item @click="paySalary" :loading="paymentInProgress" link>
+              <v-list-item-title>Pay current</v-list-item-title>
+            </v-list-item>
+            <v-list-item link>
+              <v-list-item-title>Pay arrears</v-list-item-title>
+            </v-list-item>
+          </v-list>
+        </v-menu>
+      </v-expand-transition>
     </v-toolbar>
     <v-dialog v-model="dialog" persistent scrollable max-width="800px" :fullscreen="$mq.phone">
       <v-card v-if="loanDialog">

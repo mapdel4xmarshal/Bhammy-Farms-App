@@ -7,6 +7,7 @@
       small
       class="mr-2"
       color="primary"
+      v-if="editItem"
       @click="editItem(id, item)">
       <v-icon small>mdi-pencil</v-icon>
     </v-btn>
@@ -37,7 +38,7 @@ export default {
       required: true
     },
     editItem: {
-      type: Function,
+      type: [Function, String],
       required: true
     },
     deleteItem: {

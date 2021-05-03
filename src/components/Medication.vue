@@ -34,21 +34,17 @@
 
         <v-col cols="12" md="8">
           <v-text-field
-            label="Dosage*"
+            label="Dosage per bird"
             type="number"
-            required
-            :rules="dosageRules"
             v-model="value.dosage"
           ></v-text-field>
         </v-col>
 
         <v-col cols="12" md="4">
           <v-select
-            label="Dosage unit*"
+            label="Dosage unit"
             type="number"
             :items="dosageUnit"
-            required
-            :rules="[v => !!v || 'Select a dosage unit.']"
             v-model="value.dosageUnit"
           ></v-select>
         </v-col>
@@ -65,10 +61,9 @@
 
         <v-col cols="12">
           <v-text-field
-            label="No of birds*"
+            label="No of birds"
             type="number"
             required
-            :rules="noOfBirdsRules"
             v-model="value.noOfBirds"
           ></v-text-field>
         </v-col>

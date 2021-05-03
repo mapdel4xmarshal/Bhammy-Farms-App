@@ -4,7 +4,7 @@ const controllers = require('./controllers');
 const router = express.Router();
 
 router.get('/', async (req, res) => {
-  const employees = await controllers.getEmployees();
+  const employees = await controllers.getEmployees(null, req.query.status);
   res.json(employees);
 });
 

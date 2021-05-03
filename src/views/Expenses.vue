@@ -66,7 +66,7 @@
           label="Expense category"
           hide-details
           :items="['Purchase', 'Service']"
-          v-model="house"
+          v-model="category"
           clearable
           @change="changeCategory"
           @click:clear="resetCategory"
