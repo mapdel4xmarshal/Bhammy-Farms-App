@@ -145,8 +145,59 @@
       <template v-slot:item.id="{ item }">
         {{ item.id | pad }}
       </template>
+      <template v-slot:item.actions="{ item }">
+        <TableAction id="feed"
+                     :item="item"
+                     :edit-item="''"
+                     :delete-item="confirmDelete"
+        />
+      </template>
     </v-data-table>
+    <v-snackbar
+      v-model="snackbar"
+    >
+      {{ message }}
+      <v-btn
+        :color="snackbarColor"
+        text
+        @click="snackbar = false"
+      >
+        Close
+      </v-btn>
+    </v-snackbar>
+    <v-dialog
+      v-model="dialog"
+      max-width="450"
+    >
+      <v-card>
+        <v-card-title class="headline">
+          Deleting a feed production record?
+        </v-card-title>
 
+        <v-card-text>
+          The selected feed production record will be permanently removed from the system.
+        </v-card-text>
+
+        <v-card-actions>
+          <v-btn
+            color="green darken-1"
+            text
+            @click="dialog = false"
+          >
+            cancel
+          </v-btn>
+          <v-spacer></v-spacer>
+          <v-btn
+            color="red darken-1"
+            text
+            depressed
+            @click="deleteItem"
+          >
+            Delete record
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </section>
 </template>
 
@@ -159,6 +210,10 @@ export default {
   name: 'Income',
   data() {
     return {
+      dialog: false,
+      snackbar: false,
+      message: '',
+      snackbarColor: 'blue',
       invoices: [],
       dateMenu: false,
       date: null,

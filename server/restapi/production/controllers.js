@@ -364,7 +364,7 @@ class Controller {
       };
     }
 
-    const transaction = await sequelize.transaction(); console.log('v', production);
+    const transaction = await sequelize.transaction();
 
     // Reverse eggs
     for (const egg of production.eggTypes) {

@@ -31,7 +31,7 @@
       class="elevation-1"
     >
       <template v-slot:item.description="{ item }">
-        {{ item.description | truncate }}
+        {{ item.description }}
       </template>
     </v-data-table>
     <v-snackbar

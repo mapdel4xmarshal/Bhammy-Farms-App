@@ -6,8 +6,16 @@ const path = require('path');
 const formidable = require('formidable');
 const uuid = require('uuid');
 const {
-  Party, Employee, Sequelize, BankDetail, Salary, Deductible,
-  Absence, Expense, sequelize, Batch
+  Party,
+  Employee,
+  Sequelize,
+  BankDetail,
+  Salary,
+  Deductible,
+  Absence,
+  Expense,
+  sequelize,
+  Batch
 } = require('../../models');
 const { fileUploadPath } = require('../../configs');
 const mailer = require('../../mailer/mailer');
@@ -30,7 +38,12 @@ class Controller {
   async getEmployees(id, status) {
     const where = {};
     if (id) where.employee_id = id;
-    if (status) where.is_active = { active: true, inactive: false }[status];
+    if (status) {
+      where.is_active = {
+        active: true,
+        inactive: false
+      }[status];
+    }
 
     return Employee[id ? 'findOne' : 'findAll']({
       include: [
@@ -106,7 +119,7 @@ class Controller {
         employee.totalLoan = +salaryInfo.totalLoan;
         employee.paidSalary = +salaryInfo.paidSalaries;
         employee.absences = [...employee.Absences];
-        employee.deductibles = employee.deductibles.sort((a,b) => b.id - a.id);
+        employee.deductibles = employee.deductibles.sort((a, b) => b.id - a.id);
         employee = { ...employee, ...employee.Party };
         employee.bankDetail = employee.bankDetail[0];
         delete employee.Absences;
@@ -524,18 +537,18 @@ class Controller {
         );
 
         await Party.update({
-          name: employee.name,
-          address: employee.address,
-          state: employee.state,
-          email: employee.email,
-          phone: employee.phone,
-          alt_phone: employee.altPhone
-        },
-        {
-          where: {
-            party_id: existingEmployee.toJSON().party_id
-          }
-        });
+            name: employee.name,
+            address: employee.address,
+            state: employee.state,
+            email: employee.email,
+            phone: employee.phone,
+            alt_phone: employee.altPhone
+          },
+          {
+            where: {
+              party_id: existingEmployee.toJSON().party_id
+            }
+          });
 
         resolve(existingEmployee);
       });
@@ -562,8 +575,8 @@ class Controller {
   async updateSalaryStatus(transferInfo) {
     let where = {};
     let bankDetailWhere = {};
-    if (transferInfo.data.recipient.metadata) {
-      where = { employee_id: transferInfo.data.recipient.metadata };
+    if (transferInfo.data.reference) {
+      where = { employee_id: transferInfo.data.reference };
     } else {
       bankDetailWhere = { intermediary_id: transferInfo.data.recipient.recipient_code };
     }
@@ -600,13 +613,17 @@ class Controller {
       employee.salaries[salariesLen].save();
     }
 
-    const batchInfo = await Batch.findOne({
-      attributes: ['batch_id'],
-      where: {
-        is_active: 1,
-        house_id: employee.house_id
-      }
-    }) || {};
+    let batchInfo = {};
+
+    if (employee.house_id !== 'undefined' && employee.house_id !== undefined) {
+      batchInfo = await Batch.findOne({
+        attributes: ['batch_id'],
+        where: {
+          is_active: 1,
+          house_id: employee.house_id
+        }
+      }) || {};
+    }
 
     await Expense.create({
       category: 'salary',

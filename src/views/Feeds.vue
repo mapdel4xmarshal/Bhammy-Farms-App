@@ -108,8 +108,7 @@
       :headers="headers"
       :items="feeds"
       :search="search"
-      class="elevation-1 table-cursor"
-      @click:row="selectProduction"
+      class="elevation-1"
     >
       <template v-slot:item.concentrate="{ item }">
         {{ item.concentrate.quantity | formatNumber }} {{ item.concentrate.unit }}
@@ -138,33 +137,77 @@
       <template v-slot:item.costPerBag="{ item }">
         ₦{{ (item.summary.costPerUnit * 25) | formatNumber }}
       </template>
+      <template v-slot:item.actions="{ item }">
+        <TableAction id="feed"
+                     :item="item"
+                     :edit-item="''"
+                     :delete-item="confirmDelete"
+        />
+      </template>
     </v-data-table>
     <v-snackbar
       v-model="snackbar"
     >
-      Feed production created successfully
+      {{ message }}
       <v-btn
-        color="blue"
+        :color="snackbarColor"
         text
         @click="snackbar = false"
       >
         Close
       </v-btn>
     </v-snackbar>
+    <v-dialog
+      v-model="dialog"
+      max-width="450"
+    >
+      <v-card>
+        <v-card-title class="headline">
+          Deleting a feed production record?
+        </v-card-title>
+
+        <v-card-text>
+          The selected feed production record will be permanently removed from the system.
+        </v-card-text>
+
+        <v-card-actions>
+          <v-btn
+            color="green darken-1"
+            text
+            @click="dialog = false"
+          >
+            cancel
+          </v-btn>
+          <v-spacer></v-spacer>
+          <v-btn
+            color="red darken-1"
+            text
+            depressed
+            @click="deleteItem"
+          >
+            Delete record
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </section>
 </template>
 <script>
+import FeedProduction from '@/components/FeedProduction.vue';
+import TableAction from '@/components/TableAction.vue';
 import axios from '../plugins/axios';
-import FeedProduction from '../components/FeedProduction.vue';
 
 export default {
   name: 'FeedMill',
-  components: { FeedProduction },
+  components: { FeedProduction, TableAction },
   data() {
     return {
+      dialog: false,
       dateMenu: false,
       snackbar: false,
       showDialog: false,
+      message: '',
+      snackbarColor: 'blue',
       date: null,
       search: '',
       menu: false,
@@ -214,33 +257,9 @@ export default {
         { text: 'Cost / Kg', value: 'summary.costPerUnit' },
         { text: 'Cost / Bag', value: 'costPerBag' },
         { text: 'Total Amount', value: 'summary.totalAmount', align: 'end' },
+        { text: '', value: 'actions' },
       ],
-      itemSummary: [
-        {
-          itemName: 'Test again',
-          quantityText: '23456',
-          itemAmount: 333445,
-          thumbnail: '../img/user.png'
-        },
-        {
-          itemName: 'Test again',
-          quantityText: '23456',
-          itemAmount: 333445,
-          thumbnail: '../img/user.png'
-        },
-        {
-          itemName: 'Test again',
-          quantityText: '23456',
-          itemAmount: 333445,
-          thumbnail: '../img/user.png'
-        },
-        {
-          itemName: 'Test again',
-          quantityText: '23456',
-          itemAmount: 333445,
-          thumbnail: '../img/user.png'
-        }
-      ]
+      itemSummary: []
     };
   },
   computed: {
@@ -258,11 +277,43 @@ export default {
       this.getProduction();
     },
     feedSaved() {
-      this.snackbar = true;
+      this.successAlert();
       this.showDialog = false;
+      this.message = 'Feed production created successfully';
       this.getProduction();
     },
-    selectProduction() {},
+    deleteItem() {
+      axios.delete(`/feed-productions/${this.selectedId}`)
+        .then(({ data }) => {
+          if (data.error) {
+            this.errorAlert();
+            this.message = data.error;
+          } else {
+            this.successAlert();
+            this.message = 'Feed production record deleted successfully.';
+            this.getProduction();
+          }
+        })
+        .catch(({ response: { data } }) => {
+          this.errorAlert();
+          this.message = data;
+        })
+        .finally(() => {
+          this.dialog = false;
+        });
+    },
+    successAlert() {
+      this.snackbar = true;
+      this.snackbarColor = 'blue';
+    },
+    errorAlert() {
+      this.snackbar = true;
+      this.snackbarColor = 'red';
+    },
+    confirmDelete(record, { id }) {
+      this.selectedId = id;
+      this.dialog = true;
+    },
     getProduction() {
       const filters = [];
       if (this.date && this.date.length === 1) filters.push(`date=${this.date[0]}`);

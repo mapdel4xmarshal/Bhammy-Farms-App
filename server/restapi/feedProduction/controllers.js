@@ -5,8 +5,9 @@ const ProductionRecord = require('./productionRecord');
 const ProductionSummary = require('./productionSummary');
 
 class Controller {
-  async getProductions({ before, after, date }) {
+  async getProductions({ before, after, date, id }) {
     const where = {};
+    if (id) where.id = id;
     if (before || after) where.date = {};
     if (date) where.date = date;
     if (before) where.date[Op.lte] = before;
@@ -139,12 +140,47 @@ class Controller {
     }
   }
 
-  async updateProduction(BatchId) {
-    return Batch.findOne({
-      where: { id: BatchId },
-      attributes: { exclude: ['createdAt', 'updatedAt'] }
-    })
-      .then((Batch) => Batch);
+  async deleteProduction(id, user) {
+    const productions = await this.getProductions({ id });
+    const production = productions.records[0] || null;
+
+    if (!production) {
+      return {
+        error: `No feed production found with id ${id}`,
+        status: 400
+      };
+    }
+
+    const transaction = await sequelize.transaction();
+
+    // Reverse feeds produced
+    await Item.decrement('quantity', {
+      by: Number(production.summary.quantity),
+      where: { item_id: production.type.id },
+      transaction,
+      user,
+      resourceId: 'item_id'
+    });
+
+    // Reverse ingredients
+    for (const ingredient of production.ingredients) {
+      await Item.increment('quantity', {
+        by: Number(ingredient.quantity),
+        where: { item_id: ingredient.id },
+        transaction,
+        user,
+        resourceId: 'item_id'
+      });
+    }
+
+    // Delete production
+    await FeedProduction.destroy({
+      where: {
+        id
+      }
+    });
+
+    await transaction.commit();
   }
 }
 
