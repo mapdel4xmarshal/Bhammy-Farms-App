@@ -75,7 +75,7 @@ class Salary {
 
     const periodLen = unpaidSalaries.length;
     const lastUnpaid = {...unpaidSalaries[periodLen - 1]};
-    const endDay = Math.min(lastUnpaid.days, new Date().getDate());
+    const endDay = lastUnpaid.days;
 
     return {
       amount: (unpaidSalaries

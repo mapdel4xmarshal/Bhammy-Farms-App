@@ -14,6 +14,7 @@ let sequelize;
 
 sequelize = new Sequelize(config.dbName, config.dbUser, config.dbPass, {
   dialect: 'mysql',
+  host: config.dbHost,
   define: {
     underscored: true
   },
