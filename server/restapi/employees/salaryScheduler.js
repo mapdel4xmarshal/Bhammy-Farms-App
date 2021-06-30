@@ -86,7 +86,7 @@ class SalaryScheduler {
               amount: Math.floor(salary.nextSalary.amount) * 100,
               reason: `${employeeData.Party.name}-SALARY ${salary.nextSalary.period}`,
               recipient: employeeData.bankDetail[0].intermediary_id,
-              reference: employeeData.employee_id
+              reference: `${employeeData.employee_id}_${new Date().getTime()}`
             });
 
             await employee.createSalary({

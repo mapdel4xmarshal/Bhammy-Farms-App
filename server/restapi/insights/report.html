@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script src="https://code.highcharts.com/highcharts-3d.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.12/dist/vue.min.js"></script>
+    <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@4.x/css/materialdesignicons.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css" rel="stylesheet">
+    <link href="report/main.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.js"></script>
+    <script type="module">
+      import Summary from './components/Summary.js';  console.log(Summary)
+      // when life is settled, load up the fun stuff
+      document.addEventListener('DOMContentLoaded', function () {
+        new Vue({
+          el: '#report',
+          vuetify: new Vuetify(),
+          components: {
+            'report-summary': Summary
+          },
+          // define data - initial display text
+          data: {
+            m1: 'You got to let me know',
+            info: '__theData',
+            desserts: [
+              {
+                name: 'Date',
+                value: '2020-05-01'
+              },
+              {
+                name: 'Frozen Yogurt',
+                calories: 159,
+              },
+              {
+                name: 'Ice cream sandwich',
+                calories: 237,
+              },
+              {
+                name: 'Eclair',
+                calories: 262,
+              },
+              {
+                name: 'Cupcake',
+                calories: 305,
+              },
+              {
+                name: 'Gingerbread',
+                calories: 356,
+              },
+              {
+                name: 'Jelly bean',
+                calories: 375,
+              },
+              {
+                name: 'Lollipop',
+                calories: 392,
+              },
+              {
+                name: 'Honeycomb',
+                calories: 408,
+              },
+              {
+                name: 'Donut',
+                calories: 452,
+              },
+              {
+                name: 'KitKat',
+                calories: 518,
+              },
+            ]
+          }
+        });
+      });
+    </script>
+</head>
+<body>
+<div id="report">
+    <v-app>
+        <v-main>
+            <div class="d-flex justify-space-between">
+                <div class="d-flex align-center">
+                    <h1 class="farm mr-3">BHAMMY FARMS</h1>
+                    <h2 class="report-title">Weekly  Performance</h2>
+                </div>
+                <div class="d-inline-flex align-center">
+                    <span class="pen">PEN C</span>
+                    <v-divider class="mr-2 ml-2" vertical></v-divider>
+                    <div class="pen-duration d-inline-flex flex-column">
+                        <span>WEEK 23</span>
+                        <span>MAY 05 - MAY 12</span>
+                    </div>
+                </div>
+            </div>
+            <v-divider class="mt-1"></v-divider>
+            <div class="flock-size">
+                <span>FLOCK SIZE</span>
+                <span>4420 of 4500</span>
+            </div>
+            <report-summary>ddd</report-summary>
+
+            <!--                <v-simple-table dense>
+                                <template v-slot:default>
+                                    <thead>
+                                    <tr>
+                                        <th class="text-left">
+                                            Date
+                                        </th>
+                                        <th class="text-left">
+                                            Eggs (crate)
+                                        </th>
+                                        <th class="text-left">
+                                            Production (%)
+                                        </th>
+                                        <th class="text-left">
+                                            Feed (25kg Bag)
+                                        </th>
+                                        <th class="text-left">
+                                            Mortality
+                                        </th>
+                                        <th class="text-left">
+                                            Water (Liter)
+                                        </th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <tr
+                                            v-for="item in desserts"
+                                            :key="item.name"
+                                    >
+                                        <td>{{ item.name }}</td>
+                                        <td>{{ item.calories }}</td>
+                                    </tr>
+                                    </tbody>
+                                </template>
+                            </v-simple-table>-->
+        </v-main>
+    </v-app>
+</div>
+<div id="container"></div>
+</body>
+
+<script id="js">
+  Highcharts.chart('container', {
+
+    title: {
+      text: 'Highcharts 3d line chart'
+    },
+
+    chart: {
+      margin: 75,
+      options3d: {
+        enabled: true,
+        alpha: 15,
+        beta: 15,
+        depth: 30
+      }
+    },
+    plotOptions: {
+      column: {
+        depth: 25
+      }
+    },
+    series: [{
+      data: [29.9, 71.5, 106.4, 129.2, 144.0, 176.0, 135.6, 148.5, 216.4, 194.1, 95.6, 54.4]
+    }]
+  });
+</script>
+</html>

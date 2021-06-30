@@ -363,8 +363,10 @@ export default {
     }
   },
   created() {
-    this.getProduction();
     this.getBatches();
+  },
+  activated() {
+    this.getProduction();
   }
 };
 </script>

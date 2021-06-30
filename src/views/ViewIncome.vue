@@ -4,7 +4,7 @@
       <v-btn text color="primary" class="spacer--right" to="/income"><v-icon>mdi-chevron-left</v-icon> Back</v-btn>
       <v-spacer></v-spacer>
       <v-btn color="primary" tile rounded disabled>
-        Edit Income
+        Delete Income
       </v-btn>
     </v-toolbar>
     <v-divider></v-divider>

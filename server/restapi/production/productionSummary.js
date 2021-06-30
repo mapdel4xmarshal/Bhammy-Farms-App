@@ -134,10 +134,12 @@ class ProductionSummary {
     return this._production.profit;
   }
 
-  set profit(items) {
+  set profit(items) {   console.log('items', this.medications)
     this._production.profit = Number.parseInt(items.reduce((total, item) => {
       if (item.category.toLowerCase() === 'feed') return total - ((item.quantity / item.packagingSize) * item.price);
       if (item.category.toLowerCase() === 'egg') return total + ((item.quantity / item.packagingSize) * item.price);
+      //if (item.category.toLowerCase() === 'egg') return total + ((item.quantity / item.packagingSize) * item.price);
+      //if (item.category.toLowerCase() === 'egg') return total + ((item.quantity / item.packagingSize) * item.price);
       return 0;
     }, 0));
   }

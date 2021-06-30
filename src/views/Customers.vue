@@ -113,7 +113,7 @@ export default {
       this.$router.push({ name: ROUTES.CUSTOMER_DETAIL, params: { id: customer.id } });
     }
   },
-  created() {
+  activated() {
     this.getCustomers();
   }
 };

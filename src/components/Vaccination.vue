@@ -3,6 +3,7 @@
       <v-row>
         <v-col cols="12">
           <v-autocomplete
+            @focus="getVaccines"
             :items="vaccines"
             auto-select-first
             clearable

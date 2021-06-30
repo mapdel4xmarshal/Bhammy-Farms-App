@@ -58,4 +58,17 @@ router.get('/:invoiceId', async (req, res) => {
   }
 });
 
+router.delete('/:invoiceId', async (req, res) => {
+  try {
+    const invoice = await controllers.deleteInvoiceById(req.params.invoiceId, req.user);
+    res.json(invoice);
+  } catch (e) {
+    console.log(e);
+    res.status(500).json({
+      error: 'Unable to process request. Please try again later!',
+      status: 500
+    });
+  }
+});
+
 module.exports = router;

@@ -151,9 +151,9 @@ class Controller {
     const clause = where.length > 0 ? `where ${where.join(' AND ')}` : '';
 
     return sequelize.query(`
-      SELECT items.item_name AS itemName, SUM(invoice_items.quantity) AS quantity, items.image AS thumbnail, 
+      SELECT items.item_name AS itemName, SUM(invoice_items.quantity) AS quantity, items.image AS thumbnail,
       SUM(((invoice_items.quantity / items.packaging_size) * invoice_items.item_price) - invoice_items.discount) AS itemAmount,
-      invoice_items.item_id AS itemId, items.unit, items.packaging_size AS packagingSize, 
+      invoice_items.item_id AS itemId, items.unit, items.packaging_size AS packagingSize,
       items.packaging_metric AS packagingMetric FROM invoices
       JOIN invoice_items ON invoices.invoice_id = invoice_items.invoice_id
       JOIN items ON invoice_items.item_id = items.item_id
@@ -164,7 +164,43 @@ class Controller {
       });
   }
 
+  async deleteInvoiceById(id, user) {
+    const invoice = await this.getInvoiceById(id);
 
+    if (!invoice) {
+      return {
+        error: `No invoice found with id ${id}`,
+        status: 400
+      };
+    }
+
+    const transaction = await sequelize.transaction();
+
+    // Reverse invoice items
+    for (const item of invoice.items) {
+      await Item.increment('quantity', {
+        by: Number(item.quantity),
+        where: { item_id: item.id },
+        transaction,
+        user,
+        resourceId: 'item_id'
+      });
+    }
+
+    // Delete invoice
+    await InvoiceModel.destroy({
+      where: {
+        invoice_id: id
+      }
+    });
+
+    await transaction.commit();
+
+    return {
+      status: 200,
+      message: `invoice ${id} deleted successfully`
+    }
+  }
 }
 
 module.exports = new Controller();

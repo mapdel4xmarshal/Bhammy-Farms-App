@@ -68,10 +68,12 @@ class Salary {
 
   get nextFullMonthSalary() {
     let unpaidSalaries = this.unpaidSalaries;
+
+    if (unpaidSalaries.length === 0) return { amount: 0, period: null };
+
     if (unpaidSalaries[this.unpaidSalaries.length - 1].days > new Date().getDate()) {
       unpaidSalaries = this.unpaidSalaries.slice(0, this.unpaidSalaries.length - 1);
     }
-    if (unpaidSalaries.length === 0) return { amount: 0, period: null };
 
     const periodLen = unpaidSalaries.length;
     const lastUnpaid = {...unpaidSalaries[periodLen - 1]};
@@ -93,7 +95,7 @@ class Salary {
     let lastPaidDate;
     if (lastSalary) {
       const dateArray = lastSalary.periodEnd.split('-');
-      lastPaidDate = new Date(`${dateArray[0]}-${dateArray[1]}-${+dateArray[2] + 1}`);
+      lastPaidDate = new Date(dateArray[0], dateArray[1]);
     } else {
       const date = new Date();
       lastPaidDate = `${date.getUTCFullYear()}-${(date.getUTCMonth() + 1).toString().padStart(2,'0')}-01`;

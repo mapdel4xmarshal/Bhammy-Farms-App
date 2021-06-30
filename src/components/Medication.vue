@@ -3,6 +3,7 @@
       <v-row>
         <v-col cols="12">
           <v-autocomplete
+            @focus="getMedicaments"
             :items="medicaments"
             auto-select-first
             clearable
@@ -54,6 +55,7 @@
             label="Total dosage*"
             type="number"
             required
+            :suffix="suffix"
             :rules="totalDosageRules"
             v-model="value.totalDosage"
           ></v-text-field>
@@ -134,6 +136,11 @@ export default {
     };
   },
   props: ['value'],
+  computed: {
+    suffix() {
+      return this.value.medicament?.unit || '';
+    }
+  },
   methods: {
     update() {
       this.$emit('input', this.value);

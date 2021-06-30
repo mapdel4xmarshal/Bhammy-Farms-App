@@ -576,7 +576,8 @@ class Controller {
     let where = {};
     let bankDetailWhere = {};
     if (transferInfo.data.reference) {
-      where = { employee_id: transferInfo.data.reference };
+      const reference = transferInfo.data.reference.split('_')[0];
+      where = { employee_id: reference };
     } else {
       bankDetailWhere = { intermediary_id: transferInfo.data.recipient.recipient_code };
     }

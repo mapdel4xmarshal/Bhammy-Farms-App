@@ -19,7 +19,7 @@
       small
       color="primary"
       class="ml-2"
-      @click="deleteItem(id, item)">
+      @click.stop.prevent="deleteItem(id, item)">
       <v-icon small>mdi-delete</v-icon>
     </v-btn>
   </v-row>

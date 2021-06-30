@@ -227,7 +227,7 @@ export default {
           sortable: true,
           value: 'type.name',
         },
-        { text: 'Energy Level', value: 'energyLevel' },
+        { text: 'Energy Lvl', value: 'energyLevel' },
         {
           text: 'Maize',
           sortable: true,
@@ -256,8 +256,8 @@ export default {
         { text: 'Quantity (Bag)', value: 'quantity.bag' },
         { text: 'Cost / Kg', value: 'summary.costPerUnit' },
         { text: 'Cost / Bag', value: 'costPerBag' },
-        { text: 'Total Amount', value: 'summary.totalAmount', align: 'end' },
-        { text: '', value: 'actions' },
+        { text: 'Total Amt', value: 'summary.totalAmount' },
+        { text: '', value: 'actions', align: 'end' },
       ],
       itemSummary: []
     };

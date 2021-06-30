@@ -171,11 +171,11 @@
     >
       <v-card>
         <v-card-title class="headline">
-          Deleting a feed production record?
+          Deleting a invoice?
         </v-card-title>
 
         <v-card-text>
-          The selected feed production record will be permanently removed from the system.
+          The selected invoice will be permanently removed from the system.
         </v-card-text>
 
         <v-card-actions>
@@ -205,6 +205,7 @@
 import pluralize from 'pluralize';
 import axios from '../plugins/axios';
 import ROUTES from '../router/routeNames';
+import TableAction from '../components/TableAction.vue';
 
 export default {
   name: 'Income',
@@ -246,10 +247,12 @@ export default {
         { text: 'Farm', value: 'farmLocation' },
         { text: 'Customer', value: 'customerName' },
         { text: 'Amount', value: 'amount' },
-        { text: 'Payment Status', value: 'status', align: 'end' },
+        { text: 'Payment Status', value: 'status' },
+        { text: '', value: 'actions' }
       ]
     };
   },
+  components: { TableAction },
   computed: {
     dateRangeText() {
       return this.date && this.date.length > 0 ? this.date.join(' ~ ') : null;
@@ -317,6 +320,38 @@ export default {
       this.$refs.menu.save(this.date);
       this.getInvoiceSummary();
       this.getInvoices();
+    },
+    deleteItem() {
+      axios.delete(`/invoices/${this.selectedId}`)
+        .then(({ data }) => {
+          if (data.error) {
+            this.snackbar = true;
+            this.message = data.error;
+          } else {
+            this.successAlert();
+            this.message = 'Invoice deleted successfully.';
+            this.getInvoices();
+          }
+        })
+        .catch(({ response: { data } }) => {
+          this.errorAlert();
+          this.message = data;
+        })
+        .finally(() => {
+          this.dialog = false;
+        });
+    },
+    successAlert() {
+      this.snackbar = true;
+      this.snackbarColor = 'blue';
+    },
+    errorAlert() {
+      this.snackbar = true;
+      this.snackbarColor = 'red';
+    },
+    confirmDelete(record, { id }) {
+      this.selectedId = id;
+      this.dialog = true;
     }
   },
   filters: {
@@ -327,7 +362,7 @@ export default {
       return value.toString().padStart(4, '0');
     }
   },
-  created() {
+  activated() {
     this.getInvoices();
     this.getInvoiceSummary();
   }

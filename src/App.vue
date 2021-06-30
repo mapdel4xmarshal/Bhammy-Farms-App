@@ -96,11 +96,12 @@
       <v-main>
         <v-container fluid class="overflow-y-auto main__content pa-5">
           <transition name="slide-fade" appear mode="out-in">
-            <router-view/>
-        </transition>
-      </v-container>
-    </v-main>
-
+            <keep-alive include="Income,Customers,Production">
+              <router-view/>
+            </keep-alive>
+          </transition>
+        </v-container>
+      </v-main>
   </v-app>
 </template>
 
