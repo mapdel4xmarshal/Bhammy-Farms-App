@@ -16,9 +16,9 @@ class ProductionSummary {
     this._production.initialPopulation = properties.initialFlockCount;
     this._production.climateEffect = this.climateEffect;
     this._production.batchAge = properties.batchAge;
+    this._production.cumulativeMortality = properties.cumulativeMortality;
 
     properties.items = Array.from(properties.items.values());
-    properties.mortality = Array.from(properties.mortality.values());
     properties.vaccinations = Array.from(properties.vaccinations.values());
     properties.medications = Array.from(properties.medications.values());
 
@@ -81,8 +81,7 @@ class ProductionSummary {
   }
 
   set mortality(mortality) {
-    this._production.mortality = mortality
-      .reduce((totalMortality, mortality) => totalMortality + Number.parseInt(mortality.count), 0) || 0;
+    this._production.mortality = Number.parseInt(mortality) || 0;
   }
 
   get mortalityRate() {
@@ -134,12 +133,10 @@ class ProductionSummary {
     return this._production.profit;
   }
 
-  set profit(items) {   console.log('items', this.medications)
+  set profit(items) {
     this._production.profit = Number.parseInt(items.reduce((total, item) => {
       if (item.category.toLowerCase() === 'feed') return total - ((item.quantity / item.packagingSize) * item.price);
       if (item.category.toLowerCase() === 'egg') return total + ((item.quantity / item.packagingSize) * item.price);
-      //if (item.category.toLowerCase() === 'egg') return total + ((item.quantity / item.packagingSize) * item.price);
-      //if (item.category.toLowerCase() === 'egg') return total + ((item.quantity / item.packagingSize) * item.price);
       return 0;
     }, 0));
   }

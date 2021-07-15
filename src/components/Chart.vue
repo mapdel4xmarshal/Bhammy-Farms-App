@@ -26,8 +26,15 @@ export default {
         xAxis: {
           type: 'datetime'
         },
-        yAxis: {
-          title: false
+        yAxis: [{ title: false }, {
+          min: 0,
+          max: 1,
+          tickPositions: [],
+          title: ''
+        }],
+        tooltip: {
+          shared: true,
+          headerFormat: '<b>{point.key}</b><br/>'
         },
         series: [{
           name: 'Amount',
@@ -46,6 +53,9 @@ export default {
     yAxisLabelFormatter: {
       type: Function
     },
+    xAxisLabelFormatter: {
+      type: Function
+    },
     series: {
       type: Array
     },
@@ -59,6 +69,7 @@ export default {
       const options = { ...this.chartOptions };
       options.legend.enabled = this.legendEnabled;
       if (this.yAxisLabelFormatter) options.yAxis.labels = { formatter: this.yAxisLabelFormatter() };
+      if (this.xAxisLabelFormatter) options.xAxis.labels = { formatter: this.xAxisLabelFormatter() };
       options.series = this.series;
       return options;
     }

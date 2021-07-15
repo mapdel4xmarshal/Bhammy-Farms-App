@@ -106,23 +106,25 @@
           <v-tab-item>
             <v-card outlined tile>
             <chart
-              :series="[productionData, temperatureData, humidityData, expectedProductionData]"
+              :series="[weekData, productionData, temperatureData, expectedProductionData]"
               legend-enabled
               name="production"></chart>
             </v-card>
           </v-tab-item>
           <v-tab-item>
-            <chart :series="[eggsData]" name="Eggs" unit=""
+            <chart :series="[weekData, eggsData]"
+                   name="Eggs"
+                   unit=""
                    :y-axis-label-formatter="chartFormatter" y-axis-unit="crates"></chart>
           </v-tab-item>
           <v-tab-item>
-            <chart :series="[feedsData]" name="Feeds" y-axis-unit="kg"></chart>
+            <chart :series="[weekData, feedsData]" name="Feeds" y-axis-unit="kg"></chart>
           </v-tab-item>
           <v-tab-item>
-            <chart :series="[populationData]" name="Mortality"></chart>
+            <chart :series="[weekData, populationData]" name="Mortality"></chart>
           </v-tab-item>
           <v-tab-item>
-            <chart :series="[waterData]" name="Water" y-axis-unit="l"></chart>
+            <chart :series="[weekData, waterData]" name="Water" y-axis-unit="l"></chart>
           </v-tab-item>
         </v-tabs>
       </v-col>
@@ -180,6 +182,9 @@
                 <template v-slot:item.eggs="{ item }">
                   {{ (item.eggs / item.eggPackagingSize).toFixed(2) }}
                 </template>
+                <template v-slot:item.batchAge="{ item: { batchAge } }">
+                  {{ ~~(batchAge / 7) }}
+                </template>
                 <template v-slot:item.amount="{ item }">
                   ₦{{ item.amount | formatNumber }}
                 </template>
@@ -215,7 +220,7 @@
               class="elevation-1 table-cursor"
             >
               <template v-slot:[`item.${header.value}`]="{ item }" v-for="header in eggInsightHeaders">
-                <span v-if="header.value !== 'date'" :key="header.text">
+                <span v-if="header.value !== 'date' && header.value !== 'week'" :key="header.text">
                   <span v-if="item[header.value]">
                     {{ item[header.value] | formatNumber }} creates
                   </span>
@@ -233,7 +238,7 @@
               class="elevation-1 table-cursor"
             >
               <template v-slot:[`item.${header.value}`]="{ item }" v-for="header in feedInsightHeaders">
-                <span v-if="header.value !== 'date'" :key="header.text">
+                <span v-if="header.value !== 'date' && header.value !== 'week'" :key="header.text">
                   <span v-if="item[header.value]">
                     {{ item[header.value] | formatNumber }} bags
                   </span>
@@ -283,9 +288,9 @@ export default {
       feedsData: this.baseData('Feed', 'bag'),
       waterData: this.baseData('Water', 'liter'),
       populationData: this.baseData('Population', 'bird'),
-      humidityData: this.baseData('Humidity', '%', '#37878f'),
-      temperatureData: this.baseData('Temperature', '°C', '#616161'),
+      temperatureData: this.baseData('Temperature', '°C', 'rgba(97,97,97,0.49)'),
       expectedProductionData: this.baseData('Projected Production', '%', '#8f8f8f'),
+      weekData: this.baseData('Age', 'Week', 'transparent', false, { yAxis: 1 }),
       headers: [
         {
           text: 'Date',
@@ -293,8 +298,10 @@ export default {
           sortable: true,
           value: 'date',
         },
-        { text: 'Eggs (crates)', value: 'eggs' },
+        { text: 'Week', value: 'batchAge' },
+        { text: 'Flock', value: 'flockCount' },
         { text: 'Production %', value: 'productionPercent' },
+        { text: 'Eggs (crates)', value: 'eggs' },
         { text: 'Expectancy', value: 'expectancy' },
         { text: 'Feed (kg)', value: 'feeds' },
         { text: 'Feed/animal (g)', value: 'feedPerAnimal' },
@@ -307,18 +314,31 @@ export default {
       treatments: {},
       eggInsights: [],
       feedInsights: [],
-      feedInsightHeaders: [{
-        text: 'Date',
-        align: 'start',
-        sortable: true,
-        value: 'date',
-      }],
-      eggInsightHeaders: [{
-        text: 'Date',
-        align: 'start',
-        sortable: true,
-        value: 'date',
-      }]
+      feedInsightHeaders: [
+        {
+          text: 'Date',
+          align: 'start',
+          sortable: true,
+          value: 'date',
+        },
+        {
+          text: 'Week',
+          sortable: true,
+          value: 'week',
+        }
+      ],
+      eggInsightHeaders: [
+        {
+          text: 'Date',
+          align: 'start',
+          sortable: true,
+          value: 'date',
+        },
+        {
+          text: 'Week',
+          sortable: true,
+          value: 'week',
+        }]
     };
   },
   components: { Batch, Chart, MetricCard },
@@ -335,13 +355,15 @@ export default {
 
       if (state) this.updateSections();
     },
-    baseData(name, unit, color = '#7f2775') {
+    baseData(name, unit, color = '#7f2775', showInLegend = true, options = {}) {
       return {
         name: `${name} [${unit}]`,
         type: 'areaspline',
         color,
         fillOpacity: 0.1,
-        data: []
+        data: [],
+        showInLegend,
+        ...options
       };
     },
     getTreatments() {
@@ -366,14 +388,20 @@ export default {
       axios.get(`/batches/${this.$route.params.id}/productions`)
         .then(({ data }) => {
           const uniqueHeaders = {};
+          let week;
           data.forEach((production, index) => {
             let info = {};
+            // eslint-disable-next-line no-bitwise
+            week = ~~(production.batchAge / 7);
 
             this.eggInsights.push({
-              date: production.date
+              date: production.date,
+              week
             });
+
             this.feedInsights.push({
-              date: production.date
+              date: production.date,
+              week
             });
 
             production.items.forEach((item) => {
@@ -382,6 +410,7 @@ export default {
               if (!uniqueHeaders[category]) {
                 uniqueHeaders[category] = {};
               }
+
               uniqueHeaders[category][info.name] = {
                 text: info.name,
                 value: info.name
@@ -437,7 +466,7 @@ export default {
       productionCopy.forEach((production) => {
         this.totalFeeds += production.feeds;
         this.totalEggs += Number.parseInt(production.eggs / production.eggPackagingSize, 10);
-        this.totalMortality += production.mortality;
+        this.totalMortality = production.cumulativeMortality;
         this.initialPopulation = production.initialPopulation;
         this.curateChartData(production);
       });
@@ -449,9 +478,10 @@ export default {
       this.feedsData.data.push({ x: date, y: +(production.feeds / +production.feedPackagingSize).toFixed(2) });
       this.populationData.data.push({ x: date, y: production.mortality });
       this.waterData.data.push({ x: date, y: production.water });
-      this.humidityData.data.push({ x: date, y: production.humidity });
       this.temperatureData.data.push({ x: date, y: production.temperature });
       this.expectedProductionData.data.push({ x: date, y: production.expectancy });
+      // eslint-disable-next-line no-bitwise
+      this.weekData.data.push({ x: date, y: ~~(production.batchAge / 7) });
     },
     updateSections() {
       this.getProduction();

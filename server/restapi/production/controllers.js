@@ -13,17 +13,30 @@ class Controller {
     batchId, before, after, date, isActive, productionId
   }) {
     const where = [];
-    if (isActive !== null && isActive !== undefined) where.push(`batches.is_active = '${isActive}'`);
-    if (batchId) where.push(`batches.batch_id = '${batchId}'`);
-    if (before) where.push(`productions.date <= '${before}'`);
+    const subQueryWhere = [];
+    if (isActive !== null && isActive !== undefined) {
+      where.push(`batches.is_active = '${isActive}'`);
+      subQueryWhere.push(`batches.is_active = '${isActive}'`);
+    }
+    if (batchId) {
+      where.push(`batches.batch_id = '${batchId}'`);
+      subQueryWhere.push(`batches.batch_id = '${batchId}'`);
+    }
+    if (before) {
+      where.push(`productions.date <= '${before}'`);
+      subQueryWhere.push(`productions.date <= '${before}'`);
+    }
     if (after) where.push(`productions.date >= '${after}'`);
-    if (date) where.push(`productions.date = '${date}'`);
+    if (date) {
+      where.push(`productions.date = '${date}'`);
+      subQueryWhere.push(`productions.date <= '${date}'`);
+    }
     if (productionId) where.push(`productions.production_id = '${productionId}'`);
 
     return sequelize.query(`
-    SELECT productions.production_id AS id, productions.water, mortality.id AS mortalityId, mortality.count AS mortalityCount, productions.date,
+    SELECT productions.production_id AS id, productions.water, productions.date,
       production_items.quantity AS itemQuantity, production_items.price AS itemPrice, batches.initial_stock_count AS initialFlockCount,
-      batches.name AS batch, batches.initial_stock_count AS flockCount, batches.is_active AS isActive, breeds.type AS batchType,
+      batches.name AS batch, mrt.mortality, mrt.flockCount, mrt.cumulativeMortality, batches.is_active AS isActive, breeds.type AS batchType,
       items.item_id AS itemId, items.item_name AS itemName, items.category AS itemCategory, items.packaging_size AS packagingSize, items.unit AS itemUnit,
       production_items.id AS productionItemsId, productions.humidity AS humidity, productions.temperature AS temperature,
       vaccinations.administered_by AS vaccineAdministrator, vaccinations.notes AS vaccinationNotes,
@@ -41,24 +54,32 @@ class Controller {
     FROM productions
     JOIN batches ON productions.batch_id = batches.batch_id
     JOIN breeds ON batches.breed_id = breeds.breed_id
-    LEFT JOIN mortality ON productions.production_id = mortality.production_id
+    LEFT JOIN (
+      SELECT mort.batch_id, mort.initial_stock_count, mort.production_id,
+        SUM(mort.count) OVER(PARTITION BY mort.production_id ORDER BY mort.date) AS mortality,
+        SUM(mort.count) OVER (PARTITION BY mort.batch_id ORDER BY mort.date) AS cumulativeMortality,
+        mort.initial_stock_count - SUM(mort.count) OVER (PARTITION BY mort.batch_id ORDER BY mort.date) AS flockCount
+      FROM (
+        SELECT productions.date, productions.batch_id, batches.initial_stock_count,
+            COALESCE(mortality.count, 0) AS count, mortality.id AS mortalityId, productions.production_id
+        FROM productions
+        JOIN batches on productions.batch_id = batches.batch_id
+        LEFT JOIN mortality ON mortality.production_id = productions.production_id
+        ${subQueryWhere.length > 0 ? ` WHERE ${subQueryWhere.join(' AND ')}` : ''}
+      ) AS mort
+    ) as mrt ON mrt.production_id = productions.production_id
     LEFT JOIN production_items ON productions.production_id = production_items.production_id
     LEFT JOIN items ON production_items.item_id = items.item_id
     LEFT JOIN vaccinations ON productions.production_id = vaccinations.production_id
     LEFT JOIN medication ON productions.production_id = medication.production_id
     ${where.length > 0 ? ` WHERE ${where.join(' AND ')}` : ''}
-    ORDER BY productions.date ASC;
+    ORDER BY productions.date DESC;
 `)
       .then(async ([productions]) => {
         productions = await this.processProduction(productions);
-        const totalMortality = {};
         return productions.map((production) => {
-          const productionSummary = new ProductionSummary(production);
-          if (!totalMortality[production.batch]) totalMortality[production.batch] = 0;
-          totalMortality[production.batch] += productionSummary.mortality;
-          productionSummary.flockCount -= totalMortality[production.batch];
-          return productionSummary;
-        }).reverse();
+          return new ProductionSummary(production);
+        });
       });
   }
 
@@ -295,7 +316,8 @@ class Controller {
           flockCount: production.flockCount,
           initialFlockCount: production.initialFlockCount,
           water: production.water,
-          mortality: new Map(),
+          mortality: production.mortality,
+          cumulativeMortality: production.cumulativeMortality,
           items: new Map(),
           batchAge: production.batchAge,
           temperature: production.temperature,
@@ -307,7 +329,7 @@ class Controller {
 
       const productionGroup = productionMap.get(production.id);
 
-      productionGroup.mortality.set(production.mortalityId, { count: production.mortalityCount });
+      // productionGroup.mortality.set(production.mortalityId, { count: production.mortalityCount });
 
       if (production.vaccinationId) {
         productionGroup.vaccinations.set(production.vaccinationId, {

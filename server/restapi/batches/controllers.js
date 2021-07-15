@@ -140,16 +140,16 @@ class Controller {
 
   async getBatchTreatments(batchId) {
     return sequelize.query(`
-    SELECT productions.production_id, productions.date, 
-    vaccinations.administered_by AS vaccineAdministrator, vaccinations.notes AS vaccinationNotes, 
+    SELECT productions.production_id, productions.date,
+    vaccinations.administered_by AS vaccineAdministrator, vaccinations.notes AS vaccinationNotes,
     vaccinations.vaccination_id AS vaccinationId, vaccinations.vaccine_batch_no AS vaccineBatchNo,
-    vaccinations.method AS vaccinationMethod, vaccinations.vaccine_id AS vaccineId, 
-    vaccinations.dosage AS vaccineDosage, vaccinations.dosage_unit AS vaccineDosageUnit, 
+    vaccinations.method AS vaccinationMethod, vaccinations.vaccine_id AS vaccineId,
+    vaccinations.dosage AS vaccineDosage, vaccinations.dosage_unit AS vaccineDosageUnit,
     vaccinations.total_dosage AS vaccineTotalDosage, vaccinations.no_of_birds AS vaccinatedBirds,
-    medication.administered_by AS medicamentAdministrator, medication.notes AS medicationNotes, 
+    medication.administered_by AS medicamentAdministrator, medication.notes AS medicationNotes,
     medication.medication_id AS medicationId, medication.medicament_batch_no AS medicamentBatchNo,
-    medication.method AS medicationMethod, medication.medicament_id AS medicamentId, 
-    medication.dosage AS medicamentDosage, medication.dosage_unit AS medicamentDosageUnit, 
+    medication.method AS medicationMethod, medication.medicament_id AS medicamentId,
+    medication.dosage AS medicamentDosage, medication.dosage_unit AS medicamentDosageUnit,
     medication.total_dosage AS medicamentTotalDosage, medication.no_of_birds AS medicatedBirds,
     vaccine.item_name AS vaccineName, vaccine.brand AS vaccineBrand, medicament.item_name AS medicamentName,
     medicament.brand AS medicamentBrand, vaccine.image AS vaccineThumbnail, medicament.image AS medicamentThumbnail
@@ -187,9 +187,9 @@ class Controller {
     });
 
     return sequelize.query(`
-      SELECT ROUND(SUM((production_items.quantity / items.packaging_size) * production_items.price)) AS amount, items.category 
-      FROM productions 
-      JOIN production_items ON productions.production_id = production_items.production_id 
+      SELECT ROUND(SUM((production_items.quantity / items.packaging_size) * production_items.price)) AS amount, items.category
+      FROM productions
+      JOIN production_items ON productions.production_id = production_items.production_id
       JOIN items ON production_items.item_id = items.item_id
       WHERE productions.batch_id = '${batchId}'
       GROUP BY items.category;`)
@@ -215,12 +215,16 @@ class Controller {
   }
 
   async getProduction(batchId) {
+    const batch = await Batch.findByPk(batchId);
+
     return Production.findAll({
       where: {
         batch_id: batchId
       },
       attributes: [
-        ['production_id', 'id'], 'date', 'humidity', 'temperature', 'weatherCondition', 'water', 'note'
+        ['production_id', 'id'], 'date', 'humidity', 'temperature', 'weatherCondition', 'water', 'note',
+        [literal(`COALESCE(DATEDIFF(date, '${batch.move_in_date.toJSON().slice(0, 10)}'), 0) + ${batch.move_in_age}`),
+          'batchAge']
       ],
       order: [
         ['date', 'DESC']
