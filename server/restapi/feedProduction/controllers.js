@@ -3,8 +3,13 @@ const {
 } = require('../../models');
 const ProductionRecord = require('./productionRecord');
 const ProductionSummary = require('./productionSummary');
+const Bot = require('./Bot');
 
 class Controller {
+  constructor() {
+    new Bot(this);
+  }
+
   async getProductions({ before, after, date, id }) {
     const where = {};
     if (id) where.id = id;

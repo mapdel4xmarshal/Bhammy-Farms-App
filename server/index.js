@@ -79,9 +79,6 @@ passport.deserializeUser((user, done) => {
 });
 
 app.use('/api/v1', auth);
-/*
-// Serve all the files in '/dist' directory
-app.use(express.static(path.resolve(__dirname, '../dist'))); */
 
 // uploads
 app.use('/uploads', express.static(path.resolve(__dirname, 'uploads')));
