@@ -52,13 +52,20 @@ class Bot {
 
   async filterPayload(msg) {
     const chat = await msg.getChat();
-    return chat.isGroup && (chat.name === 'Bhammy Farms - Production' || (chat.name.includes('Production')
-      && chat.name.includes('Bhammy')));
+    return chat.isGroup &&
+      (chat.name === 'Bhammy Farms - Production' ||
+        (chat.name.includes('Production') && chat.name.includes('Bhammy'))
+        || chat.name === 'Bhammy Farms - Brooding'
+        || (chat.name.includes('Brooding') && chat.name.includes('Bhammy')));
   }
 
   async addProductionRecord(payload) {
     try {
       let { body } = payload;
+
+      if (this.isBroodingRecord(body)) {
+        body = this.broodingToProductionRecord();
+      }
 
       body = this.autoCorrect(body.toLowerCase());
 

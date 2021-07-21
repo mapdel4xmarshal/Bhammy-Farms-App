@@ -1,22 +1,25 @@
 const fs = require('fs');
+const path = require('path');
+const qrcode = require('qrcode-terminal');
 const { Client } = require('whatsapp-web.js');
 const Debugger = require('../utilities/debugger');
 
 const debug = new Debugger('WhatsApp');
-const SESSION_FILE_PATH = './session.json';
+const SESSION_FILE_PATH = path.resolve(path.join(__dirname, 'session.json'));
 
 let sessionCfg;
 if (fs.existsSync(SESSION_FILE_PATH)) {
   sessionCfg = require(SESSION_FILE_PATH);
 }
 
-const client = new Client({ puppeteer: { headless: true }, session: sessionCfg });
+const client = new Client({ puppeteer: { headless: true, args: ['--no-sandbox'] }, session: sessionCfg });
 
 client.initialize();
 
 client.on('qr', (qr) => {
   // NOTE: This event will not be fired if a session is specified.
   debug.info('QR RECEIVED', qr);
+  qrcode.generate(qr, {small: true});
 });
 
 client.on('authenticated', (session) => {
