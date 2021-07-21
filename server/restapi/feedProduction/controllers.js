@@ -7,10 +7,12 @@ const Bot = require('./Bot');
 
 class Controller {
   constructor() {
-    new Bot(this);
+    new Bot(this).listen();
   }
 
-  async getProductions({ before, after, date, id }) {
+  async getProductions({
+    before, after, date, id
+  }) {
     const where = {};
     if (id) where.id = id;
     if (before || after) where.date = {};
@@ -76,7 +78,8 @@ class Controller {
         date: production.date,
         type: production.type.id,
         energy_level: production.energyLevel,
-        note: production.comment
+        note: production.comment,
+        stamp: production.stamp || null
       }, {
         transaction,
         user,

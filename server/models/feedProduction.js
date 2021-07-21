@@ -33,6 +33,10 @@ class FeedProduction extends Model {
       note: {
         type: DataTypes.TEXT,
         allowNull: true
+      },
+      stamp: {
+        type: DataTypes.TEXT,
+        allowNull: true
       }
     };
   }

@@ -1,5 +1,6 @@
 const request = require('request');
 const Notification = require('../../notification/notification');
+const Bot = require('./Bot');
 
 const {
   Production, Vaccination, Batch, Sequelize: { Op }, sequelize, Location, House, ProductionItem, Mortality, Medication,
@@ -9,6 +10,10 @@ const {
 const ProductionSummary = require('./productionSummary');
 
 class Controller {
+  constructor() {
+    new Bot(this).listen();
+  }
+
   async getProductions({
     batchId, before, after, date, isActive, productionId
   }) {
@@ -140,6 +145,7 @@ class Controller {
         weather_condition: production.weather_condition,
         water: production.water,
         note: production.note,
+        stamp: production.stamp,
         batch_id: production.batchId
       }, {
         transaction,

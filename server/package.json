@@ -10,7 +10,6 @@
     "express": "^4.17.1",
     "express-session": "^1.17.1",
     "formidable": "^1.2.2",
-    "highcharts-export-server": "^2.1.0",
     "html-pdf": "^3.0.1",
     "html-pdf-node": "^1.0.7",
     "moment": "^2.29.0",

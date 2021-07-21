@@ -37,7 +37,15 @@ class Productions extends Model {
         type: DataTypes.DECIMAL(10, 2),
         allowNull: true
       },
+      weight: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: true
+      },
       note: {
+        type: DataTypes.TEXT,
+        allowNull: true
+      },
+      stamp: {
         type: DataTypes.TEXT,
         allowNull: true
       }
