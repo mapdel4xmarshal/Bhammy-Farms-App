@@ -14,7 +14,7 @@ if (fs.existsSync(SESSION_FILE_PATH)) {
 
 const client = new Client({ puppeteer: { headless: true, args: ['--no-sandbox'] }, session: sessionCfg });
 
-client.initialize();
+if (process.env.NODE_ENV === 'production')  client.initialize();
 
 client.on('qr', (qr) => {
   // NOTE: This event will not be fired if a session is specified.
@@ -119,6 +119,34 @@ client.on('change_state', (state) => {
 
 client.on('disconnected', (reason) => {
   debug.info('Client was logged out', reason);
+});
+
+const cleanup = async () => {
+  debug.info('Cleanup', 'Closing client due to process exit');
+  try {
+    await client.destroy();
+  } catch (e) {
+    debug.error(e);
+  }
+}
+
+// clean up listeners
+process.on('beforeExit', async () => {
+  await cleanup();
+  process.exit();
+});
+process.on('uncaughtException', async () => {
+  await cleanup();
+  process.exit();
+});
+
+['SIGHUP', 'SIGINT', 'SIGQUIT', 'SIGILL',
+  'SIGTRAP', 'SIGABRT',
+  'SIGBUS', 'SIGFPE', 'SIGUSR1', 'SIGSEGV', 'SIGUSR2', 'SIGTERM'].forEach((eventType) => {
+  process.on(eventType, async () => {
+    await cleanup();
+    process.exit();
+  });
 });
 
 module.exports = client;

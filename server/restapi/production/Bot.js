@@ -64,7 +64,7 @@ class Bot {
       let { body } = payload;
 
       if (this.isBroodingRecord(body)) {
-        body = this.broodingToProductionRecord();
+        body = this.broodingToProductionRecord(body);
       }
 
       body = this.autoCorrect(body.toLowerCase());
@@ -97,6 +97,24 @@ class Bot {
     }
   }
 
+  broodingToProductionRecord(msg) {
+     return `${msg.replace('Report on Brooding Record', '')
+       .replace(/([-]){3,}.*?\1/g, '')
+       .replace(/\n\n/g, '')
+       .replace(/Date.     =/g, ' ')
+       .replace(/Feed./g, 'Feed')
+       .replace(/water./g, 'water')
+       .replace(/bags/g, 'vita chick')
+       .replace(/Drug./, 'Medication')}\nbrooding=A`;
+  }
+
+  isBroodingRecord(msg) {
+    const string = msg.toLowerCase();
+    return /(\d{1,2})([\/-])(\d{1,2})\2(\d{2,4})/.test(string)
+      && ['date', 'feed', 'water'].every((term) => string.includes(term))
+      && /brooding|large|feed|drug|mortality/.test(string);
+  }
+
   generateStamp(payload) {
     return `${payload.from.split('@')[0]}::${payload.timestamp}::${payload.body}`;
   }
@@ -123,6 +141,10 @@ class Bot {
         if (!this._excludedKeywords.includes(name) && !isEmpty(quantity)) {
           if (name.includes('pen')) {
             record.batchName = `PEN-${quantity}`.toUpperCase();
+          }
+
+          if (name.includes('brooding')) {
+            record.batchName = `BROODING-${quantity}`.toUpperCase();
           }
 
           // Include water
@@ -278,11 +300,13 @@ class Bot {
     if (activeBatch) {
       return activeBatch.batch_id;
     } else {
-      throw { msg: 'The Pen specified does not exist.' };
+      throw { msg: `The Pen specified, ${batch} does not exist.` };
     }
   }
 
   async processEggs(eggs) {
+    if (eggs.length === 0) eggs.push({ name: 'Pullet Egg', quantity: 0 });
+
     const eggItems = await Item.findAll({
       where: {
         category: 'Egg'
@@ -374,7 +398,9 @@ class Bot {
 
   isValidPayload(string) {
     return /(\d{1,2})([\/-])(\d{1,2})\2(\d{2,4})/.test(string)
-      && ['pen', 'feed', 'water'].every((term) => string.includes(term))
+      && (
+        ['pen', 'feed', 'water'].every((term) => string.includes(term))
+        || ['brooding', 'feed', 'water'].every((term) => string.includes(term)))
       && /mortality|Large|medium|pullet|crack/.test(string);
   }
 

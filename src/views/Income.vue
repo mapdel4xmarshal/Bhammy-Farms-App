@@ -75,7 +75,7 @@
       </v-btn-toggle>
     </v-toolbar>
     <v-row class="mt-0 mb-3" v-if="!mode">
-      <v-col v-for="(summary, index) in incomeSummary" :key="index" class="pa-1">
+      <v-col v-for="(summary, index) in incomeSummary" :key="index" class="pa-3">
         <v-card outlined>
           <v-list dense>
             <v-list-item>

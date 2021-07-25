@@ -108,9 +108,11 @@ class ProductionSummary {
   }
 
   set eggs(eggs) {
-    this._production.eggs = eggs.reduce((totalEggs, egg) => totalEggs + Number.parseInt(egg.quantity), 0);
-    this._production.eggPackagingSize = eggs[0].packagingSize;
-    this._production.eggTypes = eggs.map(({ id, name, quantity }) => ({ id, name, quantity }));
+    if (eggs.length > 0) {
+      this._production.eggs = eggs.reduce((totalEggs, egg) => totalEggs + Number.parseInt(egg.quantity), 0);
+      this._production.eggPackagingSize = eggs[0].packagingSize;
+      this._production.eggTypes = eggs.map(({ id, name, quantity }) => ({ id, name, quantity }));
+    }
   }
 
   get feedPerAnimal() {

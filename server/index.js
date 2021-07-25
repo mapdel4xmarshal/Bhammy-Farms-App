@@ -20,6 +20,7 @@ const activities = require('./restapi/activities/routes');
 const production = require('./restapi/production/routes');
 const feedProduction = require('./restapi/feedProduction/routes');
 const employees = require('./restapi/employees/routes');
+const damagedItems = require('./restapi/damagedItems/routes');
 
 dotenv.config();
 
@@ -94,6 +95,7 @@ app.use('/api/v1/productions', protect(), production);
 app.use('/api/v1/feed-productions', protect(), feedProduction);
 app.use('/api/v1/activity-logs', protect(), activityLogs);
 app.use('/api/v1/houses', protect(), houses);
+app.use('/api/v1/damaged-items', protect(), damagedItems);
 app.use('/api/v1/employees', protect({
   skip: '/webhook/salary'
 }), employees);

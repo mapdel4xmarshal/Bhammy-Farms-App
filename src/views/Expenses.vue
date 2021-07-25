@@ -210,7 +210,8 @@ export default {
         { text: 'Amount', value: 'amount' }
       ],
       expenses: [],
-      expenseTypes: []
+      expenseTypes: [],
+      houses: []
     };
   },
   computed: {

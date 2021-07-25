@@ -71,6 +71,9 @@ export default new Vuex.Store({
     [GETTER_TYPES.FARM_LOCATIONS](state) {
       return state.farmLocations;
     },
+    [GETTER_TYPES.SELECTED_FARM_LOCATION](state) {
+      return state.farmLocations[0];
+    },
     [GETTER_TYPES.HOUSES](state) {
       return state.houses;
     },

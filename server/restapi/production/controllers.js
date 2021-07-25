@@ -335,8 +335,6 @@ class Controller {
 
       const productionGroup = productionMap.get(production.id);
 
-      // productionGroup.mortality.set(production.mortalityId, { count: production.mortalityCount });
-
       if (production.vaccinationId) {
         productionGroup.vaccinations.set(production.vaccinationId, {
           batchNo: production.vaccineBatchNo,

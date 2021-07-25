@@ -6,6 +6,7 @@ const MUTATION_TYPES = {
 };
 
 const GETTER_TYPES = {
+  SELECTED_FARM_LOCATION: 'selectedFarmLocation',
   FARM_LOCATIONS: 'farmLocations',
   HOUSES: 'houses',
   SUPPLIERS: 'suppliers',

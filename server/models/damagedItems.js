@@ -1,4 +1,3 @@
-
 const { Model, DataTypes } = require('sequelize');
 
 class DamagedItems extends Model {
@@ -17,12 +16,24 @@ class DamagedItems extends Model {
         autoIncrement: true,
         primaryKey: true
       },
-      date: {
-        type: DataTypes.DATE,
+      invoice_id: {
+        type: DataTypes.INTEGER,
         allowNull: true
       },
+      date: {
+        type: DataTypes.DATEONLY,
+        allowNull: false
+      },
       quantity: {
-        type: DataTypes.STRING,
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: false
+      },
+      price: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: false
+      },
+      damage_type: {
+        type: DataTypes.ENUM(['crack', 'wastage', 'expired', 'other']),
         allowNull: false
       },
       description: {
@@ -30,6 +41,11 @@ class DamagedItems extends Model {
         allowNull: true
       }
     };
+  }
+
+  static associate({ Location, Item }) {
+    DamagedItems.location = DamagedItems.belongsTo(Location, { foreignKey: 'location_id' });
+    DamagedItems.item = DamagedItems.belongsTo(Item, { foreignKey: 'item_id' });
   }
 }
 

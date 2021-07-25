@@ -126,8 +126,9 @@ export default {
       { title: ROUTES.ACTIVITIES, icon: 'mdi-chart-line-variant', to: ROUTES.ACTIVITIES },
       { title: ROUTES.BATCHES, icon: 'mdi-factory', to: ROUTES.BATCHES },
       { title: ROUTES.CUSTOMERS, icon: 'mdi-account-multiple-outline', to: ROUTES.CUSTOMERS },
-      { title: ROUTES.EMPLOYEES, icon: 'mdi-account-multiple-outline', to: ROUTES.EMPLOYEES },
-      { title: ROUTES.STORE, icon: 'mdi-silo', to: ROUTES.STORE }
+      { title: ROUTES.EMPLOYEES, icon: 'mdi-card-account-details-outline', to: ROUTES.EMPLOYEES },
+      { title: ROUTES.STORE, icon: 'mdi-silo', to: ROUTES.STORE },
+      { title: ROUTES.DAMAGES, icon: 'mdi-delete-empty-outline', to: ROUTES.DAMAGES }
     ],
     mini: true,
   }),

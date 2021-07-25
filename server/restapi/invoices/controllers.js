@@ -5,8 +5,13 @@ const {
 } = require('../../models');
 const Invoice = require('./invoice');
 const InvoiceDetail = require('./invoiceDetail');
+const Bot = require('./Bot');
 
 class Controller {
+  constructor() {
+    new Bot(this).listen();
+  }
+
   async getInvoices({ before, after, paymentStatus, date }) {
     const where = {};
     if (before || after) where.invoice_date = {};
