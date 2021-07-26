@@ -20,7 +20,7 @@ class Items extends Model {
       item_name: {
         type: DataTypes.STRING,
         allowNull: false,
-        unique: true
+        unique: 'item_name'
       },
       category: {
         type: DataTypes.STRING,

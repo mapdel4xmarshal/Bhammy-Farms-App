@@ -1,18 +1,34 @@
 const {
-  Invoice: InvoiceModel, Customer, Item, InvoiceItem, Party, sequelize, Sequelize: {
-    Op, col, fn, literal
-  }, Location
+  Invoice: InvoiceModel,
+  Customer,
+  Item,
+  InvoiceItem,
+  Party,
+  sequelize,
+  Sequelize: {
+    Op,
+    col,
+    fn,
+    literal
+  },
+  Location
 } = require('../../models');
 const Invoice = require('./invoice');
 const InvoiceDetail = require('./invoiceDetail');
 const Bot = require('./Bot');
+const damagedItemsControllers = require('../damagedItems/controllers');
 
 class Controller {
   constructor() {
     new Bot(this).listen();
   }
 
-  async getInvoices({ before, after, paymentStatus, date }) {
+  async getInvoices({
+    before,
+    after,
+    paymentStatus,
+    date
+  }) {
     const where = {};
     if (before || after) where.invoice_date = {};
     if (date) where.invoice_date = date;
@@ -45,12 +61,38 @@ class Controller {
       .then((invoices) => invoices);
   }
 
+  async addInvoices(user, invoices, damagedItems) {
+    const transaction = await sequelize.transaction();
 
-  async addInvoice(user, invoice) {
+    for (const invoice of invoices) {
+      const response = await this.addInvoice(user, invoice, transaction);
+      if (response.error) {
+        transaction.rollback();
+        throw { msg: response.error };
+      }
+    }
+
+    if (damagedItems) {
+      for (const damagedItem of damagedItems) {
+        const response = await damagedItemsControllers.addDamagedItem(user, damagedItem, transaction);
+        if (response.error) {
+          transaction.rollback();
+          throw { msg: response.error };
+        }
+      }
+    }
+
+    return transaction.commit();
+  }
+
+  async addInvoice(user, invoice, trnx) {
+    const transaction = trnx || await sequelize.transaction();
+
     const validCustomer = await Customer.count({
       where: {
         customer_id: invoice.customerId
-      }
+      },
+      transaction
     });
 
     if (validCustomer === 0) {
@@ -70,8 +112,6 @@ class Controller {
 
     const normalizedInvoice = new Invoice(invoice);
 
-    const transaction = await sequelize.transaction();
-
     return InvoiceModel.create({
       ...normalizedInvoice.toDBFormat()
     }, {
@@ -81,6 +121,7 @@ class Controller {
     })
       .then(async (newInvoice) => {
         const invoiceItems = normalizedInvoice.formatItems(newInvoice.invoice_id);
+
         await InvoiceItem.bulkCreate(invoiceItems,
           {
             user,
@@ -97,7 +138,8 @@ class Controller {
             resourceId: 'item_id'
           });
         }
-        transaction.commit();
+
+        if (!trnx) transaction.commit();
         return newInvoice.invoice_id;
       })
       .catch((error) => {
@@ -110,7 +152,7 @@ class Controller {
       });
   }
 
-  async getInvoiceById(invoiceId) {
+  async getInvoiceById(invoiceId, transaction) {
     return InvoiceModel.findByPk(invoiceId, {
       attributes: [['invoice_id', 'id'],
         [fn('date_format', col('invoice_date'), '%Y-%m-%d'), 'invoiceDate'],
@@ -132,11 +174,13 @@ class Controller {
         }, {
           model: Location,
           attributes: []
-        }]
+        }],
+      ...(transaction && { transaction })
     })
-      .then((invoice) => {
-        return invoice? new InvoiceDetail(invoice.toJSON()) : { status: 404, message: 'Invoice not found.' };
-      })
+      .then((invoice) => (invoice ? new InvoiceDetail(invoice.toJSON()) : {
+        status: 404,
+        message: 'Invoice not found.'
+      }))
       .catch((error) => {
         console.log(error); // todo: add proper logger
         return {
@@ -146,8 +190,13 @@ class Controller {
       });
   }
 
-  async getInvoicesSummary({ before, after, date, paymentStatus }) {
-    let where = [];
+  async getInvoicesSummary({
+    before,
+    after,
+    date,
+    paymentStatus
+  }) {
+    const where = [];
     if (date) where.push(`invoices.invoice_date = '${date}'`);
     if (before) where.push(`invoices.invoice_date <= '${before}'`);
     if (after) where.push(`invoices.invoice_date >= '${after}'`);
@@ -164,12 +213,29 @@ class Controller {
       JOIN items ON invoice_items.item_id = items.item_id
       ${clause} group by invoice_items.item_id;
     `)
-      .then(([summary,]) => {
-        return summary;
-      });
+      .then(([summary,]) => summary);
   }
 
-  async deleteInvoiceById(id, user) {
+  async deleteInvoicesById(user, invoices, damagedItems) {
+    const transaction = await sequelize.transaction();
+
+    for (const invoice of invoices) {
+      const response = await this.deleteInvoiceById(invoice, user, transaction);
+
+      if (response.error) throw { msg: response.error };
+    }
+
+    for (const damagedItem of damagedItems) {
+      const response = await damagedItemsControllers.deleteDamagedItemById(user, damagedItem, transaction);
+
+      if (response.error) throw { msg: response.error };
+    }
+
+    transaction.commit();
+  }
+
+  async deleteInvoiceById(id, user, trnx) {
+    const transaction = trnx || await sequelize.transaction();
     const invoice = await this.getInvoiceById(id);
 
     if (!invoice) {
@@ -178,8 +244,6 @@ class Controller {
         status: 400
       };
     }
-
-    const transaction = await sequelize.transaction();
 
     // Reverse invoice items
     for (const item of invoice.items) {
@@ -196,15 +260,16 @@ class Controller {
     await InvoiceModel.destroy({
       where: {
         invoice_id: id
-      }
+      },
+      transaction
     });
 
-    await transaction.commit();
+    if (!trnx) await transaction.commit();
 
     return {
       status: 200,
       message: `invoice ${id} deleted successfully`
-    }
+    };
   }
 }
 

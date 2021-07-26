@@ -18,7 +18,8 @@ class Invoice {
       location_id: this._rawInvoice.farmLocation,
       amount: this.amount,
       discount: this.discount,
-      notes: this._rawInvoice.notes || ''
+      notes: this._rawInvoice.notes || '',
+      stamp: this._rawInvoice.stamp || null
     };
   }
 

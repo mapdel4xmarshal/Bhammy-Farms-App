@@ -1,10 +1,21 @@
 const client = require('../../whatsapp');
 const {
   Item,
-  FeedProduction,
-  Sequelize: { Op }
+  Invoice,
+  DamagedItems,
+  Party,
+  Customer,
+  Sequelize: {
+    Op,
+    where,
+    fn,
+    col
+  }
 } = require('../../models');
-const { isEmpty } = require('../../utilities/common');
+const {
+  isEmpty,
+  dateRegex
+} = require('../../utilities/common');
 const Debug = require('../../utilities/debugger');
 
 const debug = new Debug('FeedProduction:Bot');
@@ -13,28 +24,13 @@ class Bot {
   constructor(controllers) {
     this._controllers = controllers;
 
-    this._excludedKeywords = ['Tonne'];
-    this._corrections = {
-      Lavaside: ['Lavacide'],
-      Maize: ['Corn'],
-      'Toxin Binder': ['Toxin-binder', 'Toxin-binda'],
-      WheatOffal: ['Wheat offer', 'Wheat offal', 'WheatOffal', 'weat offer', 'wheat'],
-      'Choline Chloride': ['Chlorine chloride', 'Chlorine-chloride', 'Choline-Chloride'],
-      'Layer Concentrate 30% - Vita': ['Concentrate'],
-      bag: ['bags', 'Bag']
-    };
-
     this._user = {
       id: 'WhatsApp Bot',
       displayName: 'WhatsApp Bot - Group Message'
     };
 
-    this.requiredIngredients = ['Maize', 'Toxin Binder', 'WheatOffal', 'Layer Concentrate 30% - Vita'];
-
-    this.feedTypes = {
-      layer: 'Layer mash (Compounded)',
-      grower: 'Grower mash (Compounded)'
-    };
+    this.farmLocation = '84a519f5-09c1-4c57-83c8-f0e2cc773c3c';
+    this.defaultCustomer = 1;
   }
 
   listen() {
@@ -48,11 +44,9 @@ class Bot {
     client.on('message_revoke_everyone', async (payload, previousPayload) => {
       if (await this.filterPayload(payload)) {
         debug.info('Record deleted from whatsapp', previousPayload);
-        await this.deleteFeedRecord(previousPayload);
+        await this.deleteRecord(previousPayload);
       }
     });
-
-    this.addInvoiceRecord();
   }
 
   async filterPayload(msg) {
@@ -62,138 +56,18 @@ class Bot {
   }
 
   async addInvoiceRecord(payload) {
-    payload = {
-      body: '19/07/21\n' +
-        'Stock=64\n' +
-        'L=4\n' +
-        'M=54.5\n' +
-        'P=6\n' +
-        'C=\n' +
-        '\n' +
-        'Production=256\n' +
-        'L=25\n' +
-        'M=176\n' +
-        'P=53\n' +
-        'C=1.5\n' +
-        '\n' +
-        '\n' +
-        'Total=320.5\n' +
-        'L=29\n' +
-        'M=231\n' +
-        'P=59\n' +
-        'C=1.5\n' +
-        '\n' +
-        'Sold=320\n' +
-        'L=29\n' +
-        'M=230\n' +
-        'P=59\n' +
-        'C=2\n' +
-        '\n' +
-        '\n' +
-        'Crack=\n' +
-        'M=15pieces\n' +
-        '\n' +
-        '\n' +
-        '\n' +
-        'Wastage\n' +
-        'M=15 pieces\n' +
-        '\n' +
-        '\n' +
-        '\n' +
-        'Balanc=\n' +
-        'L=\n' +
-        'M=\n' +
-        'P=\n' +
-        'C=\n' +
-        '\n' +
-        '\n' +
-        'Iya mercy\n' +
-        'L=20x1400=28,000\n' +
-        'M=80x1300=104,000\n' +
-        'P=30x1100=33,000\n' +
-        'Total=165,000\n' +
-        '\n' +
-        '\n' +
-        '\n' +
-        'Alhaja Afon\n' +
-        'M=60x1300=78,000\n' +
-        'Total=78,000\n' +
-        '\n' +
-        '\n' +
-        'Foga\n' +
-        'M=15x1300=19,500\n' +
-        'P=6x1100=6,600\n' +
-        'Total=26,100\n' +
-        '\n' +
-        '\n' +
-        'Alasinrin\n' +
-        'M=44x1300=57,200\n' +
-        'P=6x1100=6,600\n' +
-        'Total=63,800\n' +
-        '\n' +
-        '\n' +
-        '\n' +
-        '\n' +
-        'M=15x1300=19,500\n' +
-        'Total=19,500\n' +
-        '\n' +
-        '\n' +
-        'Utility\n' +
-        'L=4x1400=5,600\n' +
-        'M=1x1300=1,300\n' +
-        'P=6x1100=6,600\n' +
-        'Total=12,200\n' +
-        '\n' +
-        '\n' +
-        'Esther\n' +
-        'L=1x1400=1,400\n' +
-        'M=14x1300=18,200\n' +
-        'Total=19,600\n' +
-        '\n' +
-        '\n' +
-        '\n' +
-        'Mama staff\n' +
-        'M=1x1300=1,300\n' +
-        'P=5x1100=5,500\n' +
-        'C=2x950=1,900\n' +
-        'Total=8,700\n' +
-        '\n' +
-        '\n' +
-        'P=1x1100=1100\n' +
-        'C=1x950=950\n' +
-        'Total=2,050\n' +
-        '\n' +
-        '\n' +
-        'P=5x1100=5,500\n' +
-        'L=1x1400=1,400\n' +
-        'Total=6,900'
-    };
     try {
       let { body } = payload;
 
-      const bodyArray = body.split('\n');
+      if (this.isValidPayload(body)) {
+        const record = await this.parsePayload(payload);
+        debug.info('record', record);
+        await this._controllers.addInvoices(this._user, record.sales, record.damagedItems);
 
-      if (this.isValidPayload(bodyArray[0])) {
-        const record = this.parsePayload(bodyArray);
-        const matchingItems = await this.getMatchingItems(record.type, record.ingredients);
-
-        record.ingredients = this.processIngredients(record.ingredients, matchingItems);
-
-        this.requiredIngredients.forEach((ingredient) => {
-          if (record.ingredients.filter((ingrdnt) => ingrdnt.name === ingredient).length === 0) {
-            throw { msg: `'${ingredient}' is required!` };
-          }
-        });
-
-        this.createFeedRecord(matchingItems.get(record.type).item_id, record, this.generateStamp(payload))
-          .then((res) => {
-            debug.info('Add FeedProduction - success', res);
-            payload.reply('*RECORD ADDED* 👍');
-          })
-          .catch(debug.error);
+        debug.info('addInvoices::', 'record added successfully.');
       }
     } catch (e) {
-      debug.error('Bot', e);
+      debug.error('Bot Error::', e);
       let message = 'Error, please revalidate record!';
 
       if (e.msg) message += `\n*REASON:* ${e.msg}`;
@@ -201,128 +75,281 @@ class Bot {
     }
   }
 
+  /**
+   * Generates a stamp
+   * @param payload
+   * @returns {string}
+   */
   generateStamp(payload) {
     return `${payload.from.split('@')[0]}::${payload.timestamp}::${payload.body}`;
   }
 
-  parsePayload(payloadArray) {
-    const record = { ingredients: [] };
+  /**
+   * parsePayload
+   * @param payload
+   * @returns {Promise<{sales: *[]}>}
+   */
+  async parsePayload(payload) {
+    const sections = payload.body.replace(dateRegex, '$&\n')
+      .split(/\n\n/)
+      .filter(Boolean);
 
-    payloadArray.forEach((item) => {
-      if (item.includes('=')) {
-        const itemArr = item.split('=');
-        const name = itemArr[0].trim();
-        const quantity = itemArr[1].trim();
+    const record = {
+      date: null,
+      sales: [],
+      damagedItems: []
+    };
 
-        if (!this._excludedKeywords.includes(name) && !isEmpty(quantity)) {
-          record.ingredients.push({
-            name,
-            quantity
-          });
-        }
-      } else {
-        const date = item.match(/(\d{1,2})([\/-])(\d{1,2})\2(\d{2,4})/g);
+    const stamp = this.generateStamp(payload);
 
-        if (date) {
-          const type = item.match(/layer|grower/g);
-          const dateArray = date[0].split('/');
-
-          record.date = new Date(`${dateArray[1]}-${dateArray[0]}-${dateArray[2]}`).toISOString();
-          record.type = this.feedTypes[type[0]];
-        }
+    const items = await Item.findAll({
+      attributes: ['item_name', 'item_id', 'unit', 'packaging_metric', 'packaging_size', 'price'],
+      where: {
+        category: where(fn('LOWER', col('category')), '=', 'EGG')
       }
     });
+
+    for (const section of sections) {
+      if (dateRegex.test(section)) {
+        record.date = this.processDate(section);
+      } else if (/Stock=/i.test(section)) {
+        record.stock = this.processEggRecord(section, items);
+      } else if (/production/i.test(section)) {
+        record.production = this.processEggRecord(section, items);
+      } else if (/^(\ntotal|total)/i.test(section)) {
+        record.total = this.processEggRecord(section, items);
+      } else if (/sold/i.test(section)) {
+        record.sold = this.processEggRecord(section, items);
+      } else if (/crack/i.test(section)) {
+        record.crack = this.processEggRecord(section, items);
+        record.damagedItems.push(...this.processDamagedItems('crack', record.crack, record.date, stamp));
+      } else if (/wastage/i.test(section)) {
+        record.wastage = this.processEggRecord(section, items);
+        record.damagedItems.push(...this.processDamagedItems('wastage', record.wastage, record.date, stamp));
+      } else if (/balanc/i.test(section)) {
+        record.balance = this.processEggRecord(section, items);
+      } else {
+        record.sales.push(await this.processSales(record.date, section, items, stamp));
+      }
+    }
 
     return record;
   }
 
-  processIngredients(ingredients, matchingItems) {
-    return ingredients.map((ingredient) => {
-      const item = matchingItems.get(ingredient.name);
-      const regex = new RegExp(`\\b(?:${item.packaging_metric})\\b`, 'gi');
-
-      if (regex.test(ingredient.quantity)) {
-        ingredient.quantity = +(ingredient.quantity.split(item.packaging_metric)[0]) * item.packaging_size;
-        ingredient.id = item.item_id;
-      } else if (new RegExp(`\\b(?:${item.unit})\\b`, 'gi').test(ingredient.quantity)) {
-        ingredient.quantity = +(ingredient.quantity.split(item.unit)[0]);
-        ingredient.id = item.item_id;
-      } else {
-        debug.info('No match', item.unit, regex, ingredient.quantity);
-      }
-
-      return ingredient;
-    });
+  /**
+   * processDate
+   * @param date
+   * @returns {string}
+   */
+  processDate(date) {
+    const dateArray = date.split('/');
+    return new Date(`${dateArray[1]}-${dateArray[0]}-${dateArray[2]}`).toISOString();
   }
 
+  /**
+   * processDamagedItems
+   * @param type
+   * @param items
+   * @param date
+   * @param stamp
+   * @returns {*}
+   */
+  processDamagedItems(type, items, date, stamp) {
+    return items.map((item) => ({
+      ...item,
+      itemId: item.id,
+      date,
+      damageType: type,
+      location: this.farmLocation,
+      stamp
+    }));
+  }
+
+  /**
+   * processSales
+   * @param date
+   * @param sale
+   * @param items
+   * @param stamp
+   * @returns {{fulfilmentStatus: string, notes: string, customerId, farmLocation: string, invoiceDate, paymentDate, items: *[], paymentStatus: string}}
+   */
+  async processSales(date, sale, items, stamp) {
+    const sections = sale.split('\n')
+      .filter(Boolean);
+    if (/L=|M=|C=|P=|X=/i.test(sections[0])) sections.unshift('Unknown');
+    console.log('itemsss', this.processEggRecord(sections.join('\n'), items));
+
+    return {
+      customerId: await this.getCustomerIdByName(sections[0]),
+      invoiceDate: date,
+      paymentDate: date,
+      paymentStatus: 'paid',
+      fulfilmentStatus: 'fulfilled',
+      farmLocation: this.farmLocation,
+      items: this.processEggRecord(sections.join('\n'), items),
+      stamp
+    };
+  }
+
+  /**
+   * processEggRecord
+   * @param record
+   * @param items
+   * @returns {*[]}
+   */
+  processEggRecord(record, items) {
+    const recordArray = record.split('\n');
+    recordArray.shift();
+
+    const eggs = [];
+
+    recordArray.forEach(egg => {
+      const sanitizedEgg = egg.replace(/ /g, '');
+
+      if (/^(l=|m=|p=|c=|x=)/ig.test(sanitizedEgg)) {
+        const match = sanitizedEgg.split('=');
+        const item = this.findMatchedItem(match[0], items);
+
+        if (isEmpty(item)) {
+          throw `Unknown item ${match[0]} found in ${record}`;
+        }
+
+        if (!isEmpty(match[1])) {
+          const quantity = this.processQuantity(match[1], item);
+          const amount = this.processAmount(match[1]);
+          const packageQuantity = quantity / item.packaging_size;
+
+          eggs.push({
+            id: item.item_id,
+            name: item.item_name,
+            price: item.price,
+            ...(quantity && { quantity }),
+            ...(amount && { amount: amount * packageQuantity }),
+            ...((/x|\*/i.test(match[1])) && { discount: this.processDiscount(match[1], amount, item, packageQuantity) })
+          });
+        }
+      }
+    });
+    return eggs;
+  }
+
+  async getCustomerIdByName(name) {
+    const customer = await Customer.findOne({
+      include: [{
+        required: true,
+        model: Party,
+        where: {
+          name: {
+            [Op.like]: name
+          }
+        }
+      }]
+    });
+
+    return customer?.customer_id || this.defaultCustomer;
+  }
+
+  /**
+   * findMatchedItem
+   * @param searchWord
+   * @param items
+   * @returns {*}
+   */
+  findMatchedItem(searchWord, items) {
+    return items.filter(item => new RegExp(`${searchWord}`, 'ig').test(item.item_name))[0];
+  }
+
+  /**
+   * processDiscount
+   * @param info
+   * @param amount
+   * @param matchingItem
+   * @param quantity
+   * @returns {number}
+   */
+  processDiscount(info, amount, matchingItem, quantity) {
+    const discount = (+matchingItem.price - amount) * quantity;
+
+    if (amount > +matchingItem.price) {
+      throw { msg: `The price of '${matchingItem.item_name}' is ${matchingItem.price}, but ${amount} was specified.` };
+    }
+
+    return discount;
+  }
+
+  processAmount(info) {
+    return +info.split('=')[0].split(/x|\*/i)[1];
+  }
+
+  /**
+   * processQuantity
+   * @param quantity
+   * @param matchingItem
+   * @returns {number}
+   */
+  processQuantity(quantity, matchingItem) {
+    quantity = quantity.replace('pieces', 'piece')
+      .replace('crates', 'crate');
+    const regex = new RegExp(`${matchingItem.packaging_metric}`, 'gi');
+
+    if (regex.test(quantity)) {
+      quantity = +(quantity.split(matchingItem.packaging_metric)[0]) * matchingItem.packaging_size;
+    } else if (new RegExp(`${matchingItem.unit}`, 'gi').test(quantity)) {
+      const qty = quantity.split(matchingItem.unit)[0];
+      const qtySplit = qty.split('.');
+
+      if (qtySplit.length > 1) {
+        quantity = (+(qtySplit[0]) * matchingItem.packaging_size) + Number(qtySplit[1]);
+      } else {
+        quantity = +qty;
+      }
+    } else if (/x|\*/i.test(quantity)) {
+      const qty = quantity.split(/x|\*/i);
+      quantity = +qty[0] * matchingItem.packaging_size;
+    } else {
+      quantity = +(quantity) * matchingItem.packaging_size;
+    }
+
+    return quantity;
+  }
+
+  /**
+   * isValidPayload
+   * @param string
+   * @returns {boolean}
+   */
   isValidPayload(string) {
     string = string.toLowerCase();
     return /(\d{1,2})([\/-])(\d{1,2})\2(\d{2,4})/.test(string)
       && ['production', 'total', 'balanc'].every((term) => string.includes(term))
-      && /sold|L=|M=|P=/.test(string);
+      && /sold|L=|M=|P=|C=|X=/i.test(string);
   }
 
-  createFeedRecord(id, record, stamp) {
-    const maize = record.ingredients.filter((ingredient) => ingredient.name.indexOf(/maize|corn/g) !== -1)[0] || {};
-
-    const normalizedRecord = {
-      date: record.date,
-      type: {
-        name: record.type,
-        id
-      },
-      energyLevel: this.energyLevel(maize.quantity),
-      comment: 'WhatsAppBot',
-      stamp,
-      ingredients: record.ingredients
-    };
-
-    debug.info('createFeedRecord - normalizedRecord', normalizedRecord);
-
-    return this._controllers.addProduction(this._user, normalizedRecord);
-  }
-
-  energyLevel(quantity) {
-    if (quantity >= 500) {
-      return 'high';
-    } if (quantity >= 450) {
-      return 'medium';
-    }
-    return 'low';
-  }
-
-  async getMatchingItems(feedType, ingredients) {
-    const itemPriceMap = await Item.findAll({
-      attributes: ['item_id', 'item_name', 'category', 'packaging_metric', 'unit', 'packaging_size'],
-      where: {
-        item_name: {
-          [Op.in]: [...ingredients.map((item) => item.name), feedType]
-        }
-      }
-    })
-      .then((items) => new Map(items.map((item) => [item.item_name, item])));
-
-    return itemPriceMap;
-  }
-
-  async deleteFeedRecord(prevPayload) {
+  async deleteRecord(prevPayload) {ot
     const stamp = this.generateStamp(prevPayload);
-    const bodyArray = prevPayload.body.split('\n');
 
-    if (this.isValidPayload(bodyArray[0])) {
-      const records = await FeedProduction.findAll({
-        attributes: ['id', 'stamp'],
+    if (this.isValidPayload(prevPayload.body)) {
+      let invoices = await Invoice.findAll({
+        attributes: ['invoice_id'],
         where: {
           stamp
         }
       });
 
-      records.forEach((record) => {
-        this._controllers.deleteProduction(record.id, this._user)
-          .then(() => {
-            prevPayload.reply('*RECORD DELETED!*👍');
-          });
+      let damagedItems = await DamagedItems.findAll({
+        attributes: ['id'],
+        where: {
+          stamp
+        }
       });
+
+      invoices = invoices.map((invoice) => invoice.invoice_id);
+      damagedItems = damagedItems.map((damagedItem) => damagedItem.id);
+
+      this._controllers.deleteInvoicesById(this._user, invoices, damagedItems)
+        .then(() => {
+          prevPayload.reply('*RECORD DELETED!*👍');
+        });
     }
   }
 }

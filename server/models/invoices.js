@@ -43,9 +43,12 @@ class Invoices extends Model {
         defaultValue: 0
       },
       notes: {
-        type: DataTypes.STRING,
-        allowNull: true,
-        defaultValue: 0
+        type: DataTypes.TEXT,
+        allowNull: true
+      },
+      stamp: {
+        type: DataTypes.TEXT('long'),
+        allowNull: true
       }
     };
   }

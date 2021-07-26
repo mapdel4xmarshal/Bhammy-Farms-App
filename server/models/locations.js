@@ -1,4 +1,3 @@
-'use strict';
 
 const { Model, DataTypes } = require('sequelize');
 
@@ -21,7 +20,7 @@ class Locations extends Model {
       },
       name: {
         type: DataTypes.STRING,
-        unique: true,
+        unique: 'name',
         allowNull: false
       },
       address: {

@@ -47,7 +47,8 @@ class Controller {
       }));
   }
 
-  async addDamagedItem(user, payload) {
+  async addDamagedItem(user, payload, trnx) {
+    const transaction = trnx || await sequelize.transaction();
     const where = payload.location ? { location_id: payload.location } : {};
 
     if (!this.allowedDamageTypes.includes(payload?.damageType.toLowerCase())) {
@@ -59,7 +60,8 @@ class Controller {
 
     const farm = await Location.findOne({
       where,
-      attributes: ['name', 'location_id']
+      attributes: ['name', 'location_id'],
+      transaction
     });
 
     if (!farm) {
@@ -70,7 +72,8 @@ class Controller {
     }
 
     const item = await Item.findOne({
-      where: { item_id: payload.itemId }
+      where: { item_id: payload.itemId },
+      transaction
     });
 
     if (!item) {
@@ -87,11 +90,10 @@ class Controller {
       };
     }
 
-    const transaction = await sequelize.transaction();
-
     if (item.category.toLowerCase() === 'egg' && payload?.damageType.toLowerCase() === 'crack') {
       const crackEgg = await Item.findOne({
-        where: { item_id: 4 }
+        where: { item_id: 4 },
+        transaction
       });
 
       // add to crack eggs
@@ -118,18 +120,20 @@ class Controller {
       item_id: payload.itemId,
       quantity: payload.quantity,
       price: item.price,
-      damage_type: payload.damageType
+      damage_type: payload.damageType,
+      stamp: payload.stamp
     }, {
       transaction,
       user,
       resourceId: 'id'
     })
       .then(async (item) => {
-        transaction.commit();
+        if (!trnx) transaction.commit();
         return item.id;
       })
       .catch((error) => {
         debug.error('Add damaged item', error);
+        transaction.rollback();
         return {
           error: 'Unable to process request. Please try again later!',
           status: 500
@@ -137,9 +141,12 @@ class Controller {
       });
   }
 
-  async deleteDamagedItemById(user, id) {
+  async deleteDamagedItemById(user, id, trnx) {
+    const transaction = trnx || await sequelize.transaction();
+
     const damagedItem = await DamagedItems.findOne({
-      where: { id }
+      where: { id },
+      transaction
     });
 
     if (!damagedItem) {
@@ -150,10 +157,9 @@ class Controller {
     }
 
     const item = await Item.findOne({
-      where: { item_id: damagedItem.item_id }
+      where: { item_id: damagedItem.item_id },
+      transaction
     });
-
-    const transaction = await sequelize.transaction();
 
     // Reverse crack eggs
     if (item.category.toLowerCase() === 'egg' && damagedItem.damage_type.toLowerCase() === 'crack') {
@@ -187,7 +193,8 @@ class Controller {
       }
     })
       .then(async () => {
-        return await transaction.commit();
+         if (!trnx) await transaction.commit();
+         return { message: 'Item deleted' };
       });
   }
 }

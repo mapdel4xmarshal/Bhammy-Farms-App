@@ -39,6 +39,10 @@ class DamagedItems extends Model {
       description: {
         type: DataTypes.TEXT,
         allowNull: true
+      },
+      stamp: {
+        type: DataTypes.TEXT,
+        allowNull: true
       }
     };
   }
