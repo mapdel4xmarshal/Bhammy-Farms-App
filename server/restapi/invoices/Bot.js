@@ -30,7 +30,7 @@ class Bot {
     };
 
     this.farmLocation = '84a519f5-09c1-4c57-83c8-f0e2cc773c3c';
-    this.defaultCustomer = 1;
+    this.defaultCustomer = 17;
   }
 
   listen() {
@@ -62,9 +62,14 @@ class Bot {
       if (this.isValidPayload(body)) {
         const record = await this.parsePayload(payload);
         debug.info('record', record);
-        await this._controllers.addInvoices(this._user, record.sales, record.damagedItems);
-
-        debug.info('addInvoices::', 'record added successfully.');
+        this._controllers.addInvoices(this._user, record.sales, record.damagedItems)
+          .then(() => {
+            payload.reply('*RECORD ADDED* 👍');
+            debug.info('addInvoices::', 'record added successfully.');
+          })
+          .catch(e => {
+            throw e;
+          });
       }
     } catch (e) {
       debug.error('Bot Error::', e);
@@ -121,9 +126,15 @@ class Bot {
       } else if (/sold/i.test(section)) {
         record.sold = this.processEggRecord(section, items);
       } else if (/crack/i.test(section)) {
+        if (!/crate|piece/i.test(section)) {
+          throw { msg: 'Please specify either *crate* or *pieces* for items in the Crack section' };
+        }
         record.crack = this.processEggRecord(section, items);
         record.damagedItems.push(...this.processDamagedItems('crack', record.crack, record.date, stamp));
       } else if (/wastage/i.test(section)) {
+        if (!/crate|piece/i.test(section)) {
+          throw { msg: 'Please specify either *crate* or *pieces* for items in the wastage section' };
+        }
         record.wastage = this.processEggRecord(section, items);
         record.damagedItems.push(...this.processDamagedItems('wastage', record.wastage, record.date, stamp));
       } else if (/balanc/i.test(section)) {
@@ -177,7 +188,6 @@ class Bot {
     const sections = sale.split('\n')
       .filter(Boolean);
     if (/L=|M=|C=|P=|X=/i.test(sections[0])) sections.unshift('Unknown');
-    console.log('itemsss', this.processEggRecord(sections.join('\n'), items));
 
     return {
       customerId: await this.getCustomerIdByName(sections[0]),
@@ -187,6 +197,7 @@ class Bot {
       fulfilmentStatus: 'fulfilled',
       farmLocation: this.farmLocation,
       items: this.processEggRecord(sections.join('\n'), items),
+      notes: sections[0],
       stamp
     };
   }
@@ -225,7 +236,7 @@ class Bot {
             price: item.price,
             ...(quantity && { quantity }),
             ...(amount && { amount: amount * packageQuantity }),
-            ...((/x|\*/i.test(match[1])) && { discount: this.processDiscount(match[1], amount, item, packageQuantity) })
+            ...((/x|\*/i.test(match[1])) && { discount: this.processDiscount(match[1].replace(',', ''), amount, item, packageQuantity) })
           });
         }
       }
@@ -239,9 +250,7 @@ class Bot {
         required: true,
         model: Party,
         where: {
-          name: {
-            [Op.like]: name
-          }
+          name: where(fn('LOWER', col('name')), 'LIKE', `${name.toLowerCase()}%`)
         }
       }]
     });
@@ -278,7 +287,7 @@ class Bot {
   }
 
   processAmount(info) {
-    return +info.split('=')[0].split(/x|\*/i)[1];
+    return +info.replace(',', '').split('=')[0].split(/x|\*/i)[1];
   }
 
   /**
@@ -305,6 +314,7 @@ class Bot {
       }
     } else if (/x|\*/i.test(quantity)) {
       const qty = quantity.split(/x|\*/i);
+      if (isEmpty(qty[0])) throw { msg: `Validation error at *${quantity}*. Please provide the quantity sold.` };
       quantity = +qty[0] * matchingItem.packaging_size;
     } else {
       quantity = +(quantity) * matchingItem.packaging_size;
@@ -325,7 +335,7 @@ class Bot {
       && /sold|L=|M=|P=|C=|X=/i.test(string);
   }
 
-  async deleteRecord(prevPayload) {ot
+  async deleteRecord(prevPayload) {
     const stamp = this.generateStamp(prevPayload);
 
     if (this.isValidPayload(prevPayload.body)) {
@@ -336,20 +346,22 @@ class Bot {
         }
       });
 
-      let damagedItems = await DamagedItems.findAll({
-        attributes: ['id'],
-        where: {
-          stamp
-        }
-      });
-
-      invoices = invoices.map((invoice) => invoice.invoice_id);
-      damagedItems = damagedItems.map((damagedItem) => damagedItem.id);
-
-      this._controllers.deleteInvoicesById(this._user, invoices, damagedItems)
-        .then(() => {
-          prevPayload.reply('*RECORD DELETED!*👍');
+      if (invoices.length > 0) {
+        let damagedItems = await DamagedItems.findAll({
+          attributes: ['id'],
+          where: {
+            stamp
+          }
         });
+
+        invoices = invoices.map((invoice) => invoice.invoice_id);
+        damagedItems = damagedItems.map((damagedItem) => damagedItem.id);
+
+        this._controllers.deleteInvoicesById(this._user, invoices, damagedItems)
+          .then(() => {
+            prevPayload.reply('*RECORD DELETED!*👍');
+          });
+      }
     }
   }
 }

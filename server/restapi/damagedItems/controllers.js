@@ -31,7 +31,7 @@ class Controller {
         attributes: ['brand', 'category', 'description', ['image', 'thumbnail'], ['item_id', 'id'],
           ['item_name', 'name'], ['packaging_metric', 'packagingMetric'], ['packaging_size', 'packagingSize'], 'unit']
       },
-      order: [['id', 'desc']]
+      order: [['date', 'desc']]
     })
       .then((damagedItems) => damagedItems.map((item) => {
         return {

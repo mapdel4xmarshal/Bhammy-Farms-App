@@ -16,14 +16,14 @@ class Bot {
 
     this._excludedKeywords = ['Production'];
     this._corrections = {
-      'Large Egg': ['Large'],
-      'Medium Egg': ['Medium'],
-      'Pullet Egg': ['Pullet'],
-      'Cracked Egg': ['cracks'],
+      'Large Egg': ['Large', 'Large size.', 'Large size'],
+      'Medium Egg': ['Medium', 'Medium size.', 'Medium size'],
+      'Pullet Egg': ['Pullet', 'Pullet size.', 'Pullet size'],
+      'Cracked Egg': ['cracks', 'Cracks', 'Cracks.'],
       'water': ['Water consumed'],
       'Vitamin - Miavit': ['vitamin (miavit)'],
       'compounded': ['local'],
-      feed: ['consumed']
+      feed: ['consumed', 'Feed consumed', 'Feed consumed.']
     };
 
     this._user = {
@@ -149,7 +149,7 @@ class Bot {
 
           // Include water
           if (name.includes('water')) {
-            record.water = quantity;
+            record.water = quantity.replace(/[a-z]/i, '');
           }
 
           // Add eggs
@@ -405,6 +405,8 @@ class Bot {
   }
 
   autoCorrect(payload) {
+    payload = payload.replace(/Date( )*=/,'');
+
     for (const correction in this._corrections) {
       const subRegex = this._corrections[correction].join('|');
       const regex = new RegExp(`\\b(?:${subRegex})\\b`, 'gi');

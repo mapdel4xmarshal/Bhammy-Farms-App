@@ -1,13 +1,34 @@
 const {
-  Batch, Breed, House, Production, Mortality, Location, Source, Party, Sequelize: {
-    Op, literal, fn, col
-  }, sequelize, Expense, Item
+  Batch,
+  Breed,
+  House,
+  Production,
+  Mortality,
+  Location,
+  Source,
+  Party,
+  Sequelize: {
+    Op,
+    literal,
+    fn,
+    col
+  },
+  sequelize,
+  Expense,
+  Item
 } = require('../../models');
 const BatchProduction = require('./BatchProduction');
 
 class Controller {
-  async getBatches({ house, batch, status }) {
-    const allowedStatus = { retired: 0, active: 1 };
+  async getBatches({
+                     house,
+                     batch,
+                     status
+                   }) {
+    const allowedStatus = {
+      retired: 0,
+      active: 1
+    };
     let where = {};
     if (house) where = { house_id: house };
     if (batch) where = { batch_id: batch };
@@ -138,7 +159,9 @@ class Controller {
       });
   }
 
-  async getBatchTreatments(batchId) {
+  async getBatchTreatments(batchId, list) {
+    const batch = await Batch.findByPk(batchId);
+
     return sequelize.query(`
     SELECT productions.production_id, productions.date,
     vaccinations.administered_by AS vaccineAdministrator, vaccinations.notes AS vaccinationNotes,
@@ -162,8 +185,25 @@ class Controller {
     ORDER BY productions.date DESC;
 `)
       .then(async ([treatments]) => {
-        const res = await this.processTreatments(treatments);
-        return res;
+        if (!list) {
+          return await this.processTreatments(treatments);
+        } else {
+          return treatments
+            .filter(treatment => treatment.vaccinationId || treatment.medicationId)
+            .map(treatment => ({
+              date: treatment.date,
+              week: Math.floor((((new Date(treatment.date) - new Date(batch.move_in_date)) / 86400000) + batch.move_in_age) / 7),
+              type: treatment.vaccinationId ? 'vaccination' : 'medication',
+              note: treatment.vaccinationNotes || treatment.medicationNotes,
+              id: treatment.vaccinationId || treatment.medicationId,
+              dosageUnit: treatment.vaccineDosageUnit || treatment.medicamentDosageUnit,
+              totalDosage: treatment.vaccineTotalDosage || treatment.medicamentTotalDosage,
+              vaccineName: treatment.vaccineName,
+              medicamentName: treatment.medicamentName,
+              vaccineBrand: treatment.vaccineBrand,
+              medicamentBrand: treatment.medicamentBrand
+            }));
+        }
       })
       .catch((error) => {
         console.log(error); // todo: add proper logger
@@ -223,7 +263,8 @@ class Controller {
       },
       attributes: [
         ['production_id', 'id'], 'date', 'humidity', 'temperature', 'weatherCondition', 'water', 'note',
-        [literal(`COALESCE(DATEDIFF(date, '${batch.move_in_date.toJSON().slice(0, 10)}'), 0) + ${batch.move_in_age}`),
+        [literal(`COALESCE(DATEDIFF(date, '${batch.move_in_date.toJSON()
+          .slice(0, 10)}'), 0) + ${batch.move_in_age}`),
           'batchAge']
       ],
       order: [

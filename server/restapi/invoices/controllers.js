@@ -43,7 +43,7 @@ class Controller {
         [col('Location.name'), 'farmLocation'],
         ['customer_id', 'customerId'], ['payment_status', 'paymentStatus'], ['fulfilment_status', 'fulfilmentStatus'],
         [literal('`Customer->Party`.name'), 'customerName'], 'amount', 'discount', 'notes'],
-      order: [['invoice_id', 'DESC'], ['created_at', 'DESC']],
+      order: [['invoice_date', 'DESC'], ['created_at', 'DESC']],
       raw: true,
       where,
       include: [{

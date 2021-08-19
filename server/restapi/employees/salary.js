@@ -75,6 +75,8 @@ class Salary {
       unpaidSalaries = this.unpaidSalaries.slice(0, this.unpaidSalaries.length - 1);
     }
 
+    if (unpaidSalaries.length === 0) return { amount: 0, period: null };
+
     const periodLen = unpaidSalaries.length;
     const lastUnpaid = {...unpaidSalaries[periodLen - 1]};
     const endDay = lastUnpaid.days;

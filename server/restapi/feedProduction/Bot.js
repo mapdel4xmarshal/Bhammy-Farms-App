@@ -20,7 +20,7 @@ class Bot {
       'Toxin Binder': ['Toxin-binder', 'Toxin-binda'],
       WheatOffal: ['Wheat offer', 'Wheat offal', 'WheatOffal', 'weat offer', 'wheat'],
       'Choline Chloride': ['Chlorine chloride', 'Chlorine-chloride', 'Choline-Chloride'],
-      'Layer Concentrate 30% - Vita': ['Concentrate'],
+      'Layer Concentrate 30% - Vital': ['Concentrate'],
       bag: ['bags', 'Bag']
     };
 
@@ -29,7 +29,7 @@ class Bot {
       displayName: 'WhatsApp Bot - Group Message'
     };
 
-    this.requiredIngredients = ['Maize', 'Toxin Binder', 'WheatOffal', 'Layer Concentrate 30% - Vita'];
+    this.requiredIngredients = ['Maize', 'Toxin Binder', 'WheatOffal', 'Layer Concentrate 30% - Vital'];
 
     this.feedTypes = {
       layer: 'Layer mash (Compounded)',

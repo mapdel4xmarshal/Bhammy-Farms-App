@@ -26,7 +26,7 @@ router.get('/:batchId', async (req, res) => {
 });
 
 router.get('/:batchId/treatments', async (req, res) => {
-  const treatments = await controllers.getBatchTreatments(req.params.batchId);
+  const treatments = await controllers.getBatchTreatments(req.params.batchId, req.query.list);
   res.json(treatments);
 });
 

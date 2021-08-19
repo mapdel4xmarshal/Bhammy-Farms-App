@@ -247,6 +247,7 @@ export default {
         { text: 'Farm', value: 'farmLocation' },
         { text: 'Customer', value: 'customerName' },
         { text: 'Amount', value: 'amount' },
+        { text: 'Note', value: 'notes' },
         { text: 'Payment Status', value: 'status' },
         { text: '', value: 'actions' }
       ]

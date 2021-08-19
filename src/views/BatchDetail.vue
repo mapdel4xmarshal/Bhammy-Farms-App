@@ -90,7 +90,7 @@
       </v-row>
     </transition>
     <v-row>
-      <v-col cols="12" md="9">
+      <v-col cols="12">
         <v-tabs
           background-color="transparent"
           color="primary accent-4"
@@ -128,39 +128,6 @@
           </v-tab-item>
         </v-tabs>
       </v-col>
-      <v-col cols="12" md="3">
-        <v-card-title class="subtitle-1 pl-0 pb-1">Treatment history</v-card-title>
-        <v-card outlined height="400" class="overflow-y-auto pa-1" color="transparent" tile>
-          <v-alert
-            v-for="(treatment, date) in treatments" :key="date"
-            color="primary"
-            border="left"
-            elevation="1"
-            colored-border
-            icon="mdi-medical-bag"
-          >
-            <v-chip small>
-              {{ date }}
-            </v-chip>
-            <div v-for="(item, index) in treatment" :key="index">
-              <div :key="index">
-                <strong class="text-uppercase body-2">{{ item.type }}</strong><br>
-                <span class="caption" v-if="item.vaccineName">{{ item.vaccineName }}, {{ item.vaccineBrand }}</span>
-                <span class="caption" v-else>{{ item.medicamentName }}, {{ item.medicamentBrand }}</span><br>
-                <span class="caption">DOSAGE - {{ item.totalDosage }}</span><br>
-                <span class="caption" v-if="item.note">REASON - {{ item.note }}</span>
-                <v-divider
-                  class="my-4"
-                  v-if="index < treatment.length - 1"
-                ></v-divider>
-              </div>
-            </div>
-          </v-alert>
-          <div class="d-flex justify-center pa-5 caption" v-if="!Object.keys(treatments).length">
-              No treatments found.
-          </div>
-        </v-card>
-      </v-col>
       <v-col cols="12">
         <v-tabs
             background-color="transparent"
@@ -171,6 +138,8 @@
             <v-tab>Production</v-tab>
             <v-tab>Eggs</v-tab>
             <v-tab>Feeds</v-tab>
+            <v-tab>Medications</v-tab>
+            <v-tab>Vaccinations</v-tab>
 
             <v-tab-item>
               <v-data-table
@@ -248,6 +217,36 @@
               </template>
             </v-data-table>
           </v-tab-item>
+          <v-tab-item>
+            <v-data-table
+              :headers="medicationHeader"
+              :items="treatments.filter(treatment => treatment.type === 'medication')"
+              :search="search"
+            >
+              <template v-slot:top>
+                <v-text-field v-model="search" filled class="pt-8 mb-2 mr-5 ml-5" clearable
+                label="Want to search for a particular medicament?">
+                </v-text-field>
+              </template>
+            </v-data-table>
+          </v-tab-item>
+          <v-tab-item>
+            <v-data-table
+              :headers="vaccinationHeader"
+              :items="treatments.filter(treatment => treatment.type === 'vaccination')"
+              :search="vaccineSearch"
+            >
+              <template v-slot:top>
+                <v-text-field v-model="vaccineSearch" class="pt-8 mb-2 mr-5 ml-5" clearable>
+                  <template v-slot:label>
+                    Want to search for a particular <strong>vaccine</strong>? <v-icon style="vertical-align: middle">
+                    mdi-file-find
+                  </v-icon>
+                  </template>
+                </v-text-field>
+              </template>
+            </v-data-table>
+          </v-tab-item>
           </v-tabs>
       </v-col>
     </v-row>
@@ -265,6 +264,8 @@ export default {
   name: 'BatchDetail',
   data() {
     return {
+      search: null,
+      vaccineSearch: null,
       batchesRoute: ROUTES.BATCHES,
       batch: {},
       mode: 0,
@@ -311,7 +312,7 @@ export default {
         { text: 'Climate effect', value: 'climateEffect.effect' },
         { text: 'Est. Profit', value: 'profit' },
       ],
-      treatments: {},
+      treatments: [],
       eggInsights: [],
       feedInsights: [],
       feedInsightHeaders: [
@@ -338,10 +339,80 @@ export default {
           text: 'Week',
           sortable: true,
           value: 'week',
-        }]
+        }],
+      medicationHeader: [
+        {
+          text: 'Date',
+          align: 'start',
+          sortable: true,
+          value: 'date',
+        },
+        {
+          text: 'Week',
+          sortable: true,
+          value: 'week',
+        },
+        {
+          text: 'Medicament',
+          sortable: true,
+          value: 'medicamentName',
+        },
+        {
+          text: 'Medicament Brand',
+          sortable: true,
+          value: 'medicamentBrand',
+        },
+        {
+          text: 'Total dosage',
+          sortable: true,
+          value: 'totalDosage',
+        },
+        {
+          text: 'Note',
+          sortable: false,
+          value: 'note',
+        }
+      ],
+      vaccinationHeader: [
+        {
+          text: 'Date',
+          align: 'start',
+          sortable: true,
+          value: 'date',
+        },
+        {
+          text: 'Week',
+          sortable: true,
+          value: 'week',
+        },
+        {
+          text: 'Vaccine',
+          sortable: true,
+          value: 'vaccineName',
+        },
+        {
+          text: 'Vaccine Brand',
+          sortable: true,
+          value: 'vaccineBrand',
+        },
+        {
+          text: 'Total dosage',
+          sortable: true,
+          value: 'totalDosage',
+        },
+        {
+          text: 'Note',
+          sortable: false,
+          value: 'note',
+        }
+      ]
     };
   },
-  components: { Batch, Chart, MetricCard },
+  components: {
+    Batch,
+    Chart,
+    MetricCard
+  },
   methods: {
     chartFormatter() {
       return function () {
@@ -367,7 +438,7 @@ export default {
       };
     },
     getTreatments() {
-      axios.get(`/batches/${this.$route.params.id}/treatments`)
+      axios.get(`/batches/${this.$route.params.id}/treatments?list=true`)
         .then(({ data }) => {
           this.treatments = data;
         });
