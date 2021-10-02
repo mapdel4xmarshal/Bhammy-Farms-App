@@ -20,8 +20,16 @@ class Bot {
       'Toxin Binder': ['Toxin-binder', 'Toxin-binda'],
       WheatOffal: ['Wheat offer', 'Wheat offal', 'WheatOffal', 'weat offer', 'wheat'],
       'Choline Chloride': ['Chlorine chloride', 'Chlorine-chloride', 'Choline-Chloride'],
-      'Layer Concentrate 30% - Vital': ['Concentrate'],
+      'Layer Mash (Vital)': ['Vital layer', 'Vita layer', 'Vital-layer', 'vita-layer'],
+      'Grower Mash (Vital)': ['Vital Grower', 'Vita grower', 'Vital-grower', 'vita-grower'],
       bag: ['bags', 'Bag']
+    };
+
+    this._concentrates = {
+      'vital-layer': 'Layer Concentrate 30% - Vital',
+      'vital-grower': 'Grower Concentrate 30% - Vital',
+      'chikun-grower': 'Chikun Grower Concentrate',
+      'chikun-layer': 'Chikun Layer Concentrate'
     };
 
     this._user = {
@@ -29,7 +37,7 @@ class Bot {
       displayName: 'WhatsApp Bot - Group Message'
     };
 
-    this.requiredIngredients = ['Maize', 'Toxin Binder', 'WheatOffal', 'Layer Concentrate 30% - Vital'];
+    this.requiredIngredients = ['Maize', 'Toxin Binder', 'WheatOffal', 'Concentrate'];
 
     this.feedTypes = {
       layer: 'Layer mash (Compounded)',
@@ -71,13 +79,15 @@ class Bot {
         const record = this.parsePayload(bodyArray);
         const matchingItems = await this.getMatchingItems(record.type, record.ingredients);
 
-        record.ingredients = this.processIngredients(record.ingredients, matchingItems);
-
         this.requiredIngredients.forEach((ingredient) => {
           if (record.ingredients.filter((ingrdnt) => ingrdnt.name === ingredient).length === 0) {
             throw { msg: `'${ingredient}' is required!` };
           }
         });
+
+        record.ingredients = this.processIngredients(record.concentrateBrand, record.ingredients, matchingItems);
+
+        debug.info('Record', record);
 
         this.createFeedRecord(matchingItems.get(record.type).item_id, record, this.generateStamp(payload))
           .then((res) => {
@@ -118,11 +128,16 @@ class Bot {
         const date = item.match(/(\d{1,2})([\/-])(\d{1,2})\2(\d{2,4})/g);
 
         if (date) {
-          const type = item.match(/layer|grower/g);
+          const type = item.match(/layer|grower/ig);
+          const concentrateBrand = item.match(/chikun|vital/ig) || ['vital'];
           const dateArray = date[0].split('/');
 
+          debug.info('parse payload', { type, concentrateBrand });
+
           record.date = new Date(`${dateArray[1]}-${dateArray[0]}-${dateArray[2]}`).toISOString();
-          record.type = this.feedTypes[type[0]];
+          const feedType = type[0].toLowerCase();
+          record.type = this.feedTypes[feedType];
+          record.concentrateBrand = this._concentrates[`${concentrateBrand[0].toLowerCase()}-${feedType}`];
         }
       }
     });
@@ -130,8 +145,15 @@ class Bot {
     return record;
   }
 
-  processIngredients(ingredients, matchingItems) {
+  processIngredients(concentrateBrand, ingredients, matchingItems) {
     return ingredients.map((ingredient) => {
+      if (/concentrate/ig.test(ingredient.name)) {
+        ingredient.name = concentrateBrand;
+        debug.info('ingredient name ', concentrateBrand);
+        debug.info('ingredient', ingredient);
+        debug.info('matchingItems', matchingItems);
+      }
+
       const item = matchingItems.get(ingredient.name);
       const regex = new RegExp(`\\b(?:${item.packaging_metric})\\b`, 'gi');
 
@@ -152,8 +174,8 @@ class Bot {
   isValidPayload(string) {
     string = string.toLowerCase();
     return /(\d{1,2})([\/-])(\d{1,2})\2(\d{2,4})/.test(string)
-      && ['pen', 'feed'].every((term) => string.includes(term))
-      && /layer|grower/.test(string);
+      && ['feed'].every((term) => string.includes(term))
+      && /layer|grower/i.test(string);
   }
 
   autoCorrect(payload) {
@@ -172,7 +194,8 @@ class Bot {
   }
 
   createFeedRecord(id, record, stamp) {
-    const maize = record.ingredients.filter((ingredient) => ingredient.name.indexOf(/maize|corn/g) !== -1)[0] || {};
+    const maize = record.ingredients.find((ingredient) => ingredient.name.match(/Maize|corn/ig));
+    const tonne = record.ingredients.reduce((total, ingredient) => total + ingredient.quantity, 0);
 
     const normalizedRecord = {
       date: record.date,
@@ -180,7 +203,7 @@ class Bot {
         name: record.type,
         id
       },
-      energyLevel: this.energyLevel(maize.quantity),
+      energyLevel: this.energyLevel(Math.round(maize.quantity / (tonne / 1000))),
       comment: 'WhatsAppBot',
       stamp,
       ingredients: record.ingredients
@@ -192,26 +215,24 @@ class Bot {
   }
 
   energyLevel(quantity) {
-    if (quantity >= 500) {
+    if (+quantity >= 500) {
       return 'high';
-    } if (quantity >= 450) {
+    } if (+quantity >= 450) {
       return 'medium';
     }
     return 'low';
   }
 
   async getMatchingItems(feedType, ingredients) {
-    const itemPriceMap = await Item.findAll({
+    return await Item.findAll({
       attributes: ['item_id', 'item_name', 'category', 'packaging_metric', 'unit', 'packaging_size'],
       where: {
         item_name: {
-          [Op.in]: [...ingredients.map((item) => item.name), feedType]
+          [Op.in]: [...ingredients.map((item) => item.name), feedType, ...Object.values(this._concentrates)]
         }
       }
     })
       .then((items) => new Map(items.map((item) => [item.item_name, item])));
-
-    return itemPriceMap;
   }
 
   async deleteFeedRecord(prevPayload) {

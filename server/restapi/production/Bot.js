@@ -16,14 +16,16 @@ class Bot {
 
     this._excludedKeywords = ['Production'];
     this._corrections = {
-      'Large Egg': ['Large', 'Large size.', 'Large size'],
-      'Medium Egg': ['Medium', 'Medium size.', 'Medium size'],
-      'Pullet Egg': ['Pullet', 'Pullet size.', 'Pullet size'],
-      'Cracked Egg': ['cracks', 'Cracks', 'Cracks.'],
-      'water': ['Water consumed'],
+      'Large Egg': ['Large size', 'Large'],
+      'Medium Egg': ['Medium size', 'Medium'],
+      'Pullet Egg': ['Pullet size', 'Pullet'],
+      'Cracked Egg': ['Cracks', 'crack'],
+      water: ['Water consumed'],
       'Vitamin - Miavit': ['vitamin (miavit)'],
-      'compounded': ['local'],
-      feed: ['consumed', 'Feed consumed', 'Feed consumed.']
+      compounded: ['local'],
+      feed: ['Feed consumed', 'consumed'],
+      'production total': ['Egg Production'],
+      'Production%': ['%Egg production']
     };
 
     this._user = {
@@ -52,9 +54,9 @@ class Bot {
 
   async filterPayload(msg) {
     const chat = await msg.getChat();
-    return chat.isGroup &&
-      (chat.name === 'Bhammy Farms - Production' ||
-        (chat.name.includes('Production') && chat.name.includes('Bhammy'))
+    return chat.isGroup
+      && (chat.name === 'Bhammy Farms - Production'
+        || (chat.name.includes('Production') && chat.name.includes('Bhammy'))
         || chat.name === 'Bhammy Farms - Brooding'
         || (chat.name.includes('Brooding') && chat.name.includes('Bhammy')));
   }
@@ -98,21 +100,22 @@ class Bot {
   }
 
   broodingToProductionRecord(msg) {
-     return `${msg.replace('Report on Brooding Record', '')
-       .replace(/([-]){3,}.*?\1/g, '')
-       .replace(/\n\n/g, '')
-       .replace(/Date.     =/g, ' ')
-       .replace(/Feed./g, 'Feed')
-       .replace(/water./g, 'water')
-       .replace(/bags/g, 'vita chick')
-       .replace(/Drug./, 'Medication')}\nbrooding=A`;
+    return `${msg.replace('Report on Brooding Record', '')
+      .replace(/([-]){3,}.*?\1/g, '')
+      .replace(/\n\n/g, '')
+      .replace(/Date. {5}=/g, ' ')
+      .replace(/Feed./g, 'Feed')
+      .replace(/water./g, 'water')
+      .replace(/bags/g, 'vita chick')
+      .replace(/Drug./, 'Medication')}\nbrooding=A`;
   }
 
   isBroodingRecord(msg) {
     const string = msg.toLowerCase();
     return /(\d{1,2})([\/-])(\d{1,2})\2(\d{2,4})/.test(string)
       && ['date', 'feed', 'water'].every((term) => string.includes(term))
-      && /brooding|large|feed|drug|mortality/.test(string);
+      && /brooding|large|feed|drug|mortality/.test(string)
+      && !(/pen/.test(string));
   }
 
   generateStamp(payload) {
@@ -135,7 +138,7 @@ class Bot {
     payloadArray.forEach((item) => {
       if (item.includes('=')) {
         const itemArr = item.split('=');
-        const name = itemArr[0].trim();
+        const name = itemArr[0].trim().replace('.', '');
         const quantity = itemArr[1].trim();
 
         if (!this._excludedKeywords.includes(name) && !isEmpty(quantity)) {
@@ -154,7 +157,7 @@ class Bot {
 
           // Add eggs
           if (name.includes('Egg')) {
-            let eggQuantity = quantity.replace(/crates|crate/g,'');
+            let eggQuantity = quantity.replace(/crates|crate/g, '');
             if (quantity.indexOf(/piece/) > -1) {
               const breakDown = quantity.split(/(\d+)/)
                 .filter(Boolean);
@@ -175,20 +178,20 @@ class Bot {
           }
 
           // Add feeds
-          if (name.toLowerCase().includes('feed')) {
+          if (name.toLowerCase().startsWith('feed')) {
             const feeds = quantity.split(/,|and/);
-            feeds.forEach(feed => {
+            feeds.forEach((feed) => {
               const feedData = feed.trim()
                 .split(/(\d+)/)
                 .filter(Boolean);
 
-              let qty, type;
+              let qty; let
+                type;
 
               if (feed.includes('.')) {
                 qty = Number(`${feedData[0].trim()}.${feedData[2].trim()}`);
                 type = feedData[3].trim();
-              }
-              else {
+              } else {
                 qty = feedData[0].trim();
                 type = feedData[1].trim();
               }
@@ -203,7 +206,7 @@ class Bot {
           // Add mortality
           if (name.includes('mortality')) {
             const mortality = quantity.split(',');
-            mortality.forEach(mort => {
+            mortality.forEach((mort) => {
               mort = mort.trim();
               const mortData = mort.split(/(\d+)/)
                 .filter(Boolean);
@@ -220,7 +223,7 @@ class Bot {
           if (name.includes('medication')) {
             const medications = quantity.split(',');
 
-            medications.forEach(medication => {
+            medications.forEach((medication) => {
               medication = medication.trim();
               const medicament = medication.split(/(\d+)/)
                 .filter(Boolean);
@@ -241,7 +244,7 @@ class Bot {
           if (name.includes('vaccination')) {
             const vaccinations = quantity.split(',');
 
-            vaccinations.forEach(vaccination => {
+            vaccinations.forEach((vaccination) => {
               vaccination = vaccination.trim();
               const vaccines = vaccination.split(/(\d+)/)
                 .filter(Boolean);
@@ -299,9 +302,8 @@ class Bot {
 
     if (activeBatch) {
       return activeBatch.batch_id;
-    } else {
-      throw { msg: `The Pen specified, ${batch} does not exist.` };
     }
+    throw { msg: `The Pen specified, ${batch} does not exist.` };
   }
 
   async processEggs(eggs) {
@@ -313,14 +315,13 @@ class Bot {
       }
     });
 
-    const eggItemsMap = new Map(eggItems.map(item => [item.item_name, item]));
-    return eggs.map(egg => {
+    const eggItemsMap = new Map(eggItems.map((item) => [item.item_name, item]));
+    return eggs.map((egg) => {
       if (eggItemsMap.has(egg.name)) {
         egg.id = eggItemsMap.get(egg.name).item_id;
         return egg;
-      } else {
-        throw { msg: `Unknown egg type, ${egg.name}` };
       }
+      throw { msg: `Unknown egg type, ${egg.name}` };
     });
   }
 
@@ -331,9 +332,9 @@ class Bot {
       }
     });
 
-    return feeds.map(feed => {
-      const matchingFeeds = feedItems.filter(feedItem => feed.name.split(' ')
-        .every(keyword => feedItem.item_name.toLowerCase()
+    return feeds.map((feed) => {
+      const matchingFeeds = feedItems.filter((feedItem) => feed.name.split(' ')
+        .every((keyword) => feedItem.item_name.toLowerCase()
           .indexOf(keyword) !== -1));
 
       if (matchingFeeds.length === 0) {
@@ -355,9 +356,9 @@ class Bot {
       }
     });
 
-    return medications.map(medicament => {
-      const matchingMedicament = medicamentItems.filter(medicamentItem => medicament.name.split(' ')
-        .every(keyword => medicamentItem.item_name.toLowerCase()
+    return medications.map((medicament) => {
+      const matchingMedicament = medicamentItems.filter((medicamentItem) => medicament.name.split(' ')
+        .every((keyword) => medicamentItem.item_name.toLowerCase()
           .indexOf(keyword) !== -1));
 
       if (matchingMedicament.length === 0) {
@@ -379,9 +380,9 @@ class Bot {
       }
     });
 
-    return vaccinations.map(vaccine => {
-      const matchingVaccines = vaccineItems.filter(medicamentItem => vaccine.name.split(' ')
-        .every(keyword => medicamentItem.item_name.toLowerCase()
+    return vaccinations.map((vaccine) => {
+      const matchingVaccines = vaccineItems.filter((medicamentItem) => vaccine.name.split(' ')
+        .every((keyword) => medicamentItem.item_name.toLowerCase()
           .indexOf(keyword) !== -1));
 
       if (matchingVaccines.length === 0) {
@@ -405,7 +406,7 @@ class Bot {
   }
 
   autoCorrect(payload) {
-    payload = payload.replace(/Date( )*=/,'');
+    payload = payload.replace(/Date( )*=/i, '');
 
     for (const correction in this._corrections) {
       const subRegex = this._corrections[correction].join('|');

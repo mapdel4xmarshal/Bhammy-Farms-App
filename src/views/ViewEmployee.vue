@@ -5,6 +5,14 @@
         <v-icon>mdi-chevron-left</v-icon> Back
       </v-btn>
       <v-spacer/>
+      <v-switch
+        v-model="salaryMode"
+        label="Full month"
+        inset
+        hide-details
+        @change="getEmployee"
+      ></v-switch>
+      <v-divider vertical class="ml-4" />
       <v-btn text color="primary" class="mr-2" @click="dialog = loanDialog = true">Loan</v-btn>
       <v-btn color="primary" tile @click="paySalary" :loading="paymentInProgress">Pay salary</v-btn>
     </v-toolbar>
@@ -297,6 +305,7 @@ export default {
   data() {
     return {
       absences: {},
+      salaryMode: true,
       loanDialog: false,
       paymentInProgress: false,
       dialog: false,
@@ -393,7 +402,7 @@ export default {
       this.bankDetail = { ...this.employee.bankDetail };
     },
     getEmployee() {
-      axios.get(`/employees/${this.$route.params.id}?fullMonthsOnly=true`)
+      axios.get(`/employees/${this.$route.params.id}?fullMonthsOnly=${this.salaryMode}`)
         .then(({ data }) => {
           this.employee = data;
           if (!data.bankDetail) this.employee.bankDetail = {};
@@ -464,7 +473,7 @@ export default {
     paySalary() {
       if (this.paymentInProgress) return;
       this.paymentInProgress = true;
-      axios.post(`/employees/${this.employee.id}/process-payment`, { fullMonthsOnly: true })
+      axios.post(`/employees/${this.employee.id}/process-payment`, { fullMonthsOnly: this.salaryMode })
         .then(() => {
           this.message = 'Salary payment in progress';
           this.snackbar = true;

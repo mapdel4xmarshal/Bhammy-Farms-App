@@ -21,6 +21,7 @@ const { fileUploadPath } = require('../../configs');
 const mailer = require('../../mailer/mailer');
 const SalaryClass = require('./salary');
 const SalaryScheduler = require('./salaryScheduler');
+const { getBool } = require('../../utilities/common');
 
 class Controller {
   constructor() {
@@ -75,7 +76,8 @@ class Controller {
       });
   }
 
-  getEmployee(employeeId, fullMonthsOnly) {
+  getEmployee(employeeId, fullMonthsOnly = 'false') {
+    fullMonthsOnly = getBool(fullMonthsOnly);
     return Employee.findByPk(employeeId, {
       attributes: [['date_of_birth', 'dateOfBirth'], ['day_off', 'dayOff'], 'department',
         ['employment_date', 'employmentDate'], 'gender', ['house_id', 'house'], ['is_active', 'isActive'],
@@ -537,18 +539,18 @@ class Controller {
         );
 
         await Party.update({
-            name: employee.name,
-            address: employee.address,
-            state: employee.state,
-            email: employee.email,
-            phone: employee.phone,
-            alt_phone: employee.altPhone
-          },
-          {
-            where: {
-              party_id: existingEmployee.toJSON().party_id
-            }
-          });
+          name: employee.name,
+          address: employee.address,
+          state: employee.state,
+          email: employee.email,
+          phone: employee.phone,
+          alt_phone: employee.altPhone
+        },
+        {
+          where: {
+            party_id: existingEmployee.toJSON().party_id
+          }
+        });
 
         resolve(existingEmployee);
       });
@@ -645,7 +647,8 @@ class Controller {
     }
   }
 
-  async paySalary(employeeId, user, fullMonthsOnly) {
+  async paySalary(employeeId, user, fullMonthsOnly = 'false') {
+    fullMonthsOnly = getBool(fullMonthsOnly);
     const salaryScheduler = new SalaryScheduler();
     return salaryScheduler.process(employeeId, user, fullMonthsOnly)
       .catch((error) => {

@@ -12,6 +12,7 @@ class Salary {
     this.paidSalaries = employee.salaries;
     this.outstandingLoanAmount = employee.deductibles;
     this.absences = employee.Absences.filter((absence) => absence.type === Salary.ABSENCE);
+    // this.employmentDate = employee.
   }
 
   get paidSalaries() {

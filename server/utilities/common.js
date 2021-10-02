@@ -8,3 +8,5 @@ module.exports.isEmpty = (val) => ((val !== null && typeof val === 'object' && O
     || typeof (val) === 'undefined' || (typeof (val) === 'number' && isNaN(val)));
 
 module.exports.dateRegex = /(\d{1,2})([\/-])(\d{1,2})\2(\d{2,4})/;
+
+module.exports.getBool = (val) => !!JSON.parse(String(val).toLowerCase());

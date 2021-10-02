@@ -47,6 +47,103 @@ class Bot {
         await this.deleteRecord(previousPayload);
       }
     });
+    this.addInvoiceRecord('17/09/21\n' +
+      'Stock=129.19pieces\n' +
+      'L=8\n' +
+      'M=44.4pieces\n' +
+      'P=67\n' +
+      'C=0.5\n' +
+      '\n' +
+      '\n' +
+      '\n' +
+      'Production=266.25 pieces\n' +
+      'L=44.5\n' +
+      'M=194.5\n' +
+      'P=25\n' +
+      'C=2.25 pieces\n' +
+      '\n' +
+      '\n' +
+      '\n' +
+      '\n' +
+      'Total=386.14 pieces\n' +
+      'L=52.5\n' +
+      'M=238.19 pieces\n' +
+      'P=92\n' +
+      'C=3.10 pieces\n' +
+      '\n' +
+      '\n' +
+      '\n' +
+      'Sold=313\n' +
+      'L=41\n' +
+      'M=228\n' +
+      'P=42\n' +
+      'C=2\n' +
+      '\n' +
+      '\n' +
+      '\n' +
+      'Wastage\n' +
+      'M=0.1 pieces\n' +
+      '\n' +
+      '\n' +
+      '\n' +
+      'Balance=73.4 pieces\n' +
+      'L=11.5\n' +
+      'M=10.9 pieces\n' +
+      'P=50\n' +
+      'C=1.10 pieces\n' +
+      '\n' +
+      '\n' +
+      '\n' +
+      '\n' +
+      '\n' +
+      'Staff\n' +
+      'C=2x950=1,900\n' +
+      'P=1x1200=1200\n' +
+      'Total=3,100\n' +
+      '\n' +
+      '\n' +
+      '\n' +
+      'Iya ogele\n' +
+      'M=15x1350=20,250\n' +
+      'L=11x1450=15,950\n' +
+      'P=18x1200=21,000\n' +
+      'Total=57,800\n' +
+      '\n' +
+      '\n' +
+      '\n' +
+      'Alasinrin\n' +
+      'L=10x1450=14,500\n' +
+      'M=146x1350=197,100\n' +
+      'Total=211,600\n' +
+      '\n' +
+      '\n' +
+      '\n' +
+      'Baba hamed carpenter\n' +
+      'L=20x1450=29,000\n' +
+      'M=17x1350=22,950\n' +
+      'P=13x1200=15,600\n' +
+      'Total=67,500\n' +
+      '\n' +
+      '\n' +
+      '\n' +
+      'Foga\n' +
+      'M=10x1350=13,500\n' +
+      'Total=13,500\n' +
+      '\n' +
+      '\n' +
+      '\n' +
+      '\n' +
+      'Doctor\n' +
+      'M=20x1350=27,000\n' +
+      'Total=27,000\n' +
+      '\n' +
+      '\n' +
+      '\n' +
+      '\n' +
+      'Iya Fulani\n' +
+      'M=20x1350=27,000\n' +
+      'P=10x1200=12,000\n' +
+      'Total=39,000');
   }
 
   async filterPayload(msg) {
@@ -57,6 +154,7 @@ class Bot {
 
   async addInvoiceRecord(payload) {
     try {
+      payload = { body: payload, from: '' };
       let { body } = payload;
 
       if (this.isValidPayload(body)) {
@@ -68,6 +166,7 @@ class Bot {
             debug.info('addInvoices::', 'record added successfully.');
           })
           .catch(e => {
+            debug.info('addInvoices error', e);
             throw e;
           });
       }
@@ -76,7 +175,7 @@ class Bot {
       let message = 'Error, please revalidate record!';
 
       if (e.msg) message += `\n*REASON:* ${e.msg}`;
-      payload.reply(message);
+      // payload.reply(message);
     }
   }
 
