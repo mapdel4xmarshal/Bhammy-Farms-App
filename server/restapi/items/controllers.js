@@ -2,6 +2,7 @@ const path = require('path');
 const formidable = require('formidable');
 const { Item, Sequelize } = require('../../models');
 const { fileUploadPath } = require('../../configs');
+const { isEmpty } = require('../../utilities/common');
 
 class Controller {
   // eslint-disable-next-line class-methods-use-this
@@ -76,8 +77,8 @@ class Controller {
           unit: item.unit.toLowerCase(),
           price: item.price,
           image: attachment,
-          is_produced: item.isProduced == 'undefined' ? false : item.isProduced,
-          description: item.description == 'undefined' ? '' : item.description
+          is_produced:  isEmpty(item.isProduced) ? false : item.isProduced,
+          description: isEmpty(item.description) ? '' : item.description
         }, { user, resourceId: 'item_id' })
           .then(resolve)
           .catch(reject);
@@ -111,8 +112,8 @@ class Controller {
           packaging_metric: item.packagingMetric.toLowerCase(),
           unit: item.unit.toLowerCase(),
           price: item.price,
-          is_produced: item.isProduced,
-          description: item.description
+          is_produced: isEmpty(item.isProduced) ? false : item.isProduced,
+          ...(!isEmpty(item.description) && { description: item.description })
         }, { user, resourceId: 'item_id', where: { item_id: id } })
           .then(resolve)
           .catch(reject);

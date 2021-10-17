@@ -55,6 +55,11 @@ class Medications extends Model {
         type: DataTypes.STRING,
         allowNull: false
       },
+      cost: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: true,
+        defaultValue: 0
+      },
       notes: {
         type: DataTypes.TEXT,
         allowNull: true

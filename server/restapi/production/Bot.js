@@ -14,7 +14,7 @@ class Bot {
   constructor(controllers) {
     this._controllers = controllers;
 
-    this._excludedKeywords = ['Production'];
+    this._excludedKeywords = ['Production', 'Total mor', 'Egg production', 'Wastage'];
     this._corrections = {
       'Large Egg': ['Large size', 'Large'],
       'Medium Egg': ['Medium size', 'Medium'],
@@ -23,6 +23,7 @@ class Bot {
       water: ['Water consumed'],
       'Vitamin - Miavit': ['vitamin (miavit)'],
       compounded: ['local'],
+      layer: ['layers'],
       feed: ['Feed consumed', 'consumed'],
       'production total': ['Egg Production'],
       'Production%': ['%Egg production']
@@ -103,11 +104,10 @@ class Bot {
     return `${msg.replace('Report on Brooding Record', '')
       .replace(/([-]){3,}.*?\1/g, '')
       .replace(/\n\n/g, '')
-      .replace(/Date. {5}=/g, ' ')
-      .replace(/Feed./g, 'Feed')
-      .replace(/water./g, 'water')
-      .replace(/bags/g, 'vita chick')
-      .replace(/Drug./, 'Medication')}\nbrooding=A`;
+      .replace(/Date\. {5}=/ig, ' ')
+      .replace(/(Feed\.)/ig, 'Feed')
+      .replace(/(water\.)/ig, 'water')
+      .replace(/(Drug\.|Drug)/ig, 'Medication')}\nbrooding=A`;
   }
 
   isBroodingRecord(msg) {
@@ -141,7 +141,7 @@ class Bot {
         const name = itemArr[0].trim().replace('.', '');
         const quantity = itemArr[1].trim();
 
-        if (!this._excludedKeywords.includes(name) && !isEmpty(quantity)) {
+        if (!isEmpty(quantity)) {
           if (name.includes('pen')) {
             record.batchName = `PEN-${quantity}`.toUpperCase();
           }
@@ -185,8 +185,8 @@ class Bot {
                 .split(/(\d+)/)
                 .filter(Boolean);
 
-              let qty; let
-                type;
+              let qty;
+              let type;
 
               if (feed.includes('.')) {
                 qty = Number(`${feedData[0].trim()}.${feedData[2].trim()}`);
@@ -195,6 +195,19 @@ class Bot {
                 qty = feedData[0].trim();
                 type = feedData[1].trim();
               }
+
+              if (type.includes(' feed')) {
+                type = type.replace(' feed', '');
+              }
+
+              if (type === 'compounded layer') {
+                type = 'layer mash (compounded)';
+              }
+
+              if (type === 'compounded grower') {
+                type = 'grower mash (compounded)';
+              }
+
               record.feeds.push({
                 id: null,
                 name: type,
@@ -333,9 +346,13 @@ class Bot {
     });
 
     return feeds.map((feed) => {
-      const matchingFeeds = feedItems.filter((feedItem) => feed.name.split(' ')
-        .every((keyword) => feedItem.item_name.toLowerCase()
-          .indexOf(keyword) !== -1));
+      let matchingFeeds = feedItems.filter((mFeed) => mFeed.item_name.toLowerCase() === feed.name);
+
+      if (matchingFeeds.length === 0) {
+        matchingFeeds = feedItems.filter((feedItem) => feed.name.split(' ')
+          .every((keyword) => feedItem.item_name.toLowerCase()
+            .indexOf(keyword) !== -1));
+      }
 
       if (matchingFeeds.length === 0) {
         throw { msg: `Unknown feed type, '${feed.name}'` };
@@ -343,7 +360,8 @@ class Bot {
         feed.id = matchingFeeds[0].item_id;
         feed.name = matchingFeeds[0].item_name;
       } else {
-        throw { msg: `Multiple feeds matches the name '${feed.name}', please be more specific.` };
+        throw { msg: `Multiple feeds matches the name '${feed.name}', please be more specific.
+        \nPossible options are ${matchingFeeds.map((mFeed) => mFeed.item_name).join(',')}` };
       }
       return feed;
     });
@@ -406,7 +424,8 @@ class Bot {
   }
 
   autoCorrect(payload) {
-    payload = payload.replace(/Date( )*=/i, '');
+    payload = payload.replace(/Date( )*=/i, '')
+      .replace(new RegExp(`^.*(${this._excludedKeywords.join('|')}).*$`, 'img'), '');
 
     for (const correction in this._corrections) {
       const subRegex = this._corrections[correction].join('|');

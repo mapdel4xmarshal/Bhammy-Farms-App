@@ -8,6 +8,8 @@ const {
 } = require('../../models');
 
 const ProductionSummary = require('./productionSummary');
+const Debug = require('../../utilities/debugger');
+const debug = new Debug('Production:Controller');
 
 class Controller {
   constructor() {
@@ -49,11 +51,13 @@ class Controller {
       vaccinations.method AS vaccinationMethod, vaccinations.vaccine_id AS vaccineId,
       vaccinations.dosage AS vaccineDosage, vaccinations.dosage_unit AS vaccineDosageUnit,
       vaccinations.total_dosage AS vaccineTotalDosage, vaccinations.no_of_birds AS vaccinatedBirds,
+      vaccinations.cost AS vaccineCost,
 
       medication.administered_by AS medicamentAdministrator, medication.notes AS medicationNotes,
       medication.medication_id AS medicationId, medication.medicament_batch_no AS medicamentBatchNo,
       medication.method AS medicationMethod, medication.medicament_id AS medicamentId, medication.dosage AS medicamentDosage,
       medication.dosage_unit AS medicamentDosageUnit, medication.total_dosage AS medicamentTotalDosage, medication.no_of_birds AS medicatedBirds,
+      medication.cost AS medicamentCost,
 
       DATEDIFF(productions.date, batches.move_in_date) + batches.move_in_age AS batchAge
     FROM productions
@@ -157,19 +161,25 @@ class Controller {
       const productItems = [...production.eggs, ...production.feeds];
 
       const itemPriceMap = await Item.findAll({
-        attributes: ['item_id', 'price'],
+        attributes: ['item_id', 'price', 'packaging_size'],
         where: {
           item_id: {
-            [Op.in]: productItems.map((item) => item.id)
+            [Op.in]: [
+              ...productItems.map((item) => item.id),
+              ...production.vaccinations.map((item) => item.vaccine.id),
+              ...production.medications.map((item) => item.medicament.id)
+            ]
           }
         }
       })
-        .then((items) => new Map(items.map((item) => [item.item_id, item.price])));
+        .then((items) => new Map(items.map((item) => [item.item_id, item])));
+
+      debug.info('itemPriceMap', itemPriceMap, production.medications);
 
       await ProductionItem.bulkCreate(productItems.map((item) => ({
         quantity: item.quantity,
         item_id: item.id,
-        price: itemPriceMap.get(item.id),
+        price: itemPriceMap.get(item.id).price,
         production_id: productionId
       })), {
         transaction,
@@ -210,8 +220,10 @@ class Controller {
       });
 
 
-      await this.processTreatment('vaccination', production.vaccinations, productionId, transaction, user, activeBatch);
-      await this.processTreatment('medication', production.medications, productionId, transaction, user, activeBatch);
+      await this.processTreatment('vaccination', production.vaccinations, {
+        productionId, transaction, user, activeBatch, itemPriceMap });
+      await this.processTreatment('medication', production.medications, {
+        productionId, transaction, user, activeBatch, itemPriceMap });
 
       // If the execution reaches this line, no errors were thrown.
       // We commit the transaction.
@@ -232,22 +244,28 @@ class Controller {
     }
   }
 
-  async processTreatment(type, treatments, productionId, transaction, user, activeBatch) {
+  async processTreatment(type, treatments, { productionId, transaction, user, activeBatch, itemPriceMap }) {
     const medType = type === 'vaccination' ? 'vaccine' : 'medicament';
     const modelType = type === 'vaccination' ? 'Vaccination' : 'Medication';
 
-    treatments = treatments.map((treatment) => ({
-      production_id: productionId,
-      [`${medType}_id`]: treatment[medType].id,
-      [`${medType}_batch_no`]: treatment[`${medType}BatchNo`],
-      dosage: treatment.dosage || 0,
-      dosage_unit: treatment.dosageUnit || 'N/A',
-      total_dosage: treatment.totalDosage,
-      no_of_birds: treatment.noOfBirds || activeBatch.initial_stock_count,
-      method: treatment[`${type}Method`],
-      administered_by: treatment.administeredBy,
-      notes: treatment.reason
-    }));
+    treatments = treatments.map((treatment) => {
+      const id = treatment[medType].id;
+      const item = itemPriceMap.get(id);
+
+      return {
+        production_id: productionId,
+        [`${medType}_id`]: id,
+        [`${medType}_batch_no`]: treatment[`${medType}BatchNo`],
+        dosage: treatment.dosage || 0,
+        dosage_unit: treatment.dosageUnit || 'N/A',
+        total_dosage: treatment.totalDosage,
+        no_of_birds: treatment.noOfBirds || activeBatch.initial_stock_count,
+        method: treatment[`${type}Method`],
+        administered_by: treatment.administeredBy,
+        notes: treatment.reason,
+        cost: (+treatment.totalDosage / +item.packaging_size) * +item.price
+      };
+    });
 
     for (const item of treatments) {
       await Item.decrement('quantity',
@@ -346,7 +364,8 @@ class Controller {
           vaccinationMethod: production.vaccinationMethod,
           administrator: production.vaccineAdministrator,
           note: production.vaccinationNotes,
-          noOfBirds: production.vaccinatedBirds
+          noOfBirds: production.vaccinatedBirds,
+          cost: production.vaccineCost
         });
       }
 
@@ -361,7 +380,8 @@ class Controller {
           medicationMethod: production.medicationMethod,
           administrator: production.medicamentAdministrator,
           note: production.medicationNotes,
-          noOfBirds: production.medicatedBirds
+          noOfBirds: production.medicatedBirds,
+          cost: production.medicamentCost
         });
       }
 

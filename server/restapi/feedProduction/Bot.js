@@ -13,11 +13,11 @@ class Bot {
   constructor(controllers) {
     this._controllers = controllers;
 
-    this._excludedKeywords = ['Tonne'];
+    this._excludedKeywords = ['Tonne', 'Tonnes'];
     this._corrections = {
       Lavaside: ['Lavacide'],
       Maize: ['Corn'],
-      'Toxin Binder': ['Toxin-binder', 'Toxin-binda'],
+      'Toxin Binder': ['Toxin-binder', 'Toxin-binda', 'Toxin binder'],
       WheatOffal: ['Wheat offer', 'Wheat offal', 'WheatOffal', 'weat offer', 'wheat'],
       'Choline Chloride': ['Chlorine chloride', 'Chlorine-chloride', 'Choline-Chloride'],
       'Layer Mash (Vital)': ['Vital layer', 'Vita layer', 'Vital-layer', 'vita-layer'],
@@ -40,8 +40,10 @@ class Bot {
     this.requiredIngredients = ['Maize', 'Toxin Binder', 'WheatOffal', 'Concentrate'];
 
     this.feedTypes = {
-      layer: 'Layer mash (Compounded)',
-      grower: 'Grower mash (Compounded)'
+      'vital-layer': 'Layer mash (Compounded)',
+      'vital-grower': 'Grower mash (Compounded)',
+      'chikun-layer': 'Chikun Layer Mash (Compounded)',
+      'hendrix-layer': 'Hendrix Layer Mash (Compounded)',
     };
   }
 
@@ -80,7 +82,8 @@ class Bot {
         const matchingItems = await this.getMatchingItems(record.type, record.ingredients);
 
         this.requiredIngredients.forEach((ingredient) => {
-          if (record.ingredients.filter((ingrdnt) => ingrdnt.name === ingredient).length === 0) {
+          if (record.ingredients
+              .filter((ingrdnt) => ingrdnt.name.toLowerCase() === ingredient.toLowerCase()).length === 0) {
             throw { msg: `'${ingredient}' is required!` };
           }
         });
@@ -136,8 +139,9 @@ class Bot {
 
           record.date = new Date(`${dateArray[1]}-${dateArray[0]}-${dateArray[2]}`).toISOString();
           const feedType = type[0].toLowerCase();
-          record.type = this.feedTypes[feedType];
-          record.concentrateBrand = this._concentrates[`${concentrateBrand[0].toLowerCase()}-${feedType}`];
+          const feedTypeId = `${concentrateBrand[0].toLowerCase()}-${feedType}`;
+          record.type = this.feedTypes[feedTypeId];
+          record.concentrateBrand = this._concentrates[feedTypeId];
         }
       }
     });
@@ -153,7 +157,7 @@ class Bot {
         debug.info('ingredient', ingredient);
         debug.info('matchingItems', matchingItems);
       }
-
+      debug.info('ingredient.name', ingredient.name);
       const item = matchingItems.get(ingredient.name);
       const regex = new RegExp(`\\b(?:${item.packaging_metric})\\b`, 'gi');
 

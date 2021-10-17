@@ -1,3 +1,5 @@
+const expectances = require('./expectancy');
+
 class ProductionSummary {
   constructor(properties) {
     this._production = {};
@@ -17,6 +19,7 @@ class ProductionSummary {
     this._production.climateEffect = this.climateEffect;
     this._production.batchAge = properties.batchAge;
     this._production.cumulativeMortality = properties.cumulativeMortality;
+    this._production.profit = 0;
 
     properties.items = Array.from(properties.items.values());
     properties.vaccinations = Array.from(properties.vaccinations.values());
@@ -55,6 +58,8 @@ class ProductionSummary {
       noOfBirds: vaccination.noOfBirds,
       thumbnail: vaccination.thumbnail
     }));
+
+    this._production.profit += Number.parseInt(vaccinations.reduce((total, item) => total - item.cost, 0));
   }
 
   get medications() {
@@ -74,6 +79,8 @@ class ProductionSummary {
       reason: medication.notes,
       medicamentId: medication.medicamentId
     }));
+
+    this._production.profit += Number.parseInt(medications.reduce((total, item) => total - item.cost, 0));
   }
 
   get mortality() {
@@ -136,7 +143,7 @@ class ProductionSummary {
   }
 
   set profit(items) {
-    this._production.profit = Number.parseInt(items.reduce((total, item) => {
+    this._production.profit += Number.parseInt(items.reduce((total, item) => {
       if (item.category.toLowerCase() === 'feed') return total - ((item.quantity / item.packagingSize) * item.price);
       if (item.category.toLowerCase() === 'egg') return total + ((item.quantity / item.packagingSize) * item.price);
       return 0;
@@ -180,65 +187,8 @@ class ProductionSummary {
   }
 
   set expectancy(age) {
-    age = Math.floor(Number(age) / 7);
-    let productivity = 0;
-    switch (age) {
-      case 21: {
-        productivity = 5;
-        break;
-      }
-      case 22: {
-        productivity = 10;
-        break;
-      }
-      case 23: {
-        productivity = 18;
-        break;
-      }
-      case 24: {
-        productivity = 34;
-        break;
-      }
-      case 25: {
-        productivity = 52;
-        break;
-      }
-      case 26: {
-        productivity = 65;
-        break;
-      }
-      case 27: {
-        productivity = 74;
-        break;
-      }
-      case 28: {
-        productivity = 84;
-        break;
-      }
-      case 29: {
-        productivity = 88;
-        break;
-      }
-      case 30: {
-        productivity = 92;
-        break;
-      }
-      case 31: {
-        productivity = 94;
-        break;
-      }
-      default: {
-        if (age < 21) productivity = 0;
-        else if (age >= 32 && age <= 39) productivity = 88;
-        else if (age >= 40 && age <= 47) productivity = 83;
-        else if (age >= 48 && age <= 59) productivity = 77;
-        else if (age >= 60 && age <= 64) productivity = 73;
-        else if (age >= 65 && age <= 70) productivity = 70;
-        else productivity = 60;
-        break;
-      }
-    }
-    this._production.expectancy = productivity;
+    age = Math.ceil(Number(age) / 7);
+    this._production.expectancy = expectances[age];
   }
 }
 
