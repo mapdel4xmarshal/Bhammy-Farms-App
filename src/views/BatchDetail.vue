@@ -118,7 +118,11 @@
                    :y-axis-label-formatter="chartFormatter" y-axis-unit="crates"></chart>
           </v-tab-item>
           <v-tab-item>
-            <chart :series="[weekData, feedsData]" name="Feeds" y-axis-unit="kg"></chart>
+            <chart
+              :series="[weekData, feedsData, expectedFeedData]"
+              name="Feeds"
+              y-axis-unit="kg"
+              legend-enabled></chart>
           </v-tab-item>
           <v-tab-item>
             <chart :series="[weekData, populationData]" name="Mortality"></chart>
@@ -291,6 +295,7 @@ export default {
       populationData: this.baseData('Population', 'bird'),
       temperatureData: this.baseData('Temperature', '°C', 'rgba(97,97,97,0.49)'),
       expectedProductionData: this.baseData('Projected Production', '%', '#8f8f8f'),
+      expectedFeedData: this.baseData('Expected Feed', 'bag', '#8f8f8f'),
       weekData: this.baseData('Age', 'Week', 'transparent', false, { yAxis: 1 }),
       headers: [
         {
@@ -301,11 +306,12 @@ export default {
         },
         { text: 'Week', value: 'batchAge' },
         { text: 'Flock', value: 'flockCount' },
-        { text: 'Production %', value: 'productionPercent' },
         { text: 'Eggs (crates)', value: 'eggs' },
-        { text: 'Expectancy', value: 'expectancy' },
+        { text: 'Production %', value: 'productionPercent' },
+        { text: 'Exp. Prod. %', value: 'expectancy.production%' },
         { text: 'Feed (kg)', value: 'feeds' },
-        { text: 'Feed/animal (g)', value: 'feedPerAnimal' },
+        { text: 'Feed/bird (g)', value: 'feedPerAnimal' },
+        { text: 'Exp. Feed/bird(g)', value: 'expectancy.feed' },
         { text: 'Mortality', value: 'mortality' },
         { text: 'Temperature', value: 'temperature' },
         { text: 'Humidity', value: 'humidity' },
@@ -550,7 +556,13 @@ export default {
       this.populationData.data.push({ x: date, y: production.mortality });
       this.waterData.data.push({ x: date, y: production.water });
       this.temperatureData.data.push({ x: date, y: production.temperature });
-      this.expectedProductionData.data.push({ x: date, y: production.expectancy });
+      this.expectedProductionData.data.push({ x: date, y: production.expectancy['production%'] });
+      this.expectedFeedData.data
+        .push({
+          x: date,
+          y: +((+production.expectancy.feed * production.flockCount)
+            / (+production.feedPackagingSize * 1000)).toFixed(2)
+        });
       // eslint-disable-next-line no-bitwise
       this.weekData.data.push({ x: date, y: ~~(production.batchAge / 7) });
     },

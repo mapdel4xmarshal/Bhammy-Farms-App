@@ -13,7 +13,7 @@ class Bot {
   constructor(controllers) {
     this._controllers = controllers;
 
-    this._excludedKeywords = ['Tonne', 'Tonnes'];
+    this._excludedKeywords = ['Tonne', 'Tonnes', 'tonne'];
     this._corrections = {
       Lavaside: ['Lavacide'],
       Maize: ['Corn'],
@@ -75,9 +75,9 @@ class Bot {
 
       body = this.autoCorrect(body);
 
-      const bodyArray = body.split('\n');
+      const bodyArray = body.toLowerCase().split('\n');
 
-      if (this.isValidPayload(bodyArray[0])) {
+      if (this.isValidPayload(body)) {
         const record = this.parsePayload(bodyArray);
         const matchingItems = await this.getMatchingItems(record.type, record.ingredients);
 
@@ -92,7 +92,7 @@ class Bot {
 
         debug.info('Record', record);
 
-        this.createFeedRecord(matchingItems.get(record.type).item_id, record, this.generateStamp(payload))
+        this.createFeedRecord(matchingItems.get(record.type.toLowerCase()).item_id, record, this.generateStamp(payload))
           .then((res) => {
             debug.info('Add FeedProduction - success', res);
             payload.reply('*RECORD ADDED* 👍');
@@ -115,8 +115,8 @@ class Bot {
   parsePayload(payloadArray) {
     const record = { ingredients: [] };
 
-    payloadArray.forEach((item) => {
-      if (item.includes('=')) {
+    payloadArray.map((item) => {
+      if (item.includes('=') && !item.includes('date')) {
         const itemArr = item.split('=');
         const name = itemArr[0].trim();
         const quantity = itemArr[1].trim();
@@ -128,20 +128,26 @@ class Bot {
           });
         }
       } else {
-        const date = item.match(/(\d{1,2})([\/-])(\d{1,2})\2(\d{2,4})/g);
+        if (item.includes('=')) item = item.split('=').pop();
 
-        if (date) {
-          const type = item.match(/layer|grower/ig);
-          const concentrateBrand = item.match(/chikun|vital/ig) || ['vital'];
-          const dateArray = date[0].split('/');
+        const date = item.match(/(\d{1,2})([\/-])(\d{1,2})\2(\d{2,4})/g);
+        const type = item.match(/layer|grower|prelay|pre lay/ig);
+
+        if (type) {
+          const concentrateBrand = item.match(/chikun|vital/ig);
+          if (!concentrateBrand) throw new Error('No concentrate brand specified!');
 
           debug.info('parse payload', { type, concentrateBrand });
 
-          record.date = new Date(`${dateArray[1]}-${dateArray[0]}-${dateArray[2]}`).toISOString();
           const feedType = type[0].toLowerCase();
           const feedTypeId = `${concentrateBrand[0].toLowerCase()}-${feedType}`;
           record.type = this.feedTypes[feedTypeId];
           record.concentrateBrand = this._concentrates[feedTypeId];
+        }
+
+        if (date) {
+          const dateArray = date[0].split('/');
+          record.date = new Date(`${dateArray[1]}-${dateArray[0]}-${dateArray[2]}`).toISOString();
         }
       }
     });
@@ -158,7 +164,7 @@ class Bot {
         debug.info('matchingItems', matchingItems);
       }
       debug.info('ingredient.name', ingredient.name);
-      const item = matchingItems.get(ingredient.name);
+      const item = matchingItems.get(ingredient.name.toLowerCase());
       const regex = new RegExp(`\\b(?:${item.packaging_metric})\\b`, 'gi');
 
       if (regex.test(ingredient.quantity)) {
@@ -178,7 +184,7 @@ class Bot {
   isValidPayload(string) {
     string = string.toLowerCase();
     return /(\d{1,2})([\/-])(\d{1,2})\2(\d{2,4})/.test(string)
-      && ['feed'].every((term) => string.includes(term))
+      && ['feed', 'concentrate', 'maize'].every((term) => string.includes(term))
       && /layer|grower/i.test(string);
   }
 
@@ -236,7 +242,7 @@ class Bot {
         }
       }
     })
-      .then((items) => new Map(items.map((item) => [item.item_name, item])));
+      .then((items) => new Map(items.map((item) => [item.item_name.toLowerCase(), item])));
   }
 
   async deleteFeedRecord(prevPayload) {

@@ -21,7 +21,9 @@ const { fileUploadPath } = require('../../configs');
 const mailer = require('../../mailer/mailer');
 const SalaryClass = require('./salary');
 const SalaryScheduler = require('./salaryScheduler');
-const { getBool } = require('../../utilities/common');
+const { getBool,
+  isEmpty
+} = require('../../utilities/common');
 
 class Controller {
   constructor() {
@@ -520,9 +522,9 @@ class Controller {
           salary: employee.salary,
           is_manager: employee.level,
           day_off: employee.dayOff,
-          comment: employee.comment,
-          house_id: employee.house,
-          location_id: employee.location
+          ...(!isEmpty(employee.comment) && { comment: employee.comment }),
+          ...(!isEmpty(employee.house) && { house_id: employee.house }),
+          ...(!isEmpty(employee.location) && { location_id: employee.location })
         };
 
         if (thumbnail) payload.image = thumbnail;

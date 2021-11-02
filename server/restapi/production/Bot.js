@@ -85,8 +85,9 @@ class Bot {
 
         const res = await this._controllers.addProduction(this._user, record);
 
-        if (res.error) throw { msg: res.error };
-        else {
+        if (res.error) {
+          throw { msg: res.error };
+        } else {
           debug.info('AddProduction - success', res);
           payload.reply('*RECORD ADDED* 👍');
         }
@@ -138,7 +139,8 @@ class Bot {
     payloadArray.forEach((item) => {
       if (item.includes('=')) {
         const itemArr = item.split('=');
-        const name = itemArr[0].trim().replace('.', '');
+        const name = itemArr[0].trim()
+          .replace('.', '');
         const quantity = itemArr[1].trim();
 
         if (!isEmpty(quantity)) {
@@ -158,16 +160,18 @@ class Bot {
           // Add eggs
           if (name.includes('Egg')) {
             let eggQuantity = quantity.replace(/crates|crate/g, '');
-            if (quantity.indexOf(/piece/) > -1) {
-              const breakDown = quantity.split(/(\d+)/)
-                .filter(Boolean);
+
+            if (quantity.indexOf('piece') > -1) {
+              const breakDown = quantity.split(/(\d+)/).filter(Boolean);
+
               if (breakDown.length === 2) {
-                eggQuantity = breakDown[0];
+                eggQuantity = +breakDown[0];
               } else {
-                eggQuantity = breakDown[0] * 30 + (Number(breakDown[2]) || 0);
+                eggQuantity = +breakDown[0] * 30 + (+breakDown[2] || 0);
               }
             } else {
-              eggQuantity *= 30;
+              const qty = eggQuantity.split('.');
+              eggQuantity = (qty[0] * 30) + (+qty[1] || 0);
             }
 
             record.eggs.push({
@@ -178,7 +182,8 @@ class Bot {
           }
 
           // Add feeds
-          if (name.toLowerCase().startsWith('feed')) {
+          if (name.toLowerCase()
+            .startsWith('feed')) {
             const feeds = quantity.split(/,|and/);
             feeds.forEach((feed) => {
               const feedData = feed.trim()
@@ -200,11 +205,13 @@ class Bot {
                 type = type.replace(' feed', '');
               }
 
-              if (type === 'compounded layer') {
+              if (type === 'compounded layer'
+                || ['vital', 'compounded', 'layer'].every((keyword) => type.includes(keyword))) {
                 type = 'layer mash (compounded)';
               }
 
-              if (type === 'compounded grower') {
+              if (type === 'compounded grower'
+                || ['vital', 'compounded', 'grower'].every((keyword) => type.includes(keyword))) {
                 type = 'grower mash (compounded)';
               }
 
@@ -224,7 +231,8 @@ class Bot {
               const mortData = mort.split(/(\d+)/)
                 .filter(Boolean);
               record.mortality.push({
-                time: new Date().toTimeString().split(' ')[0],
+                time: new Date().toTimeString()
+                  .split(' ')[0],
                 reason: 'other',
                 count: mortData[0],
                 description: mort
@@ -320,7 +328,12 @@ class Bot {
   }
 
   async processEggs(eggs) {
-    if (eggs.length === 0) eggs.push({ name: 'Pullet Egg', quantity: 0 });
+    if (eggs.length === 0) {
+      eggs.push({
+        name: 'Pullet Egg',
+        quantity: 0
+      });
+    }
 
     const eggItems = await Item.findAll({
       where: {
@@ -360,8 +373,11 @@ class Bot {
         feed.id = matchingFeeds[0].item_id;
         feed.name = matchingFeeds[0].item_name;
       } else {
-        throw { msg: `Multiple feeds matches the name '${feed.name}', please be more specific.
-        \nPossible options are ${matchingFeeds.map((mFeed) => mFeed.item_name).join(',')}` };
+        throw {
+          msg: `Multiple feeds matches the name '${feed.name}', please be more specific.
+        \nPossible options are ${matchingFeeds.map((mFeed) => mFeed.item_name)
+            .join(',')}`
+        };
       }
       return feed;
     });

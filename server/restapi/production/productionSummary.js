@@ -188,7 +188,7 @@ class ProductionSummary {
 
   set expectancy(age) {
     age = Math.ceil(Number(age) / 7);
-    this._production.expectancy = expectances[age];
+    this._production.expectancy = expectances[age] || expectances[expectances.length - 1];
   }
 }
 
