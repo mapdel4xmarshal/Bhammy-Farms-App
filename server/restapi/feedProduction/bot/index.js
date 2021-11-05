@@ -2,6 +2,10 @@ const client = require('../../../whatsapp');
 const FeedProduction = require('./FeedProduction');
 const Debug = require('../../../utilities/debugger');
 const debug = new Debug('FeedProduction:BotV2');
+const {
+  Item,
+  Sequelize: {Op}
+} = require('../../../models');
 
 class FeedProductionBot {
   constructor() {
@@ -16,40 +20,9 @@ class FeedProductionBot {
       bag: ['bags'],
       layer: ['layers'],
       grower: ['growers'],
-      quantity: ['qty', 'tonnes', 'tonne', 'ton', 'tons']
+      tonne: ['tonnes', 'tonne', 'ton', 'tons'],
+      concentrate: ['concentrates']
     };
-
-    this.requestHandler({
-      body: 'Date=20/11/2021\n' +
-        'Type=Prelay | Layer | Grower\n' +
-        'Maize=235kg\n' +
-        'Wheatoffal=2.8kg\n' +
-        'Lime=1\n' +
-        'Soya=10\n' +
-        'Chlorine cloride=\n' +
-        'Toxin binder=.75kg\n' +
-        'Tonne|Quantity=.5\n' +
-        'Concentrate=Chikun layer 5bags\n' +
-        'Concentrate=Hendrix layer 5bags\n' +
-        'Chikun Layer Concentrate=5bags\n' +
-        'Concentrate=(3bags chikun layers & 3kg chikun grower)\n' +
-        'Concentrate=(3kg chikun layers, 3bag chikun grower)\n' +
-        '\n' +
-        'Date=20/11/2021\n' +
-        'Type=Prelay | Layer | Grower\n' +
-        'Maize=235kg\n' +
-        'Wheatoffal=2.8kg\n' +
-        'Lime=1\n' +
-        'Soya=10\n' +
-        'Chlorine cloride=\n' +
-        '  Toxin binder=.75kg\n' +
-        'Tonne|Quantity=.5\n' +
-        'Concentrate=Chikun layer 5bags\n' +
-        'Concentrate=Hendrix layer 5bags\n' +
-        'Chikun Layer Concentrate=5bags\n' +
-        'Concentrate=(3bags chikun layers & 3kg chikun grower)\n' +
-        'Concentrate=(3kg chikun layers, 3bag chikun grower)\n'
-    }).catch(console.error);
   }
 
   listen() {
@@ -60,14 +33,15 @@ class FeedProductionBot {
     });
   }
 
-
   async requestHandler(payload) {
-    // const message = this.autoCorrect(payload.body.toLowerCase());
-                                          console.log(payload)
+    const message = this.autoCorrect(payload.body.toLowerCase());
+
     if (this.validatePayload(message)) {
       debug.info('Record received from whatsapp', message);
       try {
-        await new FeedProduction(payload, message);//.insert();
+        const items = await this.getMatchingItems();
+
+        new FeedProduction(message, items).insert();
       } catch (e) {
         debug.error('Bot', e);
         console.error(e);
@@ -75,7 +49,6 @@ class FeedProductionBot {
       }
     }
   }
-
 
   async filterPayload(msg) {
     const chat = await msg.getChat();
@@ -90,11 +63,12 @@ class FeedProductionBot {
   }
 
   autoCorrect(message) {
-    let correctedMsg;
+    let correctedMsg = message;
     for (const correction in this._corrections) {
       const subRegex = this._corrections[correction].join('|');
-      const regex = new RegExp(`\\b(?:${subRegex})\\b`, 'gi');
-      correctedMsg = message.replace(regex, correction);
+      const regex = new RegExp(`\\b(?:${subRegex})\\b`, 'ig');
+
+      correctedMsg = correctedMsg.replace(regex, correction);
 
       // add space between letter, digit and '('
       correctedMsg = correctedMsg.replace(/[a-z](?=\d)|\d(?=[a-z])|[a-z](?=\()|\d(?=\()/gi, '$& ');
@@ -104,6 +78,41 @@ class FeedProductionBot {
 
     return correctedMsg;
   }
+
+  getMatchingItems() {
+    return Item.findAll({
+      attributes: ['item_id', 'item_name', 'category', 'packaging_metric', 'unit', 'packaging_size', 'is_produced'],
+      where: {
+        category: {
+          [Op.in]: ['concentrate', 'feed', 'feed ingredient', 'feed additive']
+        }
+      },
+      raw: true
+    })
+      .then((items) => new Map(items
+        .map((item) => [item.item_name.toLowerCase(), {...item, item_name: item.item_name.toLowerCase()}])));
+  }
 }
 
-new FeedProductionBot();
+new FeedProductionBot().requestHandler({
+  body: 'Date=20/11/2021\n' +
+    'Type=layer\n' +
+    'Maize=235kg\n' +
+    'Wheatoffal=2.8kg\n' +
+    'Chlorine cloride=\n' +
+    'Toxin binder=0.75kg\n' +
+    'Quantity=363.55 kg\n' +
+    'Chikun Layers Concentrates=5bags\n' +
+    '\n' +
+    'Date=20/11/2021\n' +
+    'Type=Prelay\n' +
+    'Maize=235kg\n' +
+    'Wheatoffal=2.8kg\n' +
+    'Chlorine cloride=\n' +
+    '  Toxin binder=.75kg\n' +
+    'Quantity=0.48855 tonnes\n' +
+    'Vital Layer Concentrate=5bags\n'+
+    'vital grower Concentrate=5bags\n'
+});
+
+module.exports = FeedProductionBot;

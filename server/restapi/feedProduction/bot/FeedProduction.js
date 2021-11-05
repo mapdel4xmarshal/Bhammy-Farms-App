@@ -1,11 +1,10 @@
-const Debug = require('debug');
-const { isEmpty } = require('../../../utilities/common');
-const { Item } = require('../../models');
+const Debug = require('../../../utilities/debugger');
+const {isEmpty} = require('../../../utilities/common');
 const debug = new Debug('FeedProduction:BotV2:FeedProduction');
 
 class FeedProduction {
-  constructor(context, message) {
-    this._context = context;
+  constructor(message, matchingItems) {
+    this._matchingItems = matchingItems;
     this._user = {
       id: 'WhatsApp Bot v2',
       displayName: 'WhatsApp Bot - Group Message'
@@ -13,9 +12,10 @@ class FeedProduction {
     this._excludedKeywords = [];
     this._rawRecords = message.split('\n\n');
     this._requiredIngredients = ['Maize', 'Toxin Binder', 'WheatOffal', 'Concentrate'];
+    this.records = [];
 
-    console.log('kkkk', this._rawRecords);
-    debug('Received payload ::', message);
+    debug.info('Received message ::', message);
+    debug.info('Received matchingItems ::', matchingItems);
   }
 
   get _rawRecords() {
@@ -41,11 +41,14 @@ class FeedProduction {
           } else if (item.match(/type/ig)) {
             record.type = item.split(/type|=/ig)
               .filter(Boolean)[0].trim();
+
+            if (!record.type.includes('mash')) record.type += ' mash';
           } else if (item.match(/quantity/ig)) {
             record.quantity = item.split(/quantity|=/ig)
               .filter(Boolean)[0].trim();
           } else if (item.includes('=')) {
-            const [name, quantity] = item.split('=');
+            const [name, quantity] = item.split('=').map(_item => _item.trim());
+
             if (!isEmpty(quantity) && !this._excludedKeywords.includes(name)) {
               record.ingredients.push({
                 name,
@@ -55,36 +58,156 @@ class FeedProduction {
           }
         });
 
-      debug('_rawRecord ', record);
+      debug.info('_rawRecord ', record);
       return record;
     });
   }
 
-  parseMessage() {
-    for (const rawRecord of this._rawRecords) {
-
-    }
+  enforceRequiredIngredients(ingredients) {
+    this._requiredIngredients.forEach((reqIngredient) => {
+      if (!ingredients.find((ingredient) => ingredient.name === reqIngredient.toLowerCase()
+        || (reqIngredient.toLowerCase() === 'concentrate' && ingredient.name.includes('concentrate')))) {
+        throw new Error(`*${reqIngredient}* is required! Please revalidate the record and try again.`);
+      }
+    });
   }
 
-  async getMatchingItems(feedType, ingredients) {
-    return await Item.findAll({
-      attributes: ['item_id', 'item_name', 'category', 'packaging_metric', 'unit', 'packaging_size'],
-      where: {
-        category: {
-          [Op.in]: [...ingredients.map((item) => item.name), feedType, ...Object.values(this._concentrates)]
-        }
+  determineBrands(type, ingredients) {
+    const concentrates = ingredients.filter((ingredient) => ingredient.name.match(/concentrate/ig))
+      .map((concentrate) => concentrate.name
+        .split(/grower[s]?|layer[s]?|prelay[s]?|pre-lay[s]?|concentrate[s]?/)
+        .map((s) => s.trim())
+        .filter(Boolean).join(',')).filter(Boolean);
+
+    debug.info('concentrates', concentrates);
+
+    return Array.from(new Set(concentrates).values());
+  }
+
+  generateStamp(payload) {
+    return `${payload.from.split('@')[0]}::${payload.timestamp}::${payload.body}`;
+  }
+
+  determineType(record) {
+    const matchingItems = Array.from(this._matchingItems.values()).filter((item) => {
+      return item.is_produced && record.type.split(' ').every((word) => item.item_name.includes(word))
+    });
+
+    // Match type
+    if (matchingItems.length === 1) {
+      record.type = {name: matchingItems[0].item_name, id: matchingItems[0].item_id};
+    } else if (matchingItems.length === 0) {
+      throw new Error(`Unknown feed type *${record.type}*.
+      Please check for spelling mistakes or contact @08073290177 for assistant.`);
+    } else throw new Error(`Multiple items matches *${record.type}*. Please be more specific.
+    \nPossible options are ${matchingItems.map((mItem) => mItem.item_name).join(', ')}`);
+  }
+
+  calculateEnergyLevel(record) {
+    // Process quantity unit
+    const [qty, unit] =  record.quantity.split(' ').filter(Boolean);
+    console.log(qty, unit);
+    if (unit !== 'kg' && unit !== 'tonne') {
+      throw new Error(`Please provide a valid unit for *Quantity*. Quantity is measured in *kg* or *tonnes*.`);
+    }
+
+    record.quantity = {
+      quantity: +qty.trim() * (unit === 'tonne' ? 1000 : 1),
+      unit: unit && unit.trim()
+    };
+
+    const maize = record.ingredients.find((ingredient) => ingredient.name.match(/maize|corn/ig));
+    const kg = record.ingredients.reduce((total, ingredient) => total + ingredient.quantity, 0);
+    const quantity = Math.round(maize.quantity / (kg / 1000));
+
+    if (kg !== +record.quantity.quantity) {
+      console.log(+qty.trim() , record.quantity)
+      throw new Error(`Quantity mismatch! Total feed produced is ${kg / 1000} tonnes (${kg
+      }kg), but you recorded ${qty}${record.quantity.unit}`);
+    }
+
+    if (+quantity >= 500) {
+      record.energyLevel = 'high';
+    } else if (+quantity >= 450) {
+      record.energyLevel = 'medium';
+    } else record.energyLevel = 'low';
+  }
+
+  processIngredient(ingredient) {
+    let matchingItems = this._matchingItems.get(ingredient.name);
+
+    if (!matchingItems) {
+      debug.info(`processIngredient:: ${ingredient.name}, no direct match`);
+      matchingItems = Array.from(this._matchingItems.values()).filter((item) => {
+        console.log(item.item_name);
+        return ingredient.name.split(' ').every((word) => item.item_name.includes(word))
+      });
+    } else matchingItems = [matchingItems];
+
+    // Match ingredient
+    if (matchingItems.length === 1) {
+      const item = matchingItems[0];
+
+      ingredient.name = item.item_name;
+      ingredient.id = item.item_id;
+
+      // Process quantity and validate unit
+      const regex = new RegExp(`\\b(?:${item.packaging_metric})\\b`, 'gi');
+
+      if (regex.test(ingredient.unit)) {
+        ingredient.quantity = +(ingredient.quantity) * item.packaging_size;
+      } else if (new RegExp(`\\b(?:${item.unit})\\b`, 'gi').test(ingredient.unit)) {
+        ingredient.quantity = +ingredient.quantity;
+      } else {
+        debug.info('No matching unit', item.unit, regex, ingredient.quantity);
+        throw new Error(`Please specify a valid unit (${item.packaging_metric} or ${item.unit}) for *${ingredient.name}*.`);
       }
-    })
-      .then((items) => new Map(items.map((item) => [item.item_name.toLowerCase(), item])));
+    } else if (matchingItems.length === 0) {
+      throw new Error(`Unknown item *${ingredient.name}*.
+      Please check for spelling mistakes or contact @08073290177 for assistant.`);
+    } else throw new Error(`Multiple items matches *${ingredient.name}*. Please be more specific.
+    \nPossible options are ${matchingItems.map((mItem) => mItem.item_name).join(', ')}`);
+  }
+
+  parseMessage() {
+    for (const rawRecord of this._rawRecords) {
+      const record = {...rawRecord};
+      this.enforceRequiredIngredients(rawRecord.ingredients);
+      const concentrateBrands = this.determineBrands(rawRecord.type, rawRecord.ingredients);
+
+      if (concentrateBrands.length === 0) {
+        throw new Error('No concentrate brand specified!' +
+          '\nPossible options are Vital layer, Vital grower, Chikun layer, Hendirx etc');
+      } else if (concentrateBrands.length === 1) {
+        record.type = `${concentrateBrands[0]} ${record.type}`;
+      }
+
+      // Process ingredient unit
+      record.ingredients = rawRecord.ingredients.map((ingredient) => {
+        const [quantity, unit] = ingredient.quantity.split(' ').filter(Boolean);
+
+        if (!unit) {
+          throw new Error(`No unit provided for *${ingredient.name}*. Please provide one.`);
+        }
+
+        ingredient.quantity = +quantity.trim();
+        ingredient.unit = unit && unit.trim();
+
+        this.processIngredient(ingredient);
+
+        return ingredient;
+      });
+
+      this.determineType(record);
+      this.calculateEnergyLevel(record);
+      this.records.push(record);
+    }
+    return this.records;
   }
 
   insert() {
-
-    this._requiredIngredients.forEach((ingredient) => {
-      if (record.ingredients.filter((ingrdnt) => ingrdnt.name.toLowerCase() === ingredient.toLowerCase()).length === 0) {
-        throw { msg: `'${ingredient}' is required!` };
-      }
-    });
+    this.parseMessage();
+    console.log(this.records[0], this.records[1]);
   }
 
 }

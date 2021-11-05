@@ -3,7 +3,7 @@ const {
 } = require('../../models');
 const ProductionRecord = require('./productionRecord');
 const ProductionSummary = require('./productionSummary');
-const Bot = require('./Bot');
+const Bot = require('./bot');
 
 class Controller {
   constructor() {

@@ -118,8 +118,9 @@ process.on('beforeExit', async () => {
   await cleanup();
   process.exit();
 });
-process.on('uncaughtException', async () => {
+process.on('uncaughtException', async (e) => {
   await cleanup();
+  console.log(e);
   process.exit();
 });
 
