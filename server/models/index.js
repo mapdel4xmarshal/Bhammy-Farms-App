@@ -6,8 +6,6 @@ const Sequelize = require('sequelize');
 const basename = path.basename(__filename);
 const config = require('../configs');
 
-process.env.DEBUG = 'bhammyfarms*';
-
 const db = {};
 
 let sequelize;

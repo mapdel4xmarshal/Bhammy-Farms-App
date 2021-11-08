@@ -6,7 +6,6 @@ const {
   Party,
   Customer,
   Sequelize: {
-    Op,
     where,
     fn,
     col
@@ -62,6 +61,10 @@ class Bot {
       if (this.isValidPayload(body)) {
         const record = await this.parsePayload(payload);
         debug.info('record', record);
+
+        // Validate quantity
+        this.validateTotalSold(record.sold, [].concat(...record.sales.map((sale) => sale.items)));
+
         this._controllers.addInvoices(this._user, record.sales, record.damagedItems)
           .then(() => {
             payload.reply('*RECORD ADDED* 👍');
@@ -78,6 +81,36 @@ class Bot {
 
       if (e.msg) message += `\n*REASON:* ${e.msg}`;
       payload.reply(message);
+    }
+  }
+
+  validateTotalSold(recordedSale, actualSale) {
+    const recordSummary = { total: { quantity: 0, name: 'Total eggs'} };
+    const actualSummary = { total: { quantity: 0, name: 'Total eggs'} };
+
+    recordedSale.forEach((sale) => {
+      if (!recordSummary[sale.id]) recordSummary[sale.id] = { quantity: 0, name: sale.name };
+      recordSummary[sale.id].quantity += +sale.quantity;
+      recordSummary.total.quantity += +sale.quantity;
+    });
+
+    actualSale.forEach((sale) => {
+      if (!actualSummary[sale.id]) actualSummary[sale.id] = { quantity: 0, name: sale.name };
+      actualSummary[sale.id].quantity += +sale.quantity;
+      actualSummary.total.quantity += +sale.quantity;
+    });
+
+    debug.info('validateTotalSold', { recordSummary, actualSummary });
+
+    for (const [id, item] of Object.entries(recordSummary)) {
+      if (!actualSummary[id]) {
+        actualSummary[id] = { quantity: 0, name: item.name };
+      }
+
+      if (item.quantity !== actualSummary[id].quantity) {
+        throw { msg: `*Mismatch Error* - ${item.name} sold was ${actualSummary[id].quantity / 30
+        } crate(s) but ${item.quantity / 30} crate(s) was recorded.` };
+      }
     }
   }
 
