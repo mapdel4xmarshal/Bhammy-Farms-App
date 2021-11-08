@@ -15,6 +15,7 @@
     "html-pdf-node": "^1.0.7",
     "moment": "^2.29.0",
     "mysql2": "^2.1.0",
+    "node-html-parser": "^5.1.0",
     "node-schedule": "^1.3.2",
     "nodemailer": "^6.4.11",
     "passport": "^0.4.1",
@@ -45,7 +46,8 @@
           "code": 120,
           "ignoreUrls": true
         }
-      ]
+      ],
+      "no-underscore-dangle": "off"
     },
     "overrides": [
       {

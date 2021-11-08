@@ -21,6 +21,12 @@ const production = require('./restapi/production/routes');
 const feedProduction = require('./restapi/feedProduction/routes');
 const employees = require('./restapi/employees/routes');
 const damagedItems = require('./restapi/damagedItems/routes');
+const notifications = require('./restapi/notifications/routes');
+
+// Bots
+const FeedMillBot = require('./restapi/feedProduction/bot');
+
+new FeedMillBot().listen();
 
 dotenv.config();
 
@@ -95,6 +101,9 @@ app.use('/api/v1/damaged-items', protect(), damagedItems);
 app.use('/api/v1/employees', protect({
   skip: '/webhook/salary'
 }), employees);
+app.use('/api/v1/notifications', protect({
+  skip: '/payment'
+}), notifications);
 
 app.get('*', (req, res) => {
   res.sendFile(path.resolve('../dist/index.html'));

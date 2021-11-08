@@ -3,18 +3,14 @@ const {
 } = require('../../models');
 const ProductionRecord = require('./productionRecord');
 const ProductionSummary = require('./productionSummary');
-const Bot = require('./bot');
 
 class Controller {
-  constructor() {
-    new Bot(this).listen();
-  }
-
   async getProductions({
-    before, after, date, id
+    before, after, date, id, stamp
   }) {
     const where = {};
     if (id) where.id = id;
+    if (stamp) where.stamp = stamp;
     if (before || after) where.date = {};
     if (date) where.date = date;
     if (before) where.date[Op.lte] = before;
@@ -70,8 +66,8 @@ class Controller {
       });
   }
 
-  async addProduction(user, production) {
-    const transaction = await sequelize.transaction();
+  async addProduction(user, production, trnx) {
+    const transaction = trnx || await sequelize.transaction();
 
     try {
       const newProduction = await FeedProduction.create({
@@ -135,7 +131,7 @@ class Controller {
 
       // If the execution reaches this line, no errors were thrown.
       // We commit the transaction.
-      await transaction.commit();
+      if (!trnx) await transaction.commit();
 
       return newProduction;
     } catch (error) {
@@ -148,13 +144,15 @@ class Controller {
     }
   }
 
-  async deleteProduction(id, user) {
-    const productions = await this.getProductions({ id });
+  async deleteProduction(identifier = {}, user) {
+    const productions = await this.getProductions(identifier);
     const production = productions.records[0] || null;
+    const prop = identifier.stamp ? 'stamp' : 'id';
+    const id = identifier.stamp ? identifier.stamp : identifier.id;
 
     if (!production) {
       return {
-        error: `No feed production found with id ${id}`,
+        error: `No feed production found with ${prop} ${id}`,
         status: 400
       };
     }
@@ -184,7 +182,7 @@ class Controller {
     // Delete production
     await FeedProduction.destroy({
       where: {
-        id
+        [prop]: id
       }
     });
 

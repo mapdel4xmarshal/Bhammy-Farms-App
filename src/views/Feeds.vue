@@ -44,6 +44,7 @@
           label="Search"
           v-model="search"
           width='100'
+          @input="customFilter"
         ></v-text-field>
       </v-col>
     </v-row>
@@ -106,9 +107,9 @@
     <v-data-table
       no-data-text="No feeds produced."
       :headers="headers"
-      :items="feeds"
-      :search="search"
+      :items="filteredFeeds"
       class="elevation-1"
+      show-expand
     >
       <template v-slot:item.concentrate="{ item }">
         {{ item.concentrate.quantity | formatNumber }} {{ item.concentrate.unit }}
@@ -143,6 +144,29 @@
                      :edit-item="''"
                      :delete-item="confirmDelete"
         />
+      </template>
+      <template v-slot:expanded-item="{ headers, item }">
+        <td :colspan="headers.length" class="dropdown elevation-0">
+         <v-row class="pt-1 pb-3">
+           <v-col v-for="ingredient in item.ingredients" :key="ingredient.id">
+             <v-list-item>
+               <v-list-item-avatar tile size="30">
+                 <v-img :src="`/${ingredient.thumbnail}`"></v-img>
+               </v-list-item-avatar>
+
+               <v-list-item-content>
+                 <v-list-item-title class="caption text-uppercase text-no-wrap" style="color: rgb(114, 114, 114);">
+                   {{ ingredient.name }}</v-list-item-title>
+                 <div class="body-2 text-no-wrap">
+                   <span>
+                     {{ ingredient.qtyUsed | formatNumber }}{{ingredient.unit}}
+                   </span>&nbsp;&nbsp;|&nbsp;&nbsp;<span>₦{{ ingredient.price | formatNumber }}</span>
+                 </div>
+               </v-list-item-content>
+             </v-list-item>
+           </v-col>
+         </v-row>
+        </td>
       </template>
     </v-data-table>
     <v-snackbar
@@ -215,6 +239,7 @@ export default {
       feedsSummary: [],
       mode: 0,
       feeds: [],
+      filteredFeeds: [],
       headers: [
         {
           text: 'Date',
@@ -258,6 +283,7 @@ export default {
         { text: 'Cost / Bag', value: 'costPerBag' },
         { text: 'Total Amt', value: 'summary.totalAmount' },
         { text: '', value: 'actions', align: 'end' },
+        { text: '', value: 'data-table-expand' }
       ],
       itemSummary: []
     };
@@ -268,6 +294,10 @@ export default {
     }
   },
   methods: {
+    customFilter(search) {
+      this.filteredFeeds = this.feeds
+        .filter((record) => JSON.stringify(record).toLowerCase().indexOf(search.toLowerCase()) !== -1);
+    },
     updateDate() {
       this.$refs.menu.save(this.date);
       this.getProduction();
@@ -322,6 +352,7 @@ export default {
       axios.get(`/feed-productions?${filters.join('&')}`)
         .then(({ data }) => {
           this.feeds = data.records;
+          this.customFilter(this.search);
           this.itemSummary = data.summary.ingredients;
           this.feedsSummary = data.summary.feeds;
         });
@@ -337,3 +368,9 @@ export default {
   }
 };
 </script>
+
+<style scoped>
+.dropdown {
+  background-color: #fafafa;
+}
+</style>

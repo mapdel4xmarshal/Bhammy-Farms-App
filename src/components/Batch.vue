@@ -260,7 +260,6 @@ import axios from '../plugins/axios';
 import { ACTION_TYPES, GETTER_TYPES } from '../store/types';
 import { BATCH_GETTER_TYPES, BATCH_ACTION_TYPES } from '../store/modules/batch/types';
 
-
 export default {
   name: 'Batch',
   data() {

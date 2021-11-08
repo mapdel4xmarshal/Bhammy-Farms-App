@@ -15,7 +15,7 @@ router.post('/', async (req, res) => {
 });
 
 router.delete('/:productionId', async (req, res) => {
-  const production = await controllers.deleteProduction(req.params.productionId, req.user);
+  const production = await controllers.deleteProduction({ id: req.params.productionId }, req.user);
   res.json(production);
 });
 

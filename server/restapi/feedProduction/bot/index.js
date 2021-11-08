@@ -1,11 +1,13 @@
 const client = require('../../../whatsapp');
 const FeedProduction = require('./FeedProduction');
-const Debug = require('../../../utilities/debugger');
-const debug = new Debug('FeedProduction:BotV2');
+const controller = require('../controllers');
 const {
   Item,
-  Sequelize: {Op}
+  Sequelize: { Op }
 } = require('../../../models');
+const Debug = require('../../../utilities/debugger');
+
+const debug = new Debug('FeedProduction:BotV2');
 
 class FeedProductionBot {
   constructor() {
@@ -28,24 +30,57 @@ class FeedProductionBot {
   listen() {
     client.on('message', async (payload) => {
       if (await this.filterPayload(payload)) {
-        await this.requestHandler(payload);
+        await this.addFeedRecord(payload);
+      }
+    });
+
+    client.on('message_revoke_everyone', async (payload, previousPayload) => {
+      if (await this.filterPayload(payload)) {
+        debug.info('Record deleted from whatsapp', previousPayload);
+        await this.deleteFeedRecord(previousPayload);
       }
     });
   }
 
-  async requestHandler(payload) {
+  async addFeedRecord(payload) {
     const message = this.autoCorrect(payload.body.toLowerCase());
 
     if (this.validatePayload(message)) {
       debug.info('Record received from whatsapp', message);
       try {
         const items = await this.getMatchingItems();
+        const stamp = this.generateStamp(payload);
 
-        new FeedProduction(message, items).insert();
+        await new FeedProduction(message, items, stamp, controller)
+          .insert()
+          .then((res) => {
+            debug.info('Add FeedProduction - success', res);
+            payload.reply(`*${res.count} RECORD ADDED* 👍\n*ID:* ${res.ids
+              .join(' | ')}\n*Cost/Bag:* ₦${res.costs.join(' | ₦')}`);
+          });
       } catch (e) {
-        debug.error('Bot', e);
-        console.error(e);
-        // payload.reply(`*Unknown error occurred*\n${e}`);
+        debug.error('INSERT ERROR', e);
+        payload.reply(`*An Error Occurred*\n${e}`);
+      }
+    }
+  }
+
+  async deleteFeedRecord(payload) {
+    const message = this.autoCorrect(payload.body.toLowerCase());
+    if (this.validatePayload(message)) {
+      debug.info('Delete Record received from whatsapp', message);
+
+      try {
+        const stamp = this.generateStamp(payload);
+
+        new FeedProduction(message, [], stamp, controller).delete()
+          .then(() => {
+            payload.reply('*RECORD DELETED!*👍');
+            debug.info('RECORD DELETED');
+          });
+      } catch (e) {
+        debug.error('DELETING ERROR', e);
+        payload.reply(`*ERROR*\n${e}`);
       }
     }
   }
@@ -58,8 +93,9 @@ class FeedProductionBot {
 
   validatePayload(message) {
     return /(\d{1,2})([\/-])(\d{1,2})\2(\d{2,4})/.test(message)
-      && ['date', 'maize'].every((term) => message.includes(term))
-      && /type|layer|grower|concentrate/i.test(message);
+      && ['maize', 'type'].every((term) => message.includes(term))
+      && /layer|grower|concentrate/i.test(message)
+      && /quantity|tonne/i.test(message);
   }
 
   autoCorrect(message) {
@@ -92,27 +128,10 @@ class FeedProductionBot {
       .then((items) => new Map(items
         .map((item) => [item.item_name.toLowerCase(), {...item, item_name: item.item_name.toLowerCase()}])));
   }
-}
 
-new FeedProductionBot().requestHandler({
-  body: 'Date=20/11/2021\n' +
-    'Type=layer\n' +
-    'Maize=235kg\n' +
-    'Wheatoffal=2.8kg\n' +
-    'Chlorine cloride=\n' +
-    'Toxin binder=0.75kg\n' +
-    'Quantity=363.55 kg\n' +
-    'Chikun Layers Concentrates=5bags\n' +
-    '\n' +
-    'Date=20/11/2021\n' +
-    'Type=Prelay\n' +
-    'Maize=235kg\n' +
-    'Wheatoffal=2.8kg\n' +
-    'Chlorine cloride=\n' +
-    '  Toxin binder=.75kg\n' +
-    'Quantity=0.48855 tonnes\n' +
-    'Vital Layer Concentrate=5bags\n'+
-    'vital grower Concentrate=5bags\n'
-});
+  generateStamp(payload) {
+    return `${payload.from.split('@')[0]}::${payload.timestamp}::${payload.body}`;
+  }
+}
 
 module.exports = FeedProductionBot;

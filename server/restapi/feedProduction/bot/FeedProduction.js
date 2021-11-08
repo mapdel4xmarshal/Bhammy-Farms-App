@@ -1,10 +1,14 @@
 const Debug = require('../../../utilities/debugger');
 const {isEmpty} = require('../../../utilities/common');
+const {sequelize} = require('../../../models');
+
 const debug = new Debug('FeedProduction:BotV2:FeedProduction');
 
 class FeedProduction {
-  constructor(message, matchingItems) {
+  constructor(message, matchingItems, stamp, controller) {
+    this._stamp = stamp;
     this._matchingItems = matchingItems;
+    this._controller = controller;
     this._user = {
       id: 'WhatsApp Bot v2',
       displayName: 'WhatsApp Bot - Group Message'
@@ -27,7 +31,8 @@ class FeedProduction {
       const record = {
         ingredients: [],
         energyLevel: '',
-        comment: this._user.displayName
+        comment: this._user.displayName,
+        stamp: this._stamp
       };
 
       message.split('\n')
@@ -47,7 +52,7 @@ class FeedProduction {
             record.quantity = item.split(/quantity|=/ig)
               .filter(Boolean)[0].trim();
           } else if (item.includes('=')) {
-            const [name, quantity] = item.split('=').map(_item => _item.trim());
+            const [name, quantity] = item.split('=').map((_item) => _item.trim());
 
             if (!isEmpty(quantity) && !this._excludedKeywords.includes(name)) {
               record.ingredients.push({
@@ -84,14 +89,9 @@ class FeedProduction {
     return Array.from(new Set(concentrates).values());
   }
 
-  generateStamp(payload) {
-    return `${payload.from.split('@')[0]}::${payload.timestamp}::${payload.body}`;
-  }
-
   determineType(record) {
-    const matchingItems = Array.from(this._matchingItems.values()).filter((item) => {
-      return item.is_produced && record.type.split(' ').every((word) => item.item_name.includes(word))
-    });
+    const matchingItems = Array.from(this._matchingItems.values())
+      .filter((item) => item.is_produced && record.type.split(' ').every((word) => item.item_name.includes(word)));
 
     // Match type
     if (matchingItems.length === 1) {
@@ -99,16 +99,17 @@ class FeedProduction {
     } else if (matchingItems.length === 0) {
       throw new Error(`Unknown feed type *${record.type}*.
       Please check for spelling mistakes or contact @08073290177 for assistant.`);
-    } else throw new Error(`Multiple items matches *${record.type}*. Please be more specific.
+    } else {
+      throw new Error(`Multiple items matches *${record.type}*. Please be more specific.
     \nPossible options are ${matchingItems.map((mItem) => mItem.item_name).join(', ')}`);
+    }
   }
 
   calculateEnergyLevel(record) {
     // Process quantity unit
-    const [qty, unit] =  record.quantity.split(' ').filter(Boolean);
-    console.log(qty, unit);
+    const [qty, unit] = record.quantity.split(' ').filter(Boolean);
     if (unit !== 'kg' && unit !== 'tonne') {
-      throw new Error(`Please provide a valid unit for *Quantity*. Quantity is measured in *kg* or *tonnes*.`);
+      throw new Error('Please provide a valid unit for *Quantity*. Quantity is measured in *kg* or *tonnes*.');
     }
 
     record.quantity = {
@@ -121,9 +122,8 @@ class FeedProduction {
     const quantity = Math.round(maize.quantity / (kg / 1000));
 
     if (kg !== +record.quantity.quantity) {
-      console.log(+qty.trim() , record.quantity)
       throw new Error(`Quantity mismatch! Total feed produced is ${kg / 1000} tonnes (${kg
-      }kg), but you recorded ${qty}${record.quantity.unit}`);
+      }kg), but you recorded ${qty}${record.quantity.unit}(s)`);
     }
 
     if (+quantity >= 500) {
@@ -139,8 +139,7 @@ class FeedProduction {
     if (!matchingItems) {
       debug.info(`processIngredient:: ${ingredient.name}, no direct match`);
       matchingItems = Array.from(this._matchingItems.values()).filter((item) => {
-        console.log(item.item_name);
-        return ingredient.name.split(' ').every((word) => item.item_name.includes(word))
+        return ingredient.name.split(' ').every((word) => item.item_name.includes(word));
       });
     } else matchingItems = [matchingItems];
 
@@ -163,21 +162,23 @@ class FeedProduction {
         throw new Error(`Please specify a valid unit (${item.packaging_metric} or ${item.unit}) for *${ingredient.name}*.`);
       }
     } else if (matchingItems.length === 0) {
-      throw new Error(`Unknown item *${ingredient.name}*.
-      Please check for spelling mistakes or contact @08073290177 for assistant.`);
-    } else throw new Error(`Multiple items matches *${ingredient.name}*. Please be more specific.
+      throw new Error(`Unknown item *${ingredient.name
+      }*.\nPlease check for spelling mistakes or contact @2348073290177 for assistant.`);
+    } else {
+      throw new Error(`Multiple items matches *${ingredient.name}*. Please be more specific.
     \nPossible options are ${matchingItems.map((mItem) => mItem.item_name).join(', ')}`);
+    }
   }
 
-  parseMessage() {
+  processRecord() {
     for (const rawRecord of this._rawRecords) {
       const record = {...rawRecord};
       this.enforceRequiredIngredients(rawRecord.ingredients);
       const concentrateBrands = this.determineBrands(rawRecord.type, rawRecord.ingredients);
 
       if (concentrateBrands.length === 0) {
-        throw new Error('No concentrate brand specified!' +
-          '\nPossible options are Vital layer, Vital grower, Chikun layer, Hendirx etc');
+        throw new Error('No concentrate brand specified!'
+          + '\nPossible options are Vital layer, Vital grower, Chikun layer, Hendirx etc');
       } else if (concentrateBrands.length === 1) {
         record.type = `${concentrateBrands[0]} ${record.type}`;
       }
@@ -205,11 +206,31 @@ class FeedProduction {
     return this.records;
   }
 
-  insert() {
-    this.parseMessage();
+  async insert() {
+    this.processRecord();
     console.log(this.records[0], this.records[1]);
+    const transaction = await sequelize.transaction();
+
+    const executions = this.records.map((record) => {
+      return this._controller.addProduction(this._user, record, transaction);
+    });
+
+    return Promise.all(executions).then(async (results) => {
+      debug.info('Insert Results', results);
+      await transaction.commit();
+      const production = await this._controller.getProductions({stamp: this._stamp});
+
+      return {
+        count: results.length,
+        ids: results.map((result) => result.id),
+        costs: production.records.map((record) => (+record.summary.costPerUnit * 25) + 50)
+      };
+    });
   }
 
+  async delete() {
+    return this._controller.deleteProduction({stamp: this._stamp}, this._user);
+  }
 }
 
 module.exports = FeedProduction;

@@ -132,12 +132,14 @@
       :items="invoices"
       :search="search"
       class="elevation-1 table-cursor"
+      :show-expand="!$vuetify.breakpoint.xsOnly"
       @click:row="selectInvoice"
+      @item-expanded="getDetails"
     >
       <template v-slot:item.status="{ item }">
         <v-chip class="payment-status"
                 pill
-                :class="{[`payment-status--${item.paymentStatus}`]: true}" outlined="">{{ item.paymentStatus }}</v-chip>
+                :class="{[`payment-status--${item.paymentStatus}`]: true}" outlined>{{ item.paymentStatus }}</v-chip>
       </template>
       <template v-slot:item.amount="{ item }">
         ₦{{ item.amount | formatNumber }}
@@ -151,6 +153,29 @@
                      :edit-item="''"
                      :delete-item="confirmDelete"
         />
+      </template>
+
+      <template v-slot:expanded-item="{ headers, item }">
+        <td :colspan="headers.length" class="dropdown elevation-0 hidden-xs-only">
+          <div class="dropdown__items">
+            <span class="caption text-uppercase font-weight-bold">Name</span>
+            <span class="caption text-uppercase font-weight-bold">Quantity</span>
+            <span class="caption text-uppercase font-weight-bold">Price</span>
+            <span class="caption text-uppercase font-weight-bold">Discount</span>
+            <span class="caption text-uppercase font-weight-bold">Total</span>
+          </div>
+          <template v-for="itm in item.items">
+            <div :key="itm.id" class="dropdown__items">
+              <span>{{ itm.name }}</span>
+              <span>{{ itm.quantity / itm.packagingSize }} {{ itm.packagingMetric }}</span>
+              <span>₦{{ itm.price | formatNumber }}</span>
+              <span>₦{{ itm.discount | formatNumber}}</span>
+              <span class="font-weight-medium">
+                ₦{{ (((itm.quantity / itm.packagingSize) * itm.price) - itm.discount) | formatNumber }}
+              </span>
+            </div>
+          </template>
+        </td>
       </template>
     </v-data-table>
     <v-snackbar
@@ -249,7 +274,8 @@ export default {
         { text: 'Amount', value: 'amount' },
         { text: 'Note', value: 'notes' },
         { text: 'Payment Status', value: 'status' },
-        { text: '', value: 'actions' }
+        { text: '', value: 'actions' },
+        { text: '', value: 'data-table-expand' }
       ]
     };
   },
@@ -276,6 +302,22 @@ export default {
     },
     resetPaymentStatus() {
       this.paymentStatus = null;
+    },
+    getDetails(selected) {
+      console.log('selectedInvoice', selected.value, selected, selected.item.items);
+      if (selected.value && !selected.item.items) {
+        axios.get(`/invoices/${selected.item.id}`)
+          .then(({ data }) => {
+            this.invoices = this.invoices.map((invoice) => {
+              const inv = { ...invoice };
+              if (invoice.id === selected.item.id) {
+                inv.items = data.items;
+              }
+              return inv;
+            });
+            console.log('data', data);
+          });
+      }
     },
     getInvoices() {
       const filters = [];
@@ -388,6 +430,21 @@ export default {
 
     .table-cursor tbody tr:hover {
       cursor: pointer;
+    }
+  }
+
+  .dropdown {
+    background-color: #fafafa;
+    padding: 15px 30px !important;
+
+    &__items {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      grid-gap: 5px;
+
+      & > span {
+        padding-bottom: 10px;
+      }
     }
   }
 </style>

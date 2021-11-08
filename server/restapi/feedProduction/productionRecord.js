@@ -61,7 +61,8 @@ class ProductionRecord {
       unit: ingredient.unit,
       thumbnail: ingredient.image,
       quantity: +ingredient.FeedProductionItem.quantity,
-      price: +ingredient.FeedProductionItem.price
+      price: +ingredient.FeedProductionItem.price,
+      qtyUsed: +ingredient.FeedProductionItem.quantity
     }));
   }
 

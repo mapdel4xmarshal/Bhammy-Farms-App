@@ -3,7 +3,7 @@
     <v-toolbar flat dense color="transparent">
       <v-btn text color="primary" class="spacer--right" to="/income"><v-icon>mdi-chevron-left</v-icon> Back</v-btn>
       <v-spacer></v-spacer>
-      <v-btn color="primary" tile rounded disabled>
+      <v-btn color="primary" tile rounded @click="deleteRecord">
         Delete Income
       </v-btn>
     </v-toolbar>
@@ -101,12 +101,25 @@
         </div>
       </v-col>
     </v-row>
+    <v-snackbar
+      v-model="snackbar"
+    >
+      {{ message }}
+      <v-btn
+        color="red"
+        text
+        @click="snackbar = false"
+      >
+        Close
+      </v-btn>
+    </v-snackbar>
   </section>
 </template>
 
 <script>
 import axios from '../plugins/axios';
 import CustomerDetail from '../components/CustomerDetail.vue';
+import ROUTES from '@/router/routeNames';
 
 export default {
   name: 'ViewIncome',
@@ -114,6 +127,8 @@ export default {
   data() {
     return {
       invoice: {},
+      snackbar: false,
+      message: '',
       headers: [
         {
           text: 'SKU',
@@ -134,7 +149,22 @@ export default {
         .then(({ data }) => {
           this.invoice = data;
         });
-    }
+    },
+    deleteRecord() {
+      axios.delete(`/invoices/${this.$route.params.id}`)
+        .then(({ data }) => {
+          if (data.error) {
+            this.snackbar = true;
+            this.message = data.error;
+          } else {
+            this.$router.push({ name: ROUTES.INCOME });
+          }
+        })
+        .catch(({ response: { data } }) => {
+          this.snackbar = true;
+          this.message = data;
+        });
+    },
   },
   filters: {
     toMoney(value) {
