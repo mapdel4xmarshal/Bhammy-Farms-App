@@ -6,9 +6,9 @@ mysql.createConnection({
   host: process.env.DB_HOST || '127.0.0.1',
   port: process.env.DB_PORT || '3306',
   user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || 'Mapdel@01',
+  // password: process.env.DB_PASSWORD || 'Mapdel@01',
 }).then(async (connection) => {
-  await connection.query(`DROP DATABASE ${dbName};`);
+  await connection.query(`DROP DATABASE IF EXISTS ${dbName};`);
   connection.query(`CREATE DATABASE IF NOT EXISTS ${dbName};`).then(() => {
     console.info('Database create or successfully checked');
     connection.close();

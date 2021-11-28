@@ -29,6 +29,40 @@ class FeedProductionItem extends Model {
       }
     };
   }
+
+  static insertHandler(ItemConsumption) {
+    const consumedItem = (item) => ({
+      quantity: item.quantity,
+      consumer: 'FeedProductionItem',
+      consumer_id: item.id,
+      price: item.price,
+      item_id: item.item_id
+    });
+
+    return (items, options) => {
+      let action = 'create';
+      let payload;
+
+      if (Array.isArray(items)) {
+        action = 'bulkCreate';
+        payload = items.map(consumedItem);
+      } else payload = consumedItem(items);
+
+      return ItemConsumption[action](payload, {
+        transaction: options.transaction,
+        user: options.user,
+        resourceId: 'consumption_id'
+      });
+    };
+  }
+
+  static hooks({ ItemConsumption }) {
+    FeedProductionItem.addHook('afterCreate', 'updateConsumption',
+      FeedProductionItem.insertHandler(ItemConsumption));
+
+    FeedProductionItem.addHook('afterBulkCreate', 'updateConsumption',
+      FeedProductionItem.insertHandler(ItemConsumption));
+  }
 }
 
 module.exports = (sequelize) => {

@@ -1,4 +1,3 @@
-
 const { Model, DataTypes } = require('sequelize');
 
 class Items extends Model {
@@ -52,6 +51,20 @@ class Items extends Model {
         type: DataTypes.DECIMAL(10, 2),
         allowNull: false
       },
+      min_stock_level: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: false,
+        default: 0
+      },
+      reorder_level: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: false,
+        default: 0
+      },
+      notification: {
+        type: DataTypes.BOOLEAN,
+        default: 1
+      },
       image: {
         type: DataTypes.STRING,
         allowNull: true
@@ -67,11 +80,13 @@ class Items extends Model {
   }
 
   static associate({
-    InvoiceItem, Invoice, ProductionItem, Production, FeedProduction, FeedProductionItem
+    InvoiceItem, Invoice, ProductionItem, Production, FeedProduction, FeedProductionItem, ItemInventory, ItemConsumption
   }) {
     Items.invoices = Items.belongsToMany(Invoice, { through: InvoiceItem, foreignKey: 'item_id' });
     Items.production = Items.belongsToMany(Production, { through: ProductionItem, foreignKey: 'item_id' });
     Items.feedProduction = Items.belongsToMany(FeedProduction, { through: FeedProductionItem, foreignKey: 'item_id' });
+    Items.inventory = Items.hasMany(ItemInventory, { foreignKey: 'item_id' });
+    Items.consumption = Items.hasMany(ItemConsumption, { foreignKey: 'item_id' });
   }
 }
 

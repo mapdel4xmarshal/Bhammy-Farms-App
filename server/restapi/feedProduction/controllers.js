@@ -1,8 +1,13 @@
 const {
-  FeedProduction, Sequelize: { Op }, sequelize, FeedProductionItem, Item
+  FeedProduction, Sequelize: { Op }, sequelize, FeedProductionItem, Item, ItemInventory, ItemConsumption
 } = require('../../models');
 const ProductionRecord = require('./productionRecord');
 const ProductionSummary = require('./productionSummary');
+const itemsController = require('../items/controllers');
+const Debug = require('../../utilities/debugger');
+
+const debug = new Debug('FeedProduction:Controller');
+const MILLING_COST_PER_KG = 2;
 
 class Controller {
   async getProductions({
@@ -56,92 +61,14 @@ class Controller {
             thumbnail: item.image
           };
 
-          records.push(new ProductionRecord(feed));
+          records.push(new ProductionRecord(feed, MILLING_COST_PER_KG));
         }
 
         return {
           records,
-          summary: new ProductionSummary(records)
+          summary: new ProductionSummary(records, MILLING_COST_PER_KG)
         };
       });
-  }
-
-  async addProduction(user, production, trnx) {
-    const transaction = trnx || await sequelize.transaction();
-
-    try {
-      const newProduction = await FeedProduction.create({
-        date: production.date,
-        type: production.type.id,
-        energy_level: production.energyLevel,
-        note: production.comment,
-        stamp: production.stamp || null
-      }, {
-        transaction,
-        user,
-        resourceId: 'id'
-      });
-
-      const productionId = newProduction.id;
-
-      const itemPriceMap = await Item.findAll({
-        attributes: ['item_id', 'price'],
-        where: {
-          item_id: {
-            [Op.in]: production.ingredients.map((item) => item.id)
-          }
-        },
-        transaction
-      })
-        .then((items) => new Map(items.map((item) => [item.item_id, item.price])));
-
-      await FeedProductionItem.bulkCreate(production.ingredients.map((item) => ({
-        quantity: item.quantity,
-        item_id: item.id,
-        price: itemPriceMap.get(item.id),
-        feed_production_id: productionId
-      })), {
-        transaction,
-        user,
-        resourceId: 'id'
-      });
-
-      const productionAmount = production.ingredients
-        .reduce((totalQuantity, ingredient) => totalQuantity + +ingredient.quantity, 0);
-
-      await Item.increment('quantity', {
-        by: Number(productionAmount),
-        where: { item_id: production.type.id },
-        transaction,
-        user,
-        resourceId: 'item_id'
-      });
-
-      const { ingredients } = production;
-
-      for (const ingredient of ingredients) {
-        await Item.decrement('quantity', {
-          by: Number(ingredient.quantity),
-          where: { item_id: ingredient.id },
-          transaction,
-          user,
-          resourceId: 'item_id'
-        });
-      }
-
-      // If the execution reaches this line, no errors were thrown.
-      // We commit the transaction.
-      if (!trnx) await transaction.commit();
-
-      return newProduction;
-    } catch (error) {
-      console.log(error);
-      await transaction.rollback();
-      return {
-        error: 'Unable to process request. Please try again later!',
-        status: 500
-      };
-    }
   }
 
   async deleteProduction(identifier = {}, user) {
@@ -179,14 +106,173 @@ class Controller {
       });
     }
 
+    // get feed item ids
+    const feedProductionItemIds = await FeedProductionItem.findAll({
+      attributes: ['id'],
+      where: {
+        feed_production_id: production.id
+      }
+    },
+    {
+      transaction,
+      user,
+      resourceId: 'id'
+    }).then((productionItems) => productionItems.map((productionItem) => productionItem.id));
+
+    // delete consumption
+    await ItemConsumption.destroy({
+      where: {
+        consumer_id: {
+          [Op.in]: feedProductionItemIds
+        },
+        consumer: 'FeedProductionItem'
+      }
+    }, {
+      transaction,
+      user,
+      resourceId: 'id'
+    });
+
     // Delete production
     await FeedProduction.destroy({
       where: {
         [prop]: id
       }
+    },
+    {
+      transaction,
+      user,
+      resourceId: 'id'
+    });
+
+    await ItemInventory.destroy({
+      where: {
+        producer_id: production.id,
+        producer: 'FeedProduction'
+      }
+    }, {
+      transaction,
+      user,
+      resourceId: 'id'
     });
 
     await transaction.commit();
+  }
+
+  validateIngredients(production, itemNameMap) {
+    production.ingredients.forEach((ingredient) => {
+      const item = itemNameMap.get(ingredient.id);
+
+      debug.info('itemNameMap', itemNameMap);
+
+      if (!item) {
+        debug.error('Validation', `Unknown ingredient ${ingredient.name || ingredient.id}, id: ${ingredient.id}.`);
+
+        throw {
+          error: `Unknown ingredient ${ingredient.name || ingredient.id}.`,
+          status: 400
+        };
+      } else if (+item.quantity < +ingredient.quantity) {
+        debug.error('Validation', `Not enough *${item.name}* (${item.quantity}${item.unit}) in the store.`);
+        throw {
+          error: `Not enough *${item.name}* (${item.quantity}${item.unit}) in the store. Please restock and try again.`,
+          status: 400
+        };
+      }
+    });
+  }
+
+  async addProduction(user, production, trnx) {
+    const transaction = trnx || await sequelize.transaction();
+
+    try {
+      const itemNameMap = await Item.findAll({
+        attributes: [['item_id', 'id'], ['item_name', 'name'], 'quantity', 'unit', ['packaging_size', 'packagingSize']],
+        where: {
+          item_id: {
+            [Op.in]: [...production.ingredients.map((item) => item.id), production.type.id]
+          },
+        },
+        raw: true,
+        nest: true,
+        transaction
+      })
+        .then((items) => new Map(items.map((item) => [item.id, item])));
+
+      // Validate ingredients
+      this.validateIngredients(production, itemNameMap);
+
+      const promises = production.ingredients.map((item) => itemsController.getItemsPrices(item.id, item.quantity));
+
+      const itemPriceMap = await Promise.all(promises).then((items) => {
+        items = [].concat(...items);
+
+        const itemMap = new Map();
+        items.forEach((item) => {
+          itemMap.set(item.itemId, {
+            price: item.price,
+            name: item.itemName,
+            packagingSize: item.packagingSize
+          });
+        });
+        return itemMap;
+      });
+
+      const productionQuantity = production.ingredients
+        .reduce((totalQuantity, ingredient) => totalQuantity + +ingredient.quantity, 0);
+
+      const productionCost = production.ingredients
+        .reduce((totalCost, ingredient) => {
+          const item = itemPriceMap.get(ingredient.id);
+          return totalCost + ((+ingredient.quantity / +item.packagingSize) * +item.price);
+        }, 0);
+
+      const bags = productionQuantity / itemNameMap.get(production.type.id).packagingSize;
+
+      // Insert production record
+      const newProduction = await FeedProduction.create({
+        date: production.date,
+        type: production.type.id,
+        energy_level: production.energyLevel,
+        note: production.comment,
+        stamp: production.stamp || null,
+        quantity: productionQuantity,
+        price: Math.ceil((productionCost + (MILLING_COST_PER_KG * productionQuantity)) / bags)
+      }, {
+        transaction,
+        user,
+        resourceId: 'id'
+      });
+
+      await this.insertIngredients(newProduction.id, production, itemPriceMap, transaction, user);
+
+      // If the execution reaches this line, no errors were thrown.
+      // We commit the transaction.
+      if (!trnx) await transaction.commit();
+
+      return newProduction;
+    } catch (e) {
+      debug.error('NewProduction', e);
+      await transaction.rollback();
+      throw {
+        error: e.error || e.message || 'Unable to process request. Please try again later!',
+        message: e.message || e || null,
+        status: e.status || 500
+      };
+    }
+  }
+
+  async insertIngredients(productionId, production, itemPriceMap, transaction, user) {
+    return FeedProductionItem.bulkCreate(production.ingredients.map((item) => ({
+      quantity: item.quantity,
+      item_id: item.id,
+      price: itemPriceMap.get(item.id).price,
+      feed_production_id: productionId
+    })), {
+      transaction,
+      user,
+      resourceId: 'id'
+    });
   }
 }
 

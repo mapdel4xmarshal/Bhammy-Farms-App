@@ -200,8 +200,8 @@ export default {
             this.$emit('save');
             this.$refs.form.reset();
           })
-          .catch((response) => {
-            this.feedbackMessage = response.data.error;
+          .catch(({ response }) => {
+            this.feedbackMessage = response.data.message || response.data.error;
             this.snackbar = true;
           });
       }

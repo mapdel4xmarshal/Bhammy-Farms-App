@@ -60,7 +60,7 @@ class FeedProductionBot {
           });
       } catch (e) {
         debug.error('INSERT ERROR', e);
-        payload.reply(`*An Error Occurred*\n${e}`);
+        payload.reply(`*An Error Occurred*\n${e.message || e.error}`);
       }
     }
   }
@@ -74,13 +74,15 @@ class FeedProductionBot {
         const stamp = this.generateStamp(payload);
 
         new FeedProduction(message, [], stamp, controller).delete()
-          .then(() => {
-            payload.reply('*RECORD DELETED!*👍');
-            debug.info('RECORD DELETED');
+          .then((info) => {
+            if (!info.error) {
+              payload.reply('*RECORD DELETED!*👍');
+            }
+            debug.info('RECORD DELETED', info);
           });
       } catch (e) {
         debug.error('DELETING ERROR', e);
-        payload.reply(`*ERROR*\n${e}`);
+        payload.reply(`*ERROR*\n${e.message || e.error}`);
       }
     }
   }

@@ -161,7 +161,7 @@ class Controller {
       const productItems = [...production.eggs, ...production.feeds];
 
       const itemPriceMap = await Item.findAll({
-        attributes: ['item_id', 'price', 'packaging_size'],
+        attributes: ['item_id', 'price', 'packaging_size', 'item_name', 'quantity'],
         where: {
           item_id: {
             [Op.in]: [
@@ -198,6 +198,10 @@ class Controller {
       }
 
       for (const feed of production.feeds) {
+        if (itemPriceMap.get(feed.id).quantity < feed.quantity) {
+          throw `Not enough *${itemPriceMap.get(feed.id).item_name}* in the store. Please restock and try again.`;
+        }
+
         await Item.decrement('quantity', {
           by: Number(feed.quantity),
           where: { item_id: feed.id },
@@ -219,7 +223,6 @@ class Controller {
         resourceId: 'id'
       });
 
-
       await this.processTreatment('vaccination', production.vaccinations, {
         productionId, transaction, user, activeBatch, itemPriceMap });
       await this.processTreatment('medication', production.medications, {
@@ -239,6 +242,7 @@ class Controller {
       await transaction.rollback();
       return {
         error: 'Unable to process request. Please try again later!',
+        message: error,
         status: 500
       };
     }
@@ -268,6 +272,11 @@ class Controller {
     });
 
     for (const item of treatments) {
+      if (itemPriceMap.get(item[`${medType}_id`]).quantity < item.total_dosage) {
+        throw `Not enough *${itemPriceMap
+          .get(item[`${medType}_id`]).item_name}* in the store. Please restock and try again.`;
+      }
+
       await Item.decrement('quantity',
         {
           by: Number(item.total_dosage),

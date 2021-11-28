@@ -9,35 +9,39 @@ class Controller {
   registerHooks() {
     sequelize.addHook('afterCreate', (instance, options) => {
       if (options.user && options.resourceId) {
-        this.addActivity(options.user, new Activity('create', instance, options.resourceId), options.transaction);
+        return this.addActivity(options.user,
+          new Activity('create', instance, options.resourceId), options.transaction);
       }
     });
 
     sequelize.addHook('afterUpdate', (instance, options) => {
       if (options.user && options.resourceId) {
-        this.addActivity(options.user, new Activity('update', instance, options.resourceId), options.transaction);
+        return this.addActivity(options.user,
+          new Activity('update', instance, options.resourceId), options.transaction);
       }
     });
 
     sequelize.addHook('afterSave', (instance, options) => {
       if (options.user && options.resourceId) {
-        this.addActivity(options.user, new Activity('update', instance, options.resourceId), options.transaction);
+        return this.addActivity(options.user,
+          new Activity('update', instance, options.resourceId), options.transaction);
       }
     });
 
     sequelize.addHook('afterUpsert', (instance, options) => {
       if (options.user && options.resourceId) {
-        this.addActivity(options.user, new Activity('update', instance, options.resourceId), options.transaction);
+        return this.addActivity(options.user,
+          new Activity('update', instance, options.resourceId), options.transaction);
       }
     });
 
     sequelize.addHook('afterBulkCreate', (instance, options) => {
       if (options.user && options.resourceId) {
-        const modelInstance = !Array.isArray(instance) ? [instance] : instance;
+        const modelInstances = !Array.isArray(instance) ? [instance] : instance;
 
-        modelInstance.forEach((model) => {
-          this.addActivity(options.user, new Activity('create', model, options.resourceId), options.transaction);
-        });
+        return this.addActivity(options.user, modelInstances
+          .map((modelInstance) => new Activity('create', modelInstance, options.resourceId)),
+        options.transaction);
       }
     });
   }
@@ -47,20 +51,30 @@ class Controller {
       .then((activities) => activities);
   }
 
-  addActivity(user = {}, activity = {}, transaction) {
-    if (activity.resource === 'ACTIVITY_LOG' || !activity.resourceId) return;
-
-    return ActivityLog.create({
+  activity(activity, user) {
+    return {
       initiator_id: user.id,
       initiator_name: user.displayName,
       operation: activity.operation,
       resource_id: activity.resourceId,
       resource: activity.resource,
       payload: activity.payload
-    }, { transaction })
+    };
+  }
+
+  addActivity(user = {}, activities = {}, transaction) {
+    if (activities.resource === 'ACTIVITY_LOG' || !activities.resourceId) return;
+    let payload;
+    let action = 'create';
+
+    if (Array.isArray(activities)) {
+      payload = activities.map((activity) => this.activity(activity, user));
+      action = 'bulkCreate';
+    } else payload = this.activity(activities, user);
+
+    return ActivityLog[action](payload, { transaction })
       .then((newActivity) => newActivity.activity_id)
-      .catch((error) => console.log(error) // todo: add proper logger
-      );
+      .catch((error) => console.log(error));// todo: add proper logger
   }
 }
 

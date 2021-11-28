@@ -9,9 +9,14 @@ router.get('/', async (req, res) => {
 });
 
 router.post('/', async (req, res) => {
-  const production = await controllers.addProduction(req.user, req.body);
-  if (production.error) res.status(production.status);
-  res.json(production);
+  try {
+    const production = await controllers.addProduction(req.user, req.body);
+    if (production.error) res.status(production.status);
+    res.json(production);
+  } catch (e) {
+    res.status(e.status);
+    res.json(e);
+  }
 });
 
 router.delete('/:productionId', async (req, res) => {

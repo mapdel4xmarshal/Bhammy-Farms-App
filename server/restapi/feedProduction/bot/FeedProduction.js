@@ -90,8 +90,14 @@ class FeedProduction {
   }
 
   determineType(record) {
-    const matchingItems = Array.from(this._matchingItems.values())
-      .filter((item) => item.is_produced && record.type.split(' ').every((word) => item.item_name.includes(word)));
+    const allItems = Array.from(this._matchingItems.values());
+    let matchingItems = allItems.filter((item) => item.is_produced && record.type === item.item_name);
+
+    if (matchingItems.length === 0) {
+      matchingItems = allItems
+        .filter((item) => item.is_produced && record.type.split(' ')
+          .every((word) => item.item_name.includes(word)));
+    }
 
     // Match type
     if (matchingItems.length === 1) {
@@ -101,7 +107,7 @@ class FeedProduction {
       Please check for spelling mistakes or contact @08073290177 for assistant.`);
     } else {
       throw new Error(`Multiple items matches *${record.type}*. Please be more specific.
-    \nPossible options are ${matchingItems.map((mItem) => mItem.item_name).join(', ')}`);
+    \nPossible options are:\n${matchingItems.map((mItem) => mItem.item_name).join('\n')}`);
     }
   }
 
@@ -137,7 +143,7 @@ class FeedProduction {
     let matchingItems = this._matchingItems.get(ingredient.name);
 
     if (!matchingItems) {
-      debug.info(`processIngredient:: ${ingredient.name}, no direct match`);
+      debug.info('processIngredient::', `${ingredient.name}, no direct match`);
       matchingItems = Array.from(this._matchingItems.values()).filter((item) => {
         return ingredient.name.split(' ').every((word) => item.item_name.includes(word));
       });
@@ -181,6 +187,8 @@ class FeedProduction {
           + '\nPossible options are Vital layer, Vital grower, Chikun layer, Hendirx etc');
       } else if (concentrateBrands.length === 1) {
         record.type = `${concentrateBrands[0]} ${record.type}`;
+      } else {
+        record.type = `${record.type} (compounded)`;
       }
 
       // Process ingredient unit
@@ -208,7 +216,6 @@ class FeedProduction {
 
   async insert() {
     this.processRecord();
-    console.log(this.records[0], this.records[1]);
     const transaction = await sequelize.transaction();
 
     const executions = this.records.map((record) => {
@@ -218,18 +225,18 @@ class FeedProduction {
     return Promise.all(executions).then(async (results) => {
       debug.info('Insert Results', results);
       await transaction.commit();
-      const production = await this._controller.getProductions({stamp: this._stamp});
+      const production = await this._controller.getProductions({ stamp: this._stamp });
 
       return {
         count: results.length,
         ids: results.map((result) => result.id),
-        costs: production.records.map((record) => (+record.summary.costPerUnit * 25) + 50)
+        costs: production.records.map((record) => +record.summary.costPerUnit * 25)
       };
     });
   }
 
   async delete() {
-    return this._controller.deleteProduction({stamp: this._stamp}, this._user);
+    return this._controller.deleteProduction({ stamp: this._stamp }, this._user);
   }
 }
 

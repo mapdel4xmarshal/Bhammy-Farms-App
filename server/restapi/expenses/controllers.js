@@ -193,6 +193,8 @@ class Controller {
       if (expenseData.item_id) {
         const oldExpense = await Expense.findByPk(expense.id, { transaction });
 
+        if (expenseData.house_id === '―') expenseData.house_id = null;
+
         await Item.decrement('quantity', {
           by: Number(oldExpense.quantity),
           where: { item_id: oldExpense.item_id },

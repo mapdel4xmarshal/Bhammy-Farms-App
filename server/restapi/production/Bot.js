@@ -86,7 +86,7 @@ class Bot {
         const res = await this._controllers.addProduction(this._user, record);
 
         if (res.error) {
-          throw { msg: res.error };
+          throw { msg: res.message || res.error };
         } else {
           debug.info('AddProduction - success', res);
           payload.reply('*RECORD ADDED* 👍');

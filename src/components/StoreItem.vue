@@ -19,7 +19,7 @@
               </v-col>
 
               <v-col cols="12">
-                <v-autocomplete
+                <v-combobox
                   label="Category*"
                   hint="Item category."
                   persistent-hint
@@ -39,11 +39,11 @@
                       </v-list-item-content>
                     </v-list-item>
                   </template>
-                </v-autocomplete>
+                </v-combobox>
               </v-col>
 
               <v-col cols="12">
-                <v-autocomplete
+                <v-combobox
                   label="Brand*"
                   hint="Item brand."
                   persistent-hint
@@ -63,11 +63,11 @@
                       </v-list-item-content>
                     </v-list-item>
                   </template>
-                </v-autocomplete>
+                </v-combobox>
               </v-col>
 
               <v-col cols="12">
-                <v-autocomplete
+                <v-combobox
                   label="Unit / Metric*"
                   hint="Item measurement metric. i.e kg, ml, piece etc"
                   :rules="[v => !!v || 'Please enter item unit.']"
@@ -87,7 +87,7 @@
                       </v-list-item-content>
                     </v-list-item>
                   </template>
-                </v-autocomplete>
+                </v-combobox>
               </v-col>
 
               <v-col cols="12">
@@ -103,7 +103,7 @@
               </v-col>
 
               <v-col cols="12">
-                <v-autocomplete
+                <v-combobox
                   label="Packaging metric*"
                   hint="Item packaging measurement metric, e.g bag, sachet, crate etc"
                   :rules="[v => !!v || 'Please enter packaging metric.']"
@@ -123,7 +123,7 @@
                       </v-list-item-content>
                     </v-list-item>
                   </template>
-                </v-autocomplete>
+                </v-combobox>
               </v-col>
 
               <v-col cols="12" v-if="!value.id">
@@ -146,6 +146,37 @@
                   :rules="[v => !!v || 'Please enter item price.']"
                   type="number"
                   v-model="value.price"
+                  required
+                ></v-text-field>
+              </v-col>
+
+              <v-col cols="4">
+                <v-switch
+                  label="Enable Notifications"
+                  v-model="value.enableNotification"
+                ></v-switch>
+              </v-col>
+              <v-col cols="4">
+                <v-text-field
+                  label="Restock level*"
+                  hint="Cost of the item."
+                  persistent-hint
+                  :suffix="value.unit"
+                  :rules="[v => !!v || 'Please enter restock level.']"
+                  type="number"
+                  v-model="value.restockLevel"
+                  required
+                ></v-text-field>
+              </v-col>
+              <v-col cols="4">
+                <v-text-field
+                  label="Min level*"
+                  hint="Cost of the item."
+                  persistent-hint
+                  :suffix="value.unit"
+                  :rules="[v => !!v || 'Please enter minimum stock level.']"
+                  type="number"
+                  v-model="value.minimumStock"
                   required
                 ></v-text-field>
               </v-col>

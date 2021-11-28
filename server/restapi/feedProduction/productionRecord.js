@@ -1,5 +1,6 @@
 class ProductionRecord {
-  constructor(production) {
+  constructor(production, millingCostPerKg) {
+    this._millingCostPerKg = millingCostPerKg;
     this._production = {};
     this._production.id = production.id;
     this._production.date = production.date;
@@ -43,6 +44,9 @@ class ProductionRecord {
       this._production.summary.totalAmount += (ingredient.price * (ingredient.quantity / ingredient.packagingSize));
       this._production.summary.quantity += ingredient.quantity;
     });
+
+    // Include milling cost
+    this._production.summary.totalAmount += (this._millingCostPerKg * this._production.summary.quantity);
 
     this._production.summary.costPerUnit = Math
       .ceil(this._production.summary.totalAmount / this._production.summary.quantity);

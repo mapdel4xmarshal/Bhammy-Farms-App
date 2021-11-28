@@ -1,5 +1,4 @@
-
-const { Model, DataTypes, Sequelize } = require('sequelize');
+const { Model, DataTypes, Op } = require('sequelize');
 
 class FeedProduction extends Model {
   static get tblName() {
@@ -37,12 +36,55 @@ class FeedProduction extends Model {
       stamp: {
         type: DataTypes.TEXT,
         allowNull: true
+      },
+      price: {
+        type: DataTypes.VIRTUAL,
+        allowNull: false
+      },
+      quantity: {
+        type: DataTypes.VIRTUAL,
+        allowNull: false
       }
     };
   }
 
   static associate({ FeedProductionItem, Item }) {
-    FeedProduction.items = FeedProduction.belongsToMany(Item, { through: FeedProductionItem, foreignKey: 'feed_production_id' });
+    FeedProduction.items = FeedProduction
+      .belongsToMany(Item, { through: FeedProductionItem, foreignKey: 'feed_production_id' });
+  }
+
+  static insertHandler(ItemInventory) {
+    const inventoryItem = (item) => ({
+      quantity: item.quantity,
+      price: item.price,
+      item_id: item.type,
+      producer: 'FeedProduction',
+      producer_id: item.id
+    });
+
+    return (items, options) => {
+      let action = 'create';
+      let payload;
+
+      if (Array.isArray(items)) {
+        action = 'bulkCreate';
+        payload = items.map(inventoryItem);
+      } else payload = inventoryItem(items);
+
+      return ItemInventory[action](payload, {
+        transaction: options.transaction,
+        user: options.user,
+        resourceId: 'id'
+      });
+    };
+  }
+
+  static hooks({ ItemInventory }) {
+    FeedProduction.addHook('afterCreate', 'createInventory',
+      FeedProduction.insertHandler(ItemInventory));
+
+    FeedProduction.addHook('afterBulkCreate', 'createInventory',
+      FeedProduction.insertHandler(ItemInventory));
   }
 }
 
