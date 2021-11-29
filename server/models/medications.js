@@ -1,4 +1,3 @@
-
 const { Model, DataTypes } = require('sequelize');
 
 class Medications extends Model {
@@ -63,6 +62,9 @@ class Medications extends Model {
       notes: {
         type: DataTypes.TEXT,
         allowNull: true
+      },
+      item_price: {
+        type: DataTypes.VIRTUAL
       }
     };
   }

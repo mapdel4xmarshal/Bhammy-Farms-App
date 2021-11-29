@@ -4,11 +4,13 @@ const Bot = require('./Bot');
 
 const {
   Production, Vaccination, Batch, Sequelize: { Op }, sequelize, Location, House, ProductionItem, Mortality, Medication,
-  Item, Breed
+  Item, ItemInventory, ItemConsumption
 } = require('../../models');
 
 const ProductionSummary = require('./productionSummary');
 const Debug = require('../../utilities/debugger');
+const itemsController = require('../items/controllers');
+
 const debug = new Debug('Production:Controller');
 
 class Controller {
@@ -42,12 +44,15 @@ class Controller {
 
     return sequelize.query(`
     SELECT productions.production_id AS id, productions.water, productions.date,
-      production_items.quantity AS itemQuantity, production_items.price AS itemPrice, batches.initial_stock_count AS initialFlockCount,
-      batches.name AS batch, mrt.mortality, mrt.flockCount, mrt.cumulativeMortality, batches.is_active AS isActive, breeds.type AS batchType,
-      items.item_id AS itemId, items.item_name AS itemName, items.category AS itemCategory, items.packaging_size AS packagingSize, items.unit AS itemUnit,
-      production_items.id AS productionItemsId, productions.humidity AS humidity, productions.temperature AS temperature,
-      vaccinations.administered_by AS vaccineAdministrator, vaccinations.notes AS vaccinationNotes,
-      vaccinations.vaccination_id AS vaccinationId, vaccinations.vaccine_batch_no AS vaccineBatchNo,
+      production_items.quantity AS itemQuantity, production_items.price AS itemPrice,
+      batches.initial_stock_count AS initialFlockCount,
+      batches.name AS batch, mrt.mortality, mrt.flockCount, mrt.cumulativeMortality, batches.is_active AS isActive,
+      breeds.type AS batchType, items.item_id AS itemId, items.item_name AS itemName, items.category AS itemCategory,
+      items.packaging_size AS packagingSize, items.unit AS itemUnit,
+      production_items.id AS productionItemsId, productions.humidity AS humidity,
+      productions.temperature AS temperature, vaccinations.administered_by AS vaccineAdministrator,
+      vaccinations.notes AS vaccinationNotes, vaccinations.vaccination_id AS vaccinationId,
+      vaccinations.vaccine_batch_no AS vaccineBatchNo,
       vaccinations.method AS vaccinationMethod, vaccinations.vaccine_id AS vaccineId,
       vaccinations.dosage AS vaccineDosage, vaccinations.dosage_unit AS vaccineDosageUnit,
       vaccinations.total_dosage AS vaccineTotalDosage, vaccinations.no_of_birds AS vaccinatedBirds,
@@ -55,8 +60,9 @@ class Controller {
 
       medication.administered_by AS medicamentAdministrator, medication.notes AS medicationNotes,
       medication.medication_id AS medicationId, medication.medicament_batch_no AS medicamentBatchNo,
-      medication.method AS medicationMethod, medication.medicament_id AS medicamentId, medication.dosage AS medicamentDosage,
-      medication.dosage_unit AS medicamentDosageUnit, medication.total_dosage AS medicamentTotalDosage, medication.no_of_birds AS medicatedBirds,
+      medication.method AS medicationMethod, medication.medicament_id AS medicamentId,
+      medication.dosage AS medicamentDosage, medication.dosage_unit AS medicamentDosageUnit,
+      medication.total_dosage AS medicamentTotalDosage, medication.no_of_birds AS medicatedBirds,
       medication.cost AS medicamentCost,
 
       DATEDIFF(productions.date, batches.move_in_date) + batches.move_in_age AS batchAge
@@ -86,9 +92,7 @@ class Controller {
 `)
       .then(async ([productions]) => {
         productions = await this.processProduction(productions);
-        return productions.map((production) => {
-          return new ProductionSummary(production);
-        });
+        return productions.map((production) => new ProductionSummary(production));
       });
   }
 
@@ -130,6 +134,10 @@ class Controller {
       };
     }
 
+    if (production.feeds.length === 0) {
+      throw 'Feed is required.';
+    }
+
     const { longitude, latitude } = activeBatch.House.location;
     const weather = await this.getWeatherInfo(`${longitude},${latitude}`, production.date);
 
@@ -158,7 +166,7 @@ class Controller {
       });
 
       const productionId = newProduction.production_id;
-      const productItems = [...production.eggs, ...production.feeds];
+      const productItems = [...production.feeds, ...production.eggs];
 
       const itemPriceMap = await Item.findAll({
         attributes: ['item_id', 'price', 'packaging_size', 'item_name', 'quantity'],
@@ -174,42 +182,18 @@ class Controller {
       })
         .then((items) => new Map(items.map((item) => [item.item_id, item])));
 
-      debug.info('itemPriceMap', itemPriceMap, production.medications);
+      const itemPrices = await this.getLatestPrices(production);
 
-      await ProductionItem.bulkCreate(productItems.map((item) => ({
-        quantity: item.quantity,
-        item_id: item.id,
-        price: itemPriceMap.get(item.id).price,
-        production_id: productionId
-      })), {
-        transaction,
-        user,
-        resourceId: 'id'
-      });
-
-      for (const egg of production.eggs) {
-        await Item.increment('quantity', {
-          by: Number(egg.quantity),
-          where: { item_id: egg.id },
-          transaction,
-          user,
-          resourceId: 'item_id'
-        });
-      }
+      debug.info('itemPriceMap', itemPriceMap, itemPrices);
 
       for (const feed of production.feeds) {
         if (itemPriceMap.get(feed.id).quantity < feed.quantity) {
           throw `Not enough *${itemPriceMap.get(feed.id).item_name}* in the store. Please restock and try again.`;
         }
-
-        await Item.decrement('quantity', {
-          by: Number(feed.quantity),
-          where: { item_id: feed.id },
-          transaction,
-          user,
-          resourceId: 'item_id'
-        });
       }
+
+      await this.addEggs(production, itemPriceMap, productionId, transaction, user);
+      await this.addFeeds(production, itemPrices, productionId, transaction, user);
 
       await Mortality.bulkCreate(production.mortality.map((mortality) => ({
         time: mortality.time,
@@ -224,9 +208,11 @@ class Controller {
       });
 
       await this.processTreatment('vaccination', production.vaccinations, {
-        productionId, transaction, user, activeBatch, itemPriceMap });
+        productionId, transaction, user, activeBatch, itemPriceMap, itemPrices
+      });
       await this.processTreatment('medication', production.medications, {
-        productionId, transaction, user, activeBatch, itemPriceMap });
+        productionId, transaction, user, activeBatch, itemPriceMap, itemPrices
+      });
 
       // If the execution reaches this line, no errors were thrown.
       // We commit the transaction.
@@ -248,12 +234,92 @@ class Controller {
     }
   }
 
-  async processTreatment(type, treatments, { productionId, transaction, user, activeBatch, itemPriceMap }) {
+  getLatestPrices(production) {
+    const ingredients = [
+      ...[...production.feeds, ...production.eggs].map((item) => ({ id: item.id, quantity: item.quantity })),
+      ...production.vaccinations.map((item) => ({ id: item.vaccine.id, quantity: +item.totalDosage })),
+      ...production.medications.map((item) => ({ id: item.medicament.id, quantity: +item.totalDosage }))
+    ];
+    const promises = ingredients.map((item) => itemsController.getItemsPrices(item.id, item.quantity));
+    console.log('ingredients', ingredients);
+    return Promise.all(promises).then((items) => {
+      items = [].concat(...items);
+
+      const itemMap = new Map();
+      items.forEach((item) => {
+        itemMap.set(item.itemId, {
+          price: item.price,
+          name: item.itemName,
+          packagingSize: item.packagingSize
+        });
+      });
+      return itemMap;
+    });
+  }
+
+  addFeeds({ feeds }, itemPrices, productionId, transaction, user) {
+    // Add feed items
+    return ProductionItem.bulkCreate(feeds.map((feed) => ({
+      quantity: feed.quantity,
+      item_id: feed.id,
+      price: itemPrices.get(feed.id).price,
+      production_id: productionId
+    })), {
+      transaction,
+      user,
+      resourceId: 'id'
+    }).then((productionItems) =>
+      // Persist feed items
+      // eslint-disable-next-line implicit-arrow-linebreak
+      ItemConsumption.bulkCreate(productionItems.map((item) => ({
+        quantity: item.quantity,
+        consumer: 'ProductionItem',
+        consumer_id: item.id,
+        price: item.price,
+        item_id: item.item_id
+      })),
+      {
+        transaction,
+        user,
+        resourceId: 'consumption_id'
+      }));
+  }
+
+  async addEggs(production, itemPriceMap, productionId, transaction, user) {
+    // Add egg items
+    await ProductionItem.bulkCreate(production.eggs.map((egg) => ({
+      quantity: egg.quantity,
+      item_id: egg.id,
+      price: itemPriceMap.get(egg.id).price,
+      production_id: productionId
+    })), {
+      transaction,
+      user,
+      resourceId: 'id'
+    });
+
+    // Persist egg items
+    return ItemInventory.bulkCreate(production.eggs.map((egg) => ({
+      quantity: egg.quantity,
+      price: itemPriceMap.get(egg.id).price,
+      item_id: egg.id,
+      producer: 'Production',
+      producer_id: productionId
+    })), {
+      transaction,
+      user,
+      resourceId: 'id'
+    });
+  }
+
+  async processTreatment(type, treatments, {
+    productionId, transaction, user, activeBatch, itemPriceMap, itemPrices
+  }) {
     const medType = type === 'vaccination' ? 'vaccine' : 'medicament';
     const modelType = type === 'vaccination' ? 'Vaccination' : 'Medication';
 
     treatments = treatments.map((treatment) => {
-      const id = treatment[medType].id;
+      const { id } = treatment[medType];
       const item = itemPriceMap.get(id);
 
       return {
@@ -267,24 +333,16 @@ class Controller {
         method: treatment[`${type}Method`],
         administered_by: treatment.administeredBy,
         notes: treatment.reason,
-        cost: (+treatment.totalDosage / +item.packaging_size) * +item.price
+        cost: (+treatment.totalDosage / +item.packaging_size) * +itemPrices.get(id).price,
+        item_price: +itemPrices.get(id).price
       };
     });
 
     for (const item of treatments) {
-      if (itemPriceMap.get(item[`${medType}_id`]).quantity < item.total_dosage) {
+      if (+itemPriceMap.get(item[`${medType}_id`]).quantity < +item.total_dosage) {
         throw `Not enough *${itemPriceMap
           .get(item[`${medType}_id`]).item_name}* in the store. Please restock and try again.`;
       }
-
-      await Item.decrement('quantity',
-        {
-          by: Number(item.total_dosage),
-          where: { item_id: item[`${medType}_id`] },
-          user,
-          resourceId: 'item_id',
-          transaction
-        });
     }
 
     return eval(modelType)
@@ -292,7 +350,18 @@ class Controller {
         transaction,
         user,
         resourceId: `${type}_id`
-      });
+      }).then((items) => ItemConsumption.bulkCreate(items.map((item) => ({
+        quantity: item.total_dosage,
+        consumer: modelType,
+        consumer_id: item[`${modelType.toLowerCase()}_id`],
+        price: +item.item_price,
+        item_id: item[`${medType}_id`]
+      })),
+      {
+        transaction,
+        user,
+        resourceId: 'consumption_id'
+      }));
   }
 
   async getWeatherInfo(coordinate, date) {
@@ -307,32 +376,6 @@ class Controller {
         }
       });
     });
-  }
-
-  async getProductionById(productionId) {
-    return Production.findAll({
-      where,
-      attributes: { exclude: ['createdAt', 'updatedAt'] },
-      include: [{
-        model: Batch,
-        include: Breed
-      }, {
-        model: Vaccination,
-        include: Item
-      }, Medication, Mortality, {
-        model: Item,
-        through: ProductionItem
-      }]
-    })
-      .then((productions) => productions.map((production) => new ProductionSummary(production)));
-  }
-
-  async updateProduction(BatchId) {
-    return Batch.findOne({
-      where: { id: BatchId },
-      attributes: { exclude: ['createdAt', 'updatedAt'] }
-    })
-      .then((Batch) => Batch);
   }
 
   async processProduction(productions) {

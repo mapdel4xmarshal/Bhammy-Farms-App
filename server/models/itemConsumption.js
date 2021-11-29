@@ -27,6 +27,9 @@ class ItemConsumption extends Model {
       },
       consumer_id: {
         type: DataTypes.STRING
+      },
+      price: {
+        type: DataTypes.VIRTUAL
       }
     };
   }

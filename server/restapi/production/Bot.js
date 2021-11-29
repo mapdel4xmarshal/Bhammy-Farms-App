@@ -376,7 +376,7 @@ class Bot {
         throw {
           msg: `Multiple feeds matches the name '${feed.name}', please be more specific.
         \nPossible options are ${matchingFeeds.map((mFeed) => mFeed.item_name)
-            .join(',')}`
+    .join(',')}`
         };
       }
       return feed;
@@ -434,7 +434,7 @@ class Bot {
   isValidPayload(string) {
     return /(\d{1,2})([\/-])(\d{1,2})\2(\d{2,4})/.test(string)
       && (
-        ['pen', 'feed', 'water'].every((term) => string.includes(term))
+        ['pen', 'feed consumed', 'water'].every((term) => string.includes(term))
         || ['brooding', 'feed', 'water'].every((term) => string.includes(term)))
       && /mortality|Large|medium|pullet|crack/.test(string);
   }

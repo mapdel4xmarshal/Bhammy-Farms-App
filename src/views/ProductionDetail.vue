@@ -593,7 +593,7 @@ export default {
               this.$router.push('/productions');
             })
             .catch(({ response: data }) => {
-              this.message = data.error || data.data.error;
+              this.message = data.error || data.data.message || data.data.error;
               this.snackbar = true;
             })
             .finally(() => {

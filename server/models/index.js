@@ -1,4 +1,3 @@
-
 const fs = require('fs');
 const path = require('path');
 const Sequelize = require('sequelize');
@@ -40,6 +39,6 @@ Object.keys(db).forEach((modelName) => {
 db.sequelize = sequelize;
 db.Sequelize = Sequelize;
 
-sequelize.sync({ force: false, alter: true });
+sequelize.sync({ force: false, alter: false });
 
 module.exports = db;
