@@ -241,7 +241,7 @@ class Controller {
       ...production.medications.map((item) => ({ id: item.medicament.id, quantity: +item.totalDosage }))
     ];
     const promises = ingredients.map((item) => itemsController.getItemsPrices(item.id, item.quantity));
-    console.log('ingredients', ingredients);
+
     return Promise.all(promises).then((items) => {
       items = [].concat(...items);
 

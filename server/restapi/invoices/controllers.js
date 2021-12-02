@@ -4,6 +4,7 @@ const {
   Item,
   InvoiceItem,
   Party,
+  ItemConsumption,
   sequelize,
   Sequelize: {
     Op,
@@ -110,6 +111,27 @@ class Controller {
       };
     }
 
+    const itemPriceMap = await Item.findAll({
+      attributes: ['item_id', 'price', 'packaging_size', 'item_name', 'quantity', 'unit'],
+      where: {
+        item_id: {
+          [Op.in]: invoice.items.map((item) => item.id)
+        }
+      }
+    })
+      .then((items) => new Map(items.map((item) => [item.item_id, item])));
+
+    for (const item of invoice.items) {
+      const stockItem = itemPriceMap.get(item.id);
+      if (stockItem.quantity < item.quantity) {
+        return {
+          error: `Not enough *${stockItem.item_name}* (${stockItem.quantity}${stockItem.unit
+          }) in the store. Please restock and try again.`,
+          status: 400
+        };
+      }
+    }
+
     const normalizedInvoice = new Invoice(invoice);
 
     return InvoiceModel.create({
@@ -128,16 +150,6 @@ class Controller {
             resourceId: 'invoice_id',
             transaction
           });
-
-        for (const item of invoiceItems) {
-          await Item.decrement('quantity', {
-            by: item.quantity,
-            where: { item_id: item.item_id },
-            transaction,
-            user,
-            resourceId: 'item_id'
-          });
-        }
 
         if (!trnx) transaction.commit();
         return newInvoice.invoice_id;
@@ -255,6 +267,15 @@ class Controller {
         resourceId: 'item_id'
       });
     }
+
+    // Delete consumption
+    await ItemConsumption.destroy({
+      where: {
+        consumer_id: id,
+        consumer: 'InvoiceItem'
+      },
+      transaction
+    });
 
     // Delete invoice
     await InvoiceModel.destroy({
