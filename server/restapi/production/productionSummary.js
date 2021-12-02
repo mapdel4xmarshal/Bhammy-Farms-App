@@ -99,7 +99,6 @@ class ProductionSummary {
     this._production.mortalityRate = Number(((mortality * 100) / this._production.flockCount).toFixed(2));
   }
 
-
   get feeds() {
     return this._production.feeds;
   }
@@ -107,7 +106,11 @@ class ProductionSummary {
   set feeds(feeds) {
     this._production.feeds = feeds.reduce((totalFeed, feed) => totalFeed + Number.parseInt(feed.quantity), 0);
     this._production.feedPackagingSize = feeds[0].packagingSize;
-    this._production.feedTypes = feeds.map(({ id, name, quantity }) => ({ id, name, quantity }));
+    this._production.feedTypes = feeds.map(({
+      id, name, quantity, productionItemsId
+    }) => ({
+      id, name, quantity, productionItemsId
+    }));
   }
 
   get eggs() {

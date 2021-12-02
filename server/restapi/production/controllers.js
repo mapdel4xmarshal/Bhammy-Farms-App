@@ -184,7 +184,7 @@ class Controller {
 
       const itemPrices = await this.getLatestPrices(production);
 
-      debug.info('itemPriceMap', itemPriceMap, itemPrices);
+      debug.info('itemPriceMap', { itemPriceMap, itemPrices });
 
       for (const feed of production.feeds) {
         if (itemPriceMap.get(feed.id).quantity < feed.quantity) {
@@ -444,7 +444,8 @@ class Controller {
         price: production.itemPrice,
         category: production.itemCategory,
         packagingSize: production.packagingSize,
-        unit: production.itemUnit
+        unit: production.itemUnit,
+        productionItemsId: production.productionItemsId
       });
     });
 
@@ -463,6 +464,9 @@ class Controller {
     }
 
     const transaction = await sequelize.transaction();
+    const feedTypes = [];
+    const medications = [];
+    const vaccinations = [];
 
     // Reverse eggs
     for (const egg of production.eggTypes) {
@@ -475,8 +479,21 @@ class Controller {
       });
     }
 
+    // Reverse ItemInventory
+    await ItemInventory.destroy({
+      where: {
+        producer_id: production.id,
+        producer: 'Production'
+      }
+    }, {
+      transaction,
+      user,
+      resourceId: 'id'
+    });
+
     // Reverse feeds
     for (const feed of production.feedTypes) {
+      feedTypes.push(feed.productionItemsId);
       await Item.increment('quantity', {
         by: Number(feed.quantity),
         where: { item_id: feed.id },
@@ -488,6 +505,7 @@ class Controller {
 
     // Reverse medications
     for (const medication of production.medications) {
+      medications.push(medication.id);
       await Item.increment('quantity', {
         by: Number(medication.totalDosage),
         where: { item_id: medication.medicamentId },
@@ -497,8 +515,16 @@ class Controller {
       });
     }
 
+    // Delete medications
+    await Medication.destroy({
+      where: {
+        production_id: production.id
+      }
+    });
+
     // Reverse vaccination
     for (const vaccination of production.vaccinations) {
+      vaccinations.push(vaccination.id);
       await Item.increment('quantity', {
         by: Number(vaccination.totalDosage),
         where: { item_id: vaccination.vaccineId },
@@ -508,18 +534,69 @@ class Controller {
       });
     }
 
+    // Delete vaccination
+    await Vaccination.destroy({
+      where: {
+        production_id: production.id
+      }
+    });
+
     // Reverse mortality
     await Mortality.destroy({
       where: {
         production_id: production.id
-      }
+      },
+      transaction
     });
 
     // Delete production
     await Production.destroy({
       where: {
         production_id: production.id
+      },
+      transaction
+    });
+
+    // delete feed consumption
+    await ItemConsumption.destroy({
+      where: {
+        consumer_id: {
+          [Op.in]: feedTypes
+        },
+        consumer: 'ProductionItem'
       }
+    }, {
+      transaction,
+      user,
+      resourceId: 'id'
+    });
+
+    // delete vaccine consumption
+    await ItemConsumption.destroy({
+      where: {
+        consumer_id: {
+          [Op.in]: vaccinations
+        },
+        consumer: 'Vaccination'
+      }
+    }, {
+      transaction,
+      user,
+      resourceId: 'id'
+    });
+
+    // delete medicament consumption
+    await ItemConsumption.destroy({
+      where: {
+        consumer_id: {
+          [Op.in]: medications
+        },
+        consumer: 'Medication'
+      }
+    }, {
+      transaction,
+      user,
+      resourceId: 'id'
     });
 
     await transaction.commit();
