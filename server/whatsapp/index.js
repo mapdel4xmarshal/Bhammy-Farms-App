@@ -12,14 +12,35 @@ if (fs.existsSync(SESSION_FILE_PATH)) {
   sessionCfg = require(SESSION_FILE_PATH);
 }
 
-const client = new Client({ puppeteer: { headless: true, args: ['--no-sandbox'] }, session: sessionCfg });
+const client = new Client({
+  puppeteer: {
+    headless: true,
+    args: [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-dev-shm-usage',
+      '--disable-accelerated-2d-canvas',
+      '--no-first-run',
+      '--no-zygote',
+      '--single-process',
+      '--disable-gpu'
+    ]// ,
+    // executablePath: '/opt/homebrew/bin/chromium'
+  },
+  session: sessionCfg
+});
 
-if (process.env.NODE_ENV === 'production')  client.initialize();
+// if (process.env.NODE_ENV === 'production')
+try {
+  client.initialize();
+} catch (e) {
+  console.log(e);
+}
 
 client.on('qr', (qr) => {
   // NOTE: This event will not be fired if a session is specified.
   debug.info('QR RECEIVED', qr);
-  qrcode.generate(qr, {small: true});
+  qrcode.generate(qr, { small: true });
 });
 
 client.on('authenticated', (session) => {
@@ -107,11 +128,11 @@ client.on('disconnected', (reason) => {
 const cleanup = async () => {
   debug.info('Cleanup', 'Closing client due to process exit');
   try {
-    await client.destroy();
+    client.destroy();
   } catch (e) {
     debug.error(e);
   }
-}
+};
 
 // clean up listeners
 process.on('beforeExit', async () => {

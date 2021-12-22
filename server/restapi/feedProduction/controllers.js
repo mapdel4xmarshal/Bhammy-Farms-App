@@ -4,6 +4,7 @@ const {
 const ProductionRecord = require('./productionRecord');
 const ProductionSummary = require('./productionSummary');
 const itemsController = require('../items/controllers');
+const ItemsNotification = require('../notifications/ItemsNotification');
 const Debug = require('../../utilities/debugger');
 
 const debug = new Debug('FeedProduction:Controller');
@@ -159,7 +160,7 @@ class Controller {
     await transaction.commit();
   }
 
-  validateIngredients(production, itemNameMap) {
+  validateIngredients(production, itemNameMap, itemPriceMap) {
     production.ingredients.forEach((ingredient) => {
       const item = itemNameMap.get(ingredient.id);
 
@@ -172,7 +173,8 @@ class Controller {
           error: `Unknown ingredient ${ingredient.name || ingredient.id}.`,
           status: 400
         };
-      } else if (+item.quantity < +ingredient.quantity) {
+      } else if (+item.quantity < +ingredient.quantity
+        || (+ingredient.quantity > 0 && !itemPriceMap.has(ingredient.id))) {
         debug.error('Validation', `Not enough *${item.name}* (${item.quantity}${item.unit}) in the store.`);
         throw {
           error: `Not enough *${item.name}* (${item.quantity}${item.unit}) in the store. Please restock and try again.`,
@@ -186,6 +188,8 @@ class Controller {
     const transaction = trnx || await sequelize.transaction();
 
     try {
+      const itemsNotification = new ItemsNotification(transaction);
+      await itemsNotification.snapshot();
       const itemNameMap = await Item.findAll({
         attributes: [['item_id', 'id'], ['item_name', 'name'], 'quantity', 'unit', ['packaging_size', 'packagingSize']],
         where: {
@@ -198,9 +202,6 @@ class Controller {
         transaction
       })
         .then((items) => new Map(items.map((item) => [item.id, item])));
-
-      // Validate ingredients
-      this.validateIngredients(production, itemNameMap);
 
       const promises = production.ingredients.map((item) => itemsController.getItemsPrices(item.id, item.quantity));
 
@@ -217,6 +218,9 @@ class Controller {
         });
         return itemMap;
       });
+
+      // Validate ingredients
+      this.validateIngredients(production, itemNameMap, itemPriceMap);
 
       const productionQuantity = production.ingredients
         .reduce((totalQuantity, ingredient) => totalQuantity + +ingredient.quantity, 0);
@@ -246,6 +250,7 @@ class Controller {
 
       await this.insertIngredients(newProduction.id, production, itemPriceMap, transaction, user);
 
+      itemsNotification.notify();
       // If the execution reaches this line, no errors were thrown.
       // We commit the transaction.
       if (!trnx) await transaction.commit();

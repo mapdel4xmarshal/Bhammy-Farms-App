@@ -203,6 +203,7 @@ class Controller {
   }
 
   async getItemsPrices(itemId, quantity = 1, maxPrice = true) {
+    quantity = Math.max(quantity, 1);
     const whereClause = itemId ? `WHERE I.item_id IN (${!Array.isArray(itemId) ? itemId : itemId.join(',')})` : '';
     const price = maxPrice
       ? 'MAX(IV.inventoryPrice) over (PARTITION BY IV.item_id) as price' : 'IV.inventoryPrice as price';

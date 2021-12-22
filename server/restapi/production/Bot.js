@@ -18,7 +18,7 @@ class Bot {
     this._corrections = {
       'Large Egg': ['Large size', 'Large'],
       'Medium Egg': ['Medium size', 'Medium'],
-      'Pullet Egg': ['Pullet size', 'Pullet'],
+      'Pullet Egg': ['Pullet size', 'Pullet', 'Pullets'],
       'Cracked Egg': ['Cracks', 'crack'],
       water: ['Water consumed'],
       'Vitamin - Miavit': ['vitamin (miavit)'],
@@ -73,6 +73,7 @@ class Bot {
       body = this.autoCorrect(body.toLowerCase());
 
       const bodyArray = body.split('\n');
+      console.log('this.isValidPayload(body)', this.isValidPayload(body));
 
       if (this.isValidPayload(body)) {
         let record = this.parsePayload(bodyArray);
@@ -115,7 +116,7 @@ class Bot {
     const string = msg.toLowerCase();
     return /(\d{1,2})([\/-])(\d{1,2})\2(\d{2,4})/.test(string)
       && ['date', 'feed', 'water'].every((term) => string.includes(term))
-      && /brooding|large|feed|drug|mortality/.test(string)
+      && /brooding|large|feed|drug|mortality/ig.test(string)
       && !(/pen/.test(string));
   }
 
@@ -145,7 +146,8 @@ class Bot {
 
         if (!isEmpty(quantity)) {
           if (name.includes('pen')) {
-            record.batchName = `PEN-${quantity}`.toUpperCase();
+            record.batchName = quantity.toLowerCase().includes('brooding') ? 'BROODING-A' :
+              `PEN-${quantity}`.toUpperCase();
           }
 
           if (name.includes('brooding')) {
@@ -206,12 +208,12 @@ class Bot {
               }
 
               if (type === 'compounded layer'
-                || ['vital', 'compounded', 'layer'].every((keyword) => type.includes(keyword))) {
+              /* || ['vital', 'compounded', 'layer'].every((keyword) => type.includes(keyword)) */) {
                 type = 'layer mash (compounded)';
               }
 
               if (type === 'compounded grower'
-                || ['vital', 'compounded', 'grower'].every((keyword) => type.includes(keyword))) {
+              /* || ['vital', 'compounded', 'grower'].every((keyword) => type.includes(keyword)) */) {
                 type = 'grower mash (compounded)';
               }
 
@@ -434,8 +436,10 @@ class Bot {
   isValidPayload(string) {
     return /(\d{1,2})([\/-])(\d{1,2})\2(\d{2,4})/.test(string)
       && (
-        ['pen', 'feed consumed', 'water'].every((term) => string.includes(term))
-        || ['brooding', 'feed', 'water'].every((term) => string.includes(term)))
+        ['pen', 'feed', 'water'].every((term) => string.includes(term))
+        || ['brooding', 'feed', 'water'].every((term) => string.includes(term))
+        || ['pen', 'date', 'feed', 'age of bird', 'stock of bird'].every((term) => string.includes(term))
+      )
       && /mortality|Large|medium|pullet|crack/.test(string);
   }
 

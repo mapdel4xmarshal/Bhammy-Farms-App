@@ -1,5 +1,6 @@
 const request = require('request');
 const Notification = require('../../notification/notification');
+const ItemsNotification = require('../notifications/ItemsNotification');
 const Bot = require('./Bot');
 
 const {
@@ -150,6 +151,8 @@ class Controller {
     const transaction = await sequelize.transaction();
 
     try {
+      const itemsNotification = new ItemsNotification(transaction);
+      await itemsNotification.snapshot();
       const newProduction = await Production.create({
         date: production.date,
         humidity: production.humidity,
@@ -214,6 +217,7 @@ class Controller {
         productionId, transaction, user, activeBatch, itemPriceMap, itemPrices
       });
 
+      itemsNotification.notify();
       // If the execution reaches this line, no errors were thrown.
       // We commit the transaction.
       await transaction.commit();
@@ -318,6 +322,13 @@ class Controller {
     const medType = type === 'vaccination' ? 'vaccine' : 'medicament';
     const modelType = type === 'vaccination' ? 'Vaccination' : 'Medication';
 
+    for (const item of treatments) {
+      if (+itemPriceMap.get(item[medType].id).quantity < +item.totalDosage) {
+        throw `Not enough *${itemPriceMap
+          .get(item[medType].id).item_name}* in the store. Please restock and try again.`;
+      }
+    }
+
     treatments = treatments.map((treatment) => {
       const { id } = treatment[medType];
       const item = itemPriceMap.get(id);
@@ -337,13 +348,6 @@ class Controller {
         item_price: +itemPrices.get(id).price
       };
     });
-
-    for (const item of treatments) {
-      if (+itemPriceMap.get(item[`${medType}_id`]).quantity < +item.total_dosage) {
-        throw `Not enough *${itemPriceMap
-          .get(item[`${medType}_id`]).item_name}* in the store. Please restock and try again.`;
-      }
-    }
 
     return eval(modelType)
       .bulkCreate(treatments, {

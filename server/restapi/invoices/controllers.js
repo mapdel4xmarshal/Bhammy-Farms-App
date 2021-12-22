@@ -68,7 +68,7 @@ class Controller {
     for (const invoice of invoices) {
       const response = await this.addInvoice(user, invoice, transaction);
       if (response.error) {
-        transaction.rollback();
+        await transaction.rollback();
         throw { msg: response.error };
       }
     }
@@ -77,7 +77,7 @@ class Controller {
       for (const damagedItem of damagedItems) {
         const response = await damagedItemsControllers.addDamagedItem(user, damagedItem, transaction);
         if (response.error) {
-          transaction.rollback();
+          await transaction.rollback();
           throw { msg: response.error };
         }
       }
@@ -117,7 +117,8 @@ class Controller {
         item_id: {
           [Op.in]: invoice.items.map((item) => item.id)
         }
-      }
+      },
+      transaction
     })
       .then((items) => new Map(items.map((item) => [item.item_id, item])));
 
@@ -151,11 +152,11 @@ class Controller {
             transaction
           });
 
-        if (!trnx) transaction.commit();
+        if (!trnx) await transaction.commit();
         return newInvoice.invoice_id;
       })
-      .catch((error) => {
-        transaction.rollback();
+      .catch(async (error) => {
+        await transaction.rollback();
         console.log(error); // todo: add proper logger
         return {
           error: 'Unable to process request. Please try again later!',

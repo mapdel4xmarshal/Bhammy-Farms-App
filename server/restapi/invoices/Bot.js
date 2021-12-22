@@ -36,7 +36,15 @@ class Bot {
     client.on('message', async (payload) => {
       if (await this.filterPayload(payload)) {
         debug.info('Record received from whatsapp', payload);
-        await this.addInvoiceRecord(payload);
+        try {
+          await this.addInvoiceRecord(payload);
+        } catch (e) {
+          debug.error('Bot Error::', e);
+          let message = 'Error, please revalidate record!';
+
+          if (e.msg) message += `\n*REASON:* ${e.msg}`;
+          payload.reply(message);
+        }
       }
     });
 
@@ -55,32 +63,24 @@ class Bot {
   }
 
   async addInvoiceRecord(payload) {
-    try {
-      let { body } = payload;
+    let { body } = payload;
 
-      if (this.isValidPayload(body)) {
-        const record = await this.parsePayload(payload);
-        debug.info('record', record);
+    if (this.isValidPayload(body)) {
+      const record = await this.parsePayload(payload);
+      debug.info('record', record);
 
-        // Validate quantity
-        this.validateTotalSold(record.sold, [].concat(...record.sales.map((sale) => sale.items)));
+      // Validate quantity
+      this.validateTotalSold(record.sold, [].concat(...record.sales.map((sale) => sale.items)));
 
-        this._controllers.addInvoices(this._user, record.sales, record.damagedItems)
-          .then(() => {
-            payload.reply('*RECORD ADDED* 👍');
-            debug.info('addInvoices::', 'record added successfully.');
-          })
-          .catch(e => {
-            debug.info('addInvoices error', e);
-            throw e;
-          });
-      }
-    } catch (e) {
-      debug.error('Bot Error::', e);
-      let message = 'Error, please revalidate record!';
-
-      if (e.msg) message += `\n*REASON:* ${e.msg}`;
-      payload.reply(message);
+      return this._controllers.addInvoices(this._user, record.sales, record.damagedItems)
+        .then((response = {}) => {
+          debug.info('response', response);
+          if (response.error) {
+            throw { msg: response.error };
+          }
+          payload.reply('*RECORD ADDED* 👍');
+          debug.info('addInvoices::', 'record added successfully.');
+        });
     }
   }
 

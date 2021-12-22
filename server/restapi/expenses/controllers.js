@@ -1,7 +1,7 @@
 const path = require('path');
 const formidable = require('formidable');
 const {
-  Expense, ExpenseType, Sequelize, sequelize, Batch, Location, House, Item
+  Expense, ExpenseType, Sequelize, sequelize, Batch, Location, House, Item, ItemInventory
 } = require('../../models');
 const { fileUploadPath } = require('../../configs');
 
@@ -127,20 +127,20 @@ class Controller {
           user,
           resourceId: 'expense_id',
           transaction
-        })
-          .catch(reject);
+        }).catch(reject);
 
         if (expenseData.item_id) {
-          const item = await Item.findByPk(expenseData.item_id, { transaction })
-            .catch(reject);
-
-          await Item.update({ quantity: Number(item.quantity) + Number(expenseData.quantity) }, {
-            where: { item_id: expenseData.item_id },
+          await ItemInventory.create({
+            quantity: expenseData.quantity,
+            price: expenseData.price,
+            item_id: expenseData.item_id,
+            producer: 'Expense',
+            producer_id: newExpense.expense_id
+          }, {
+            transaction,
             user,
-            resourceId: 'expense_id',
-            transaction
-          })
-            .catch(reject);
+            resourceId: 'id'
+          }).catch(reject);
         }
         await transaction.commit();
         resolve(newExpense);
@@ -203,12 +203,28 @@ class Controller {
           resourceId: 'item_id'
         });
 
-        await Item.increment('quantity', {
-          by: Number(expenseData.quantity),
-          where: { item_id: expenseData.item_id },
+        // Reverse ItemInventory
+        await ItemInventory.destroy({
+          where: {
+            producer_id: expense.id,
+            producer: 'Expense'
+          }
+        }, {
           transaction,
           user,
-          resourceId: 'item_id'
+          resourceId: 'id'
+        });
+
+        await ItemInventory.create({
+          quantity: expenseData.quantity,
+          price: expenseData.price,
+          item_id: expenseData.item_id,
+          producer: 'Expense',
+          producer_id: expense.id
+        }, {
+          transaction,
+          user,
+          resourceId: 'id'
         });
       }
 

@@ -1,4 +1,4 @@
-process.env.DEBUG = 'bhammy*';
+process.env.DEBUG = 'null';//'bhammy*';
 
 const express = require('express');
 const bodyParser = require('body-parser');

@@ -48,7 +48,7 @@ class ItemInventory extends Model {
         // eslint-disable-next-line no-await-in-loop
         await Items.update({
           quantity: Sequelize.literal(`quantity + ${Number(item.quantity)}`),
-          price: item.price
+          ...(item.price && { price: item.price })
         },
         {
           where: { item_id: item.item_id },

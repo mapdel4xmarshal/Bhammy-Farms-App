@@ -60,7 +60,7 @@ class FeedProductionBot {
           });
       } catch (e) {
         debug.error('INSERT ERROR', e);
-        payload.reply(`*An Error Occurred*\n${e.message || e.error}`);
+        payload.reply(`*An Error Occurred*\n${e.message?.error || e.message || e.error}`);
       }
     }
   }
