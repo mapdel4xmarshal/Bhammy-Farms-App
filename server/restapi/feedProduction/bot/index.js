@@ -88,7 +88,7 @@ class FeedProductionBot {
   }
 
   async filterPayload(msg) {
-    const chat = await msg.getChat();
+    const chat = await msg.chat;
     return chat.isGroup && (chat.name === 'Bhammy Farms - Feed Mill' || (chat.name.includes('Feed')
       && chat.name.includes('Bhammy')));
   }

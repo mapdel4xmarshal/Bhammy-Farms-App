@@ -250,7 +250,7 @@ class Controller {
 
       await this.insertIngredients(newProduction.id, production, itemPriceMap, transaction, user);
 
-      itemsNotification.notify();
+      await itemsNotification.notify();
       // If the execution reaches this line, no errors were thrown.
       // We commit the transaction.
       if (!trnx) await transaction.commit();

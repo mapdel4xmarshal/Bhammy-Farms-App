@@ -1,157 +1,159 @@
-const fs = require('fs');
-const path = require('path');
-const qrcode = require('qrcode-terminal');
-const { Client } = require('whatsapp-web.js');
+#!/usr/bin/env node
+
 const Debugger = require('../utilities/debugger');
+const EventEmitter = require('events');
+const WebSocketClient = require('websocket').client;
 
 const debug = new Debugger('WhatsApp');
-const SESSION_FILE_PATH = path.resolve(path.join(__dirname, 'session.json'));
+const client = new WebSocketClient();
 
-let sessionCfg;
-if (fs.existsSync(SESSION_FILE_PATH)) {
-  sessionCfg = require(SESSION_FILE_PATH);
-}
+class WhatsappClient extends EventEmitter {
+  constructor() {
+    super();
+    this.connectWS();
+    this.registerWsHandlers();
+  }
 
-const client = new Client({
-  puppeteer: {
-    headless: true,
-    args: [
-      '--no-sandbox',
-      '--disable-setuid-sandbox',
-      '--disable-dev-shm-usage',
-      '--disable-accelerated-2d-canvas',
-      '--no-first-run',
-      '--no-zygote',
-      '--single-process',
-      '--disable-gpu'
-    ]// ,
-    // executablePath: '/opt/homebrew/bin/chromium'
-  },
-  session: sessionCfg
-});
+  static replyMessage(connection, payload) {
+    const response = {
+      action: 'reply',
+      message: payload.message,
+      chatId: payload.chatId,
+      messageId: payload.messageId
+    };
 
-// if (process.env.NODE_ENV === 'production')
-try {
-  client.initialize();
-} catch (e) {
-  console.log(e);
-}
+    if (connection.connected) {
+      connection.sendUTF(JSON.stringify(response));
 
-client.on('qr', (qr) => {
-  // NOTE: This event will not be fired if a session is specified.
-  debug.info('QR RECEIVED', qr);
-  qrcode.generate(qr, { small: true });
-});
-
-client.on('authenticated', (session) => {
-  debug.info('AUTHENTICATED', session);
-  sessionCfg = session;
-  fs.writeFile(SESSION_FILE_PATH, JSON.stringify(session), (err) => {
-    if (err) {
-      debug.error(err);
+      debug.info('Reply message', response);
     }
-  });
-});
-
-client.on('auth_failure', (msg) => {
-  // Fired if session restore was unsuccessfull
-  debug.error('AUTHENTICATION FAILURE', msg);
-});
-
-client.on('ready', () => {
-  debug.info('READY');
-});
-
-client.on('message', async (msg) => {
-  if (msg.body === '!ping reply') {
-    // Send a new message as a reply to the current one
-    msg.reply('pong');
-  } else if (msg.body === '!ping') {
-    // Send a new message to the same chat
-    client.sendMessage(msg.from, 'pong');
   }
-});
 
-client.on('message_create', (msg) => {
-  // Fired on all message creations, including your own
-  if (msg.fromMe) {
-    // do stuff here
-    debug.info('message_create', msg);
+  connectWS() {
+    client.connect('ws://34.227.100.168:8000/', 'echo-protocol');
   }
-});
 
-client.on('message_revoke_everyone', async (after, before) => {
-  // Fired whenever a message is deleted by anyone (including you)
-  debug.info('message_revoke_everyone - after', after); // message after it was deleted.
-  if (before) {
-    debug.info('message_revoke_everyone - before', before); // message before it was deleted.
+  sendMessage(chatId, message) {
+    this._connection.sendUTF(JSON.stringify({ action: 'sendMessage', chatId, message }));
   }
-});
 
-client.on('message_revoke_me', async (msg) => {
-  // Fired whenever a message is only deleted in your own view.
-  debug.info('message_revoke_me', msg.body); // message before it was deleted.
-});
-
-client.on('message_ack', (msg, ack) => {
-  /*
-      == ACK VALUES ==
-      ACK_ERROR: -1
-      ACK_PENDING: 0
-      ACK_SERVER: 1
-      ACK_DEVICE: 2
-      ACK_READ: 3
-      ACK_PLAYED: 4
-  */
-
-  console.log('message_ack', msg, ack);
-
-  if (ack == 3) {
-    // The message was read
+  getChats() {
+    this._connection.sendUTF(JSON.stringify({ action: 'getChats' }));
   }
-});
 
-client.on('change_battery', (batteryInfo) => {
-  // Battery percentage for attached device has changed
-  const { battery, plugged } = batteryInfo;
-  debug.info(`Battery: ${battery}% - Charging? ${plugged}`);
-});
+  registerWsHandlers() {
+    const context = this;
 
-client.on('change_state', (state) => {
-  debug.info('CHANGE STATE', state);
-});
+    client.on('connectFailed', (error) => {
+      debug.info('connectFailed', `Connect Error: ${error.toString()}`);
+      setTimeout(context.connectWS, 5000);
+    });
 
-client.on('disconnected', (reason) => {
-  debug.info('Client was logged out', reason);
-});
+    client.on('connect', (connection) => {
+      debug.info('connect::', 'WebSocket Client Connected');
 
-const cleanup = async () => {
-  debug.info('Cleanup', 'Closing client due to process exit');
-  try {
-    client.destroy();
-  } catch (e) {
-    debug.error(e);
+      this._connection = connection;
+
+      connection.on('error', (error) => {
+        debug.info('Websocket error::', `Connection Error: ${error.toString()}`);
+        context.emit('server_connection_error', error);
+        setTimeout(context.connectWS, 5000);
+      });
+
+      connection.on('close', (reason) => {
+        debug.info('Websocket close::', 'echo-protocol Connection Closed');
+        context.emit('server_connection_close', reason);
+        setTimeout(context.connectWS, 5000);
+      });
+
+      connection.on('message', (serverMessage) => {
+        try {
+          if (serverMessage.type === 'utf8') {
+            const payload = JSON.parse(serverMessage.utf8Data);
+            debug.info(`Received: '${serverMessage.utf8Data}'`);
+            const { message } = payload;
+
+            switch (payload.action) {
+              case 'auth_failure': {
+                debug.error('AUTHENTICATION FAILURE', message);
+                context.emit('auth_failure', message);
+                break;
+              }
+              case 'ready': {
+                debug.info('READY');
+                context.emit('ready');
+                break;
+              }
+              case 'message_create':
+              case 'message': {
+                const messageId = message?.id?._serialized;
+                const chatId = message?.chat?.groupMetadata?.id._serialized || message.chat.id._serialized;
+
+                debug.info(payload.action, message);
+                context.emit(payload.action, {
+                  ...message,
+                  reply: (msg) => WhatsappClient.replyMessage(connection, {
+                    message: msg,
+                    messageId,
+                    chatId
+                  })
+                });
+                break;
+              }
+              case 'message_revoke_everyone': {
+                const messageId = message?.id?._serialized;
+                const chatId = message?.after?.chat?.groupMetadata?.id._serialized || message?.after?.chat.id._serialized;
+
+                debug.info('message_revoke_everyone - after', message.after); // message after it was deleted.
+                if (message.before) {
+                  debug.info('message_revoke_everyone - before', message.before); // message before it was deleted.
+                }
+                context.emit('message_revoke_everyone', {
+                  ...message.after,
+                  reply: (msg) => WhatsappClient.replyMessage(connection, {
+                    message: msg,
+                    messageId,
+                    chatId
+                  })
+                },{
+                  ...message.before,
+                  reply: (msg) => WhatsappClient.replyMessage(connection, {
+                    message: msg,
+                    messageId,
+                    chatId
+                  })
+                });
+                break;
+              }
+              case 'message_revoke_me':
+              case 'change_state':
+              case 'change_battery': {
+                debug.info(payload.action, message);
+                context.emit(payload.action, {
+                  ...message,
+                  reply: (msg) => WhatsappClient.replyMessage(connection, msg)
+                });
+                break;
+              }
+              case 'disconnected': {
+                context.emit('disconnected', message);
+                debug.info('Client was logged out', message);
+                break;
+              }
+              case 'getChats': {
+                context.emit('getChats', payload.chats);
+                debug.info('getChats', payload.chats);
+                break;
+              }
+              default: debug.info(payload.action, payload.chats);
+            }
+          }
+        } catch (e) {
+          debug.error('Websocket Message error::', e);
+        }
+      });
+    });
   }
-};
+}
 
-// clean up listeners
-process.on('beforeExit', async () => {
-  await cleanup();
-  process.exit();
-});
-process.on('uncaughtException', async (e) => {
-  await cleanup();
-  console.log(e);
-  process.exit();
-});
-
-['SIGHUP', 'SIGINT', 'SIGQUIT', 'SIGILL',
-  'SIGTRAP', 'SIGABRT',
-  'SIGBUS', 'SIGFPE', 'SIGUSR1', 'SIGSEGV', 'SIGUSR2', 'SIGTERM'].forEach((eventType) => {
-  process.on(eventType, async () => {
-    await cleanup();
-    process.exit();
-  });
-});
-
-module.exports = client;
+module.exports = new WhatsappClient();

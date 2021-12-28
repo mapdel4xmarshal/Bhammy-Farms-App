@@ -217,7 +217,7 @@ class Controller {
         productionId, transaction, user, activeBatch, itemPriceMap, itemPrices
       });
 
-      itemsNotification.notify();
+      await itemsNotification.notify();
       // If the execution reaches this line, no errors were thrown.
       // We commit the transaction.
       await transaction.commit();

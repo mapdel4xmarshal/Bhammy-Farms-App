@@ -54,7 +54,7 @@ class Bot {
   }
 
   async filterPayload(msg) {
-    const chat = await msg.getChat();
+    const chat = await msg.chat;
     return chat.isGroup
       && (chat.name === 'Bhammy Farms - Production'
         || (chat.name.includes('Production') && chat.name.includes('Bhammy'))
@@ -73,7 +73,6 @@ class Bot {
       body = this.autoCorrect(body.toLowerCase());
 
       const bodyArray = body.split('\n');
-      console.log('this.isValidPayload(body)', this.isValidPayload(body));
 
       if (this.isValidPayload(body)) {
         let record = this.parsePayload(bodyArray);

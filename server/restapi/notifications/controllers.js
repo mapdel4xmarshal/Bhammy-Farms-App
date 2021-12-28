@@ -4,6 +4,7 @@ const client = require('../../whatsapp');
 class Controller {
   constructor() {
     this.GROUP_NAME = 'BHAMMY FARMS - SALES';
+    this._groupId = null;
   }
 
   async processPaymentNotifications(notifications = []) {
@@ -17,7 +18,7 @@ class Controller {
       return payment;
     });
 
-    const groupId = await this.getGroupByName(this.GROUP_NAME);
+    const groupId = this._groupId || await this.getGroupByName(this.GROUP_NAME);
     const messages = [];
 
     for (const payment of payments) {
@@ -26,7 +27,7 @@ class Controller {
         payment['Transaction Narration']}\nDate and Time: ${payment['Date and Time']}`;
 
       if (groupId) {
-        await client.sendMessage(groupId.groupMetadata.id._serialized, message);
+        client.sendMessage(groupId.groupMetadata.id._serialized, message);
         messages.push(message);
       }
     }
@@ -35,10 +36,14 @@ class Controller {
   }
 
   getGroupByName(groupName) {
-    return client.getChats()
-      .then((chats) => {
-        return chats.find((chat) => chat.isGroup && (chat.name === groupName));
+    return new Promise((resolve) => {
+      client.getChats();
+      client.once('getChats', (chats) => {
+        const chat = chats.find((cht) => cht.isGroup && (cht.name === groupName));
+        this._groupId = chat;
+        resolve(chat);
       });
+    });
   }
 }
 

@@ -9,6 +9,7 @@ class ItemsNotification {
     this.GROUP_NAME = 'Bhammy Farms - Oloko';
     this._items = [];
     this._transaction = transaction;
+    this._groupId = null;
   }
 
   _getItems(arrayFormat = false) {
@@ -28,27 +29,32 @@ class ItemsNotification {
   }
 
   async snapshot() {
-    this._items = await this._getItems();
+    return this._getItems().then((items) => { this._items = items; });
   }
 
   _getGroupByName(groupName) {
-    return client.getChats()
-      .then((chats) => {
-        return chats.find((chat) => chat.isGroup && (chat.name === groupName));
+    return new Promise((resolve) => {
+      client.getChats();
+      client.once('getChats', (chats) => {
+        const chat = chats.find((cht) => cht.isGroup && (cht.name === groupName));
+        this._groupId = chat;
+        debug.info('getChats', chats);
+        resolve(chat);
       });
+    });
   }
 
   _minStockMessage(item) {
-    return `‼️ *${item.name}* is ridiculously low! The quantity remaining is ${item.quantity}${item.unit
-    }. Please restock immediately!`;
+    return `‼️ *${item.name}* is ridiculously low! The quantity remaining is *${item.quantity}${item.unit
+    }*. Please restock immediately!`;
   }
 
   _restockMessage(item) {
-    return `⚠️Restock *${item.name}*. The quantity remaining is *${item.quantity}${item.unit}*.`;
+    return `⚠️ Restock *${item.name}*. The quantity remaining is *${item.quantity}${item.unit}*.`;
   }
 
   async _sendNotification(message) {
-    const groupId = await this._getGroupByName(this.GROUP_NAME);
+    const groupId = this._groupId || await this._getGroupByName(this.GROUP_NAME);
     return client.sendMessage(groupId.groupMetadata.id._serialized, message);
   }
 
@@ -57,15 +63,14 @@ class ItemsNotification {
 
     newItems.forEach((item) => {
       if (this._items.has(item.id)) {
-        const nItem = this._items.has(item.id);
+        const nItem = this._items.get(item.id);
         if (+nItem.quantity !== +item.quantity) {
-          if (+item.quantity <= +item.restockLevel) {
-            debug.info('RESTOCK ITEM', nItem);
-            this._sendNotification(this._restockMessage(item));
-          }
           if (+item.quantity <= +item.minimumStock) {
             debug.info('MIN STOCK ITEM', nItem);
             this._sendNotification(this._minStockMessage(item));
+          } else if (+item.quantity <= +item.restockLevel) {
+            debug.info('RESTOCK ITEM', nItem);
+            this._sendNotification(this._restockMessage(item));
           }
         }
       }

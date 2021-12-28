@@ -57,7 +57,7 @@ class Bot {
   }
 
   async filterPayload(msg) {
-    const chat = await msg.getChat();
+    const chat = await msg.chat;
     return chat.isGroup && (chat.name === 'BHAMMY FARMS - SALES' || (chat.name.includes('Sales')
       && chat.name.includes('Bhammy')));
   }
