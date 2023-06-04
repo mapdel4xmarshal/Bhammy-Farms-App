@@ -28,6 +28,7 @@
       :headers="headers"
       :items="batches"
       :search="search"
+      :items-per-page="-1"
       class="elevation-1 table-cursor"
       @click:row="selectBatch"
       no-data-text="No batch available, please add a batch."

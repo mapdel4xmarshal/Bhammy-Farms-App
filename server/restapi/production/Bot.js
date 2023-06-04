@@ -17,9 +17,11 @@ class Bot {
     this._excludedKeywords = ['Production', 'Total mor', 'Egg production', 'Wastage'];
     this._corrections = {
       'Large Egg': ['Large size', 'Large'],
+      'Extra Large Egg': ['ExtraLarge', 'Jumbo', 'Extra Large'],
       'Medium Egg': ['Medium size', 'Medium'],
       'Pullet Egg': ['Pullet size', 'Pullet', 'Pullets'],
       'Cracked Egg': ['Cracks', 'crack'],
+      'Small Egg': ['Small', 'small'],
       water: ['Water consumed'],
       'Vitamin - Miavit': ['vitamin (miavit)'],
       compounded: ['local'],
@@ -145,8 +147,8 @@ class Bot {
 
         if (!isEmpty(quantity)) {
           if (name.includes('pen')) {
-            record.batchName = quantity.toLowerCase().includes('brooding') ? 'BROODING-A' :
-              `PEN-${quantity}`.toUpperCase();
+            record.batchName = quantity.toLowerCase().includes('brooding') ? 'BROODING-A'
+              : `PEN-${quantity}`.toUpperCase();
           }
 
           if (name.includes('brooding')) {
@@ -439,7 +441,7 @@ class Bot {
         || ['brooding', 'feed', 'water'].every((term) => string.includes(term))
         || ['pen', 'date', 'feed', 'age of bird', 'stock of bird'].every((term) => string.includes(term))
       )
-      && /mortality|Large|medium|pullet|crack/.test(string);
+      && /mortality|Large|medium|pullet|crack|jumbo/.test(string);
   }
 
   autoCorrect(payload) {

@@ -3,7 +3,7 @@
     <store-item v-model="item"
                 :active="newItem"
                 :errored.sync="errored"
-                @cancel="newItem = false"
+                @cancel="cancel"
                 @save="saved"/>
     <v-toolbar flat dense color="transparent">
       <v-toolbar-title>Inventory</v-toolbar-title>
@@ -126,20 +126,20 @@ export default {
     search: '',
     message: '',
     items: [],
-    item: {
-      category: '',
-      name: '',
-      unit: '',
-      image: null,
-    },
+    item: {},
     showItemInfo: false
   }),
   methods: {
     saved() {
       this.newItem = false;
       this.snackbar = true;
+      this.resetItem();
       this.message = this.item.id ? 'Item updated successfully' : 'Item added successfully';
       this.getItems();
+    },
+    cancel() {
+      this.newItem = false;
+      this.resetItem();
     },
     getItems() {
       axios.get('items')
@@ -167,9 +167,18 @@ export default {
     },
     formatNumber(value) {
       return new Intl.NumberFormat('en-US', { minimumFractionDigits: 0 }).format((value).toFixed(2));
+    },
+    resetItem() {
+      this.item = {
+        category: '',
+        name: '',
+        unit: '',
+        image: null,
+      };
     }
   },
   created() {
+    this.resetItem();
     this.getItems();
   }
 };

@@ -3,6 +3,7 @@ module.exports = (options = {}) => (req, res, next) => {
     req.user = {};
     return next();
   }
+  console.log('user---', req.user);
   if (req.user) { return next(); }
   res.status(401).json({
     status: 401,

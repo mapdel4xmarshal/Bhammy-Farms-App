@@ -3,7 +3,7 @@ const client = require('../../whatsapp');
 
 class Controller {
   constructor() {
-    this.GROUP_NAME = 'BHAMMY FARMS - SALES';
+    this.GROUP_NAME = 'BHAMMY FARMS - ALERTS';
     this._groupId = null;
   }
 

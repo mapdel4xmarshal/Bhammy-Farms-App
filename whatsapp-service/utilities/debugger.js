@@ -27,7 +27,7 @@ class Debugger extends EventEmitter {
   }
 
   error(name, payload) {
-    this.debugError(payload);
+    this.debugError(name, payload);
     this.emit('err', payload);
     Debugger.emitter.emit('err', {
       name: this.name,

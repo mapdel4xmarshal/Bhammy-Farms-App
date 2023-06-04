@@ -30,7 +30,7 @@ class WhatsappClient extends EventEmitter {
   }
 
   connectWS() {
-    client.connect('ws://34.227.100.168:8000/', 'echo-protocol');
+    client.connect('ws://54.198.186.115:8000/', 'echo-protocol');
   }
 
   sendMessage(chatId, message) {

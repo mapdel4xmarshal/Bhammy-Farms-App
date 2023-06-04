@@ -65,14 +65,6 @@ class Controller {
   async addInvoices(user, invoices, damagedItems) {
     const transaction = await sequelize.transaction();
 
-    for (const invoice of invoices) {
-      const response = await this.addInvoice(user, invoice, transaction);
-      if (response.error) {
-        await transaction.rollback();
-        throw { msg: response.error };
-      }
-    }
-
     if (damagedItems) {
       for (const damagedItem of damagedItems) {
         const response = await damagedItemsControllers.addDamagedItem(user, damagedItem, transaction);
@@ -80,6 +72,14 @@ class Controller {
           await transaction.rollback();
           throw { msg: response.error };
         }
+      }
+    }
+
+    for (const invoice of invoices) {
+      const response = await this.addInvoice(user, invoice, transaction);
+      if (response.error) {
+        await transaction.rollback();
+        throw { msg: response.error };
       }
     }
 
@@ -237,7 +237,7 @@ class Controller {
 
       if (response.error) throw { msg: response.error };
     }
-
+    // NOT WORKING... DAMAGED ITEMS NOT DELETED..CHECK
     for (const damagedItem of damagedItems) {
       const response = await damagedItemsControllers.deleteDamagedItemById(user, damagedItem, transaction);
 

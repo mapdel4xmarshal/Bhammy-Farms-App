@@ -29,8 +29,9 @@ class Controller {
       subQueryWhere.push(`batches.is_active = '${isActive}'`);
     }
     if (batchId) {
-      where.push(`batches.batch_id = '${batchId}'`);
-      subQueryWhere.push(`batches.batch_id = '${batchId}'`);
+      const cond = `(${batchId.split(',').map((id) => `batches.batch_id = '${id}'`).join(' OR ')})`;
+      where.push(cond);
+      subQueryWhere.push(cond);
     }
     if (before) {
       where.push(`productions.date <= '${before}'`);

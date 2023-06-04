@@ -48,8 +48,8 @@ class Controller {
   }
 
   async addDamagedItem(user, payload, trnx) {
+    const transaction = trnx || await sequelize.transaction();
     try {
-      const transaction = trnx || await sequelize.transaction();
       const where = payload.location ? {location_id: payload.location} : {};
 
       if (!this.allowedDamageTypes.includes(payload?.damageType.toLowerCase())) {
@@ -143,7 +143,7 @@ class Controller {
 
       return damagedRecord;
     } catch (error) {
-      debug.error('Add damaged item', error);
+      console.error('Add damaged item', error);
       await transaction.rollback();
       return {
         error: 'Unable to process request. Please try again later!',

@@ -21,10 +21,10 @@ const BatchProduction = require('./BatchProduction');
 
 class Controller {
   async getBatches({
-                     house,
-                     batch,
-                     status
-                   }) {
+    house,
+    batch,
+    status
+  }) {
     const allowedStatus = {
       retired: 0,
       active: 1
@@ -48,6 +48,7 @@ class Controller {
         [fn('sum', fn('COALESCE', col('Productions->Mortalities.count'), 0)), 'totalMortality'],
         [literal('`Source->Party`.`name`'), 'sourceName'],
         [literal('CASE WHEN is_active = 1 THEN "Active" ELSE "Retired" END'), 'status']],
+      order: [['name', 'ASC']],
       include: [
         {
           model: Breed,
@@ -187,23 +188,22 @@ class Controller {
       .then(async ([treatments]) => {
         if (!list) {
           return await this.processTreatments(treatments);
-        } else {
-          return treatments
-            .filter(treatment => treatment.vaccinationId || treatment.medicationId)
-            .map(treatment => ({
-              date: treatment.date,
-              week: Math.floor((((new Date(treatment.date) - new Date(batch.move_in_date)) / 86400000) + batch.move_in_age) / 7),
-              type: treatment.vaccinationId ? 'vaccination' : 'medication',
-              note: treatment.vaccinationNotes || treatment.medicationNotes,
-              id: treatment.vaccinationId || treatment.medicationId,
-              dosageUnit: treatment.vaccineDosageUnit || treatment.medicamentDosageUnit,
-              totalDosage: treatment.vaccineTotalDosage || treatment.medicamentTotalDosage,
-              vaccineName: treatment.vaccineName,
-              medicamentName: treatment.medicamentName,
-              vaccineBrand: treatment.vaccineBrand,
-              medicamentBrand: treatment.medicamentBrand
-            }));
         }
+        return treatments
+          .filter((treatment) => treatment.vaccinationId || treatment.medicationId)
+          .map((treatment) => ({
+            date: treatment.date,
+            week: Math.floor((((new Date(treatment.date) - new Date(batch.move_in_date)) / 86400000) + batch.move_in_age) / 7),
+            type: treatment.vaccinationId ? 'vaccination' : 'medication',
+            note: treatment.vaccinationNotes || treatment.medicationNotes,
+            id: treatment.vaccinationId || treatment.medicationId,
+            dosageUnit: treatment.vaccineDosageUnit || treatment.medicamentDosageUnit,
+            totalDosage: treatment.vaccineTotalDosage || treatment.medicamentTotalDosage,
+            vaccineName: treatment.vaccineName,
+            medicamentName: treatment.medicamentName,
+            vaccineBrand: treatment.vaccineBrand,
+            medicamentBrand: treatment.medicamentBrand
+          }));
       })
       .catch((error) => {
         console.log(error); // todo: add proper logger
@@ -265,7 +265,7 @@ class Controller {
         ['production_id', 'id'], 'date', 'humidity', 'temperature', 'weatherCondition', 'water', 'note',
         [literal(`COALESCE(DATEDIFF(date, '${batch.move_in_date.toJSON()
           .slice(0, 10)}'), 0) + ${batch.move_in_age}`),
-          'batchAge']
+        'batchAge']
       ],
       order: [
         ['date', 'DESC']

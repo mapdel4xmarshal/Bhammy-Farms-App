@@ -162,7 +162,7 @@
                   hint="Cost of the item."
                   persistent-hint
                   :suffix="value.unit"
-                  :rules="[v => !!v || 'Please enter restock level.']"
+                  :rules="[v => value.enableNotification || !!v || 'Please enter restock level.']"
                   type="number"
                   v-model="value.restockLevel"
                   required
@@ -174,7 +174,7 @@
                   hint="Cost of the item."
                   persistent-hint
                   :suffix="value.unit"
-                  :rules="[v => !!v || 'Please enter minimum stock level.']"
+                  :rules="[v => value.enableNotification || !!v || 'Please enter minimum stock level.']"
                   type="number"
                   v-model="value.minimumStock"
                   required
@@ -211,7 +211,7 @@
       <v-card-actions>
         <v-btn color="primary darken-1" text @click="cancel">Cancel</v-btn>
         <v-spacer></v-spacer>
-        <v-btn color="primary darken-1" tile @click="save">{{ buttonTitle }}</v-btn>
+        <v-btn color="primary darken-1" :disabled="!valid" tile @click="save">{{ buttonTitle }}</v-btn>
       </v-card-actions>
     </v-card>
 

@@ -1,4 +1,4 @@
-//process.env.DEBUG = 'null';//'bhammy*';
+process.env.DEBUG = 'bhammy*';
 
 const express = require('express');
 const bodyParser = require('body-parser');
@@ -24,11 +24,15 @@ const feedProduction = require('./restapi/feedProduction/routes');
 const employees = require('./restapi/employees/routes');
 const damagedItems = require('./restapi/damagedItems/routes');
 const notifications = require('./restapi/notifications/routes');
+const WeatherMonitor = require('./weatherMonitor');
 
 // Bots
 const FeedMillBot = require('./restapi/feedProduction/bot');
 
 new FeedMillBot().listen();
+
+const weatherMonitor = new WeatherMonitor();
+weatherMonitor.monitor();
 
 dotenv.config();
 
@@ -73,7 +77,7 @@ if (app.get('env') === 'production') {
   app.use(passport.initialize());
   app.use(passport.session());
 
-// You can use this section to keep a smaller payload
+  // You can use this section to keep a smaller payload
   passport.serializeUser((user, done) => {
     done(null, user);
   });

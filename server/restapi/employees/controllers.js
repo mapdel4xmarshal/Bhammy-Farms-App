@@ -21,7 +21,8 @@ const { fileUploadPath } = require('../../configs');
 const mailer = require('../../mailer/mailer');
 const SalaryClass = require('./salary');
 const SalaryScheduler = require('./salaryScheduler');
-const { getBool,
+const {
+  getBool,
   isEmpty
 } = require('../../utilities/common');
 
@@ -633,7 +634,7 @@ class Controller {
     await Expense.create({
       category: 'salary',
       amount: Math.floor(transferInfo.data.amount / 100),
-      date: transferInfo.data.created_at.substr(0, 10),
+      date: transferInfo.data.createdAt.substr(0, 10),
       invoice_number: transferInfo.data.transfer_code,
       provider: employee.Party.name,
       description: transferInfo.data.reason,

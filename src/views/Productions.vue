@@ -13,12 +13,44 @@
 
     <v-row class="mt-3">
       <v-col cols="12" md="3">
+        <v-menu
+          ref="menu"
+          :close-on-content-click="false"
+          transition="scale-transition"
+          offset-y
+          min-width="290px"
+          v-model="menu"
+          :return-value.sync="date"
+        >
+          <template v-slot:activator="{ on }">
+            <v-text-field
+              :value="dateRangeText"
+              dense
+              label="Date"
+              autocomplete="false"
+              clearable
+              @click:clear="clearDate"
+              v-on="on"
+            ></v-text-field>
+          </template>
+          <v-date-picker v-model="date" range>
+            <v-btn text color="primary" @click="menu = false">Cancel</v-btn>
+            <v-spacer></v-spacer>
+            <v-btn text color="primary" @click="date = [] && updateDate()">All</v-btn>
+            <v-btn color="primary" @click="updateDate">OK</v-btn>
+          </v-date-picker>
+        </v-menu>
+      </v-col>
+      <v-col cols="12" md="5">
         <v-autocomplete
           v-model="batch"
           label="Batch"
           persistent-hint
           required
           dense
+          chips
+          small-chips
+          multiple
           no-data-text="No batch available"
           clearable
           return-object
@@ -34,34 +66,6 @@
             </v-list-item-content>
           </template>
         </v-autocomplete>
-      </v-col>
-      <v-col cols="12" md="3">
-        <v-menu
-          ref="menu"
-          :close-on-content-click="false"
-          transition="scale-transition"
-          offset-y
-          min-width="290px"
-          v-model="menu"
-          :return-value.sync="date"
-        >
-          <template v-slot:activator="{ on }">
-            <v-text-field
-              v-model="dateRangeText"
-              dense
-              label="Date"
-              autocomplete="false"
-              clearable
-              @click:clear="date = null && getProduction"
-              v-on="on"
-            ></v-text-field>
-          </template>
-          <v-date-picker v-model="date" range>
-            <v-spacer></v-spacer>
-            <v-btn text color="primary" @click="menu = false">Cancel</v-btn>
-            <v-btn text color="primary" @click="updateDate">OK</v-btn>
-          </v-date-picker>
-        </v-menu>
       </v-col>
       <v-spacer></v-spacer>
       <v-col cols="12" md="3">
@@ -93,35 +97,37 @@
       </v-btn-toggle>
     </v-toolbar>
 
-    <v-row v-if="!mode">
-      <v-col>
-        <metric-card title="Eggs Produced" :value="totalEggs" unit="crates" img="img/egg.png"/>
-      </v-col>
-
-      <v-col>
-        <metric-card title="Birds" :value="totalBirds" unit="birds" img="img/hen.png"/>
-      </v-col>
-
-      <v-col>
-        <metric-card title="Feeds Consumed" :value="totalFeeds" unit="kg" img="img/feed.png"/>
-      </v-col>
-
-      <v-col>
-        <metric-card title="Morality" :value="totalMortality" unit="bird(s)" img="img/dead.png"/>
-      </v-col>
-    </v-row>
-    <v-row v-else>
-      <template v-for="(value, type) in eggTypes">
-        <v-col :key="type">
-          <metric-card :title="type" :value="value / 30" unit="crates" img="img/egg.png"/>
+    <div class="summary-container">
+      <v-row v-if="!mode">
+        <v-col>
+          <metric-card title="Eggs Produced" :value="totalEggs" unit="crates" img="img/egg.png"/>
         </v-col>
-      </template>
-      <template v-for="(value, type) in feedTypes">
-        <v-col :key="type">
-          <metric-card :title="type" :value="value / 25" unit="bags" img="img/feed.png"/>
+
+        <v-col>
+          <metric-card title="Birds" :value="totalBirds" unit="birds" img="img/hen.png"/>
         </v-col>
-      </template>
-    </v-row>
+
+        <v-col>
+          <metric-card title="Feeds Consumed" :value="totalFeeds" unit="kg" img="img/feed.png"/>
+        </v-col>
+
+        <v-col>
+          <metric-card title="Morality" :value="totalMortality" unit="bird(s)" img="img/dead.png"/>
+        </v-col>
+      </v-row>
+      <v-row v-else>
+        <template v-for="(value, type) in eggTypes">
+          <v-col :key="type">
+            <metric-card :title="type" :value="value / 30" unit="crates" img="img/egg.png"/>
+          </v-col>
+        </template>
+        <template v-for="(value, type) in feedTypes">
+          <v-col :key="type">
+            <metric-card :title="type" :value="value / 25" unit="bags" img="img/feed.png"/>
+          </v-col>
+        </template>
+      </v-row>
+    </div>
     <v-data-table
       :headers="headers"
       :items="productions"
@@ -267,11 +273,30 @@ export default {
     createNew() {
       this.$router.push({ name: ROUTES.NEW_PRODUCTION });
     },
+    clearDate() {
+      this.defaultDate();
+      this.getProduction();
+    },
+    async defaultDate() {
+      const endDate = new Date().getTime();
+      const startDate = endDate - 5184000000; // 60 days
+      this.date = [];
+      await this.$nextTick(() => {
+        this.date = [
+          new Date(endDate).toISOString().split('T')[0],
+          new Date(startDate).toISOString().split('T')[0]
+        ];
+      });
+    },
     getProduction() {
       const filters = ['isActive=1'];
-      if (this.batch) filters.push(`batchId=${this.batch.batchId}`);
+
+      if (this.batch) filters.push(`batchId=${this.batch.map((batch) => batch.batchId).join()}`);
       if (this.date.length === 1) filters.push(`date=${this.date[0]}`);
-      if (this.date.length === 2) filters.push(`after=${this.date[0]}&before=${this.date[1]}`);
+      if (this.date.length === 2) {
+        this.date.sort((a, b) => a.localeCompare(b));
+        filters.push(`after=${this.date[0]}&before=${this.date[1]}`);
+      }
       axios.get(`/productions?${filters.join('&')}`)
         .then(({ data }) => {
           this.productions = data;
@@ -363,6 +388,7 @@ export default {
     }
   },
   created() {
+    this.defaultDate();
     this.getBatches();
   },
   activated() {
@@ -371,8 +397,15 @@ export default {
 };
 </script>
 
-<style lang="css">
+<style lang="scss">
   .table-cursor tbody tr:hover {
     cursor: pointer;
+  }
+
+  .summary-container {
+    max-height: 100px;
+    margin-top: 10px;
+    margin-bottom: 30px;
+    overflow: auto;
   }
 </style>

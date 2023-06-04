@@ -221,7 +221,7 @@ class Bot {
   async processSales(date, sale, items, stamp) {
     const sections = sale.split('\n')
       .filter(Boolean);
-    if (/L=|M=|C=|P=|X=/i.test(sections[0])) sections.unshift('Unknown');
+    if (/XL=|M=|C=|P=|X=|L=/i.test(sections[0])) sections.unshift('Unknown');
 
     return {
       customerId: await this.getCustomerIdByName(sections[0]),
@@ -249,9 +249,9 @@ class Bot {
     const eggs = [];
 
     recordArray.forEach(egg => {
-      const sanitizedEgg = egg.replace(/ /g, '');
+      const sanitizedEgg = egg.replace(/ /g, '').replace(/XL=/ig, 'E=');
 
-      if (/^(l=|m=|p=|c=|x=)/ig.test(sanitizedEgg)) {
+      if (/^(l=|m=|p=|c=|e=|s=)/ig.test(sanitizedEgg)) {
         const match = sanitizedEgg.split('=');
         const item = this.findMatchedItem(match[0], items);
 
@@ -299,7 +299,7 @@ class Bot {
    * @returns {*}
    */
   findMatchedItem(searchWord, items) {
-    return items.filter(item => new RegExp(`${searchWord}`, 'ig').test(item.item_name))[0];
+    return items.filter(item => new RegExp(`${searchWord}`, 'ig').test(item.item_name[0]))[0];
   }
 
   /**
@@ -366,7 +366,7 @@ class Bot {
     string = string.toLowerCase();
     return /(\d{1,2})([\/-])(\d{1,2})\2(\d{2,4})/.test(string)
       && ['production', 'total', 'balanc'].every((term) => string.includes(term))
-      && /sold|L=|M=|P=|C=|X=/i.test(string);
+      && /sold|L=|M=|P=|C=|X=|S=/i.test(string);
   }
 
   async deleteRecord(prevPayload) {
