@@ -18,6 +18,11 @@ router.get('/departments', async (req, res) => {
   res.json(departments);
 });
 
+router.get('/banks', async (req, res) => {
+  const bank = await controllers.listBanks();
+  res.json(bank);
+});
+
 router.get('/:employeeId', async (req, res) => {
   const employee = await controllers.getEmployee(req.params.employeeId, req.query.fullMonthsOnly);
   res.json(employee);

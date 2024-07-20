@@ -13,7 +13,6 @@ const debug = new Debug('Production:Bot');
 class Bot {
   constructor(controllers) {
     this._controllers = controllers;
-
     this._excludedKeywords = ['Production', 'Total mor', 'Egg production', 'Wastage'];
     this._corrections = {
       'Large Egg': ['Large size', 'Large'],
@@ -22,6 +21,7 @@ class Bot {
       'Pullet Egg': ['Pullet size', 'Pullet', 'Pullets'],
       'Cracked Egg': ['Cracks', 'crack'],
       'Small Egg': ['Small', 'small'],
+      'Ungraded Egg': ['Unsorted', 'ungraded', 'Ungraded', 'all size', 'no size'],
       water: ['Water consumed'],
       'Vitamin - Miavit': ['vitamin (miavit)'],
       compounded: ['local'],

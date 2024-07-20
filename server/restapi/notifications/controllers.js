@@ -35,15 +35,29 @@ class Controller {
     return messages;
   }
 
-  getGroupByName(groupName) {
+  getGroupByName(groupName, skipCache) {
     return new Promise((resolve) => {
       client.getChats();
       client.once('getChats', (chats) => {
         const chat = chats.find((cht) => cht.isGroup && (cht.name === groupName));
-        this._groupId = chat;
+        if (!skipCache) this._groupId = chat;
         resolve(chat);
       });
     });
+  }
+
+  async processWhatsappNotifications(payload) {
+    const groupId = await this.getGroupByName(payload.group, true);
+    client.sendMessage(groupId.groupMetadata.id._serialized, payload.message);
+
+    return payload;
+  }
+
+  async processWhatsappWebhook(payload) {
+    const groupId = await this.getGroupByName(payload.group, true);
+    console.log(groupId, payload);
+
+    return payload;
   }
 }
 

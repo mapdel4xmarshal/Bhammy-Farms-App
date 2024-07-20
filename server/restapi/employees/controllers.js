@@ -163,10 +163,29 @@ class Controller {
       });
   }
 
+  async listBanks() {
+    return new Promise((resolve) => {
+      const url = 'https://api.paystack.co/bank?country=nigeria';
+      request.get(url, (error, res, detail) => {
+        console.log(error, detail, url);
+        if (error) {
+          resolve({
+            error: 'Unable to process request. Please try again later!',
+            status: 500
+          });
+        } else {
+          resolve(JSON.parse(detail));
+        }
+      })
+        .auth(null, null, true, process.env.PAYSTACK_SECRET);
+    });
+  }
+
   async getBank(accountNumber, bankCode) {
     return new Promise((resolve) => {
       const url = `https://api.paystack.co/bank/resolve?account_number=${accountNumber}&bank_code=${bankCode}`;
       request.get(url, (error, res, detail) => {
+        console.log(error, detail, url);
         if (error) {
           resolve({
             error: 'Unable to process request. Please try again later!',

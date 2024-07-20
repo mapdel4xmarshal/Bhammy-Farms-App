@@ -108,7 +108,7 @@ app.use('/api/v1/employees', protect({
   skip: '/webhook/salary'
 }), employees);
 app.use('/api/v1/notifications', protect({
-  skip: '/payment'
+  skip: ['/payment', '/whatsapp', '/whatsapp/webhook']
 }), notifications);
 
 app.get('*', (req, res) => {

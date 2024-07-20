@@ -53,17 +53,7 @@ router.get('/logout', (req, res) => {
     returnTo += `:${port}`;
   }
 
-  const logoutURL = new url.URL(
-    `https://${process.env.AUTH0_DOMAIN}/v2/logout`
-  );
-
-  logoutURL.search = querystring.stringify({
-    client_id: process.env.AUTH0_CLIENT_ID,
-    returnTo
-  });
-
-  res.redirect(logoutURL);
+  res.redirect(`https://${process.env.AUTH0_DOMAIN}/v2/logout?client_id=${process.env.AUTH0_CLIENT_ID}&returnTo=${returnTo}`);
 });
-
 
 module.exports = router;

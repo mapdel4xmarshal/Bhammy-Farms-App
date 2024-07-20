@@ -29,8 +29,10 @@ server.listen(port, async () => {
 
   await whatsapp.initialize();
 
-  whatsapp.client.on('ready', () => {
+  whatsapp.client.on('ready', async () => {
     debug.info('READY');
+    const version = await whatsapp.client.getWWebVersion();
+    debug.info(`WWeb v${version}`);
     broadCastMessage('ready');
   });
 

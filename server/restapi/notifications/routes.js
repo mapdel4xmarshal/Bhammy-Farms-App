@@ -17,4 +17,32 @@ router.post('/payment', async (req, res) => {
   }
 });
 
+router.post('/whatsapp', async (req, res) => {
+  try {
+    const messages = await controller.processWhatsappNotifications(req.body);
+    res.json(messages);
+  } catch (e) {
+    console.log(e);
+    res.status(500)
+      .json({
+        error: e,
+        status: 500
+      });
+  }
+});
+
+router.post('whatsapp/webhook', async (req, res) => {
+  try {
+    const messages = await controller.processWhatsappWebhook(req.body);
+    res.json(messages);
+  } catch (e) {
+    console.log(e);
+    res.status(500)
+      .json({
+        error: e,
+        status: 500
+      });
+  }
+});
+
 module.exports = router;

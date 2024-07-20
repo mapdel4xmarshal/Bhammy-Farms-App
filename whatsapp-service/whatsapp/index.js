@@ -1,17 +1,10 @@
 const fs = require('fs');
 const path = require('path');
 const qrcode = require('qrcode-terminal');
-const { Client } = require('whatsapp-web.js');
+const { Client, LocalAuth } = require('whatsapp-web.js');
 const Debugger = require('../utilities/debugger');
 
 const debug = new Debugger('WhatsApp');
-const SESSION_FILE_PATH = path.resolve(path.join(__dirname, 'session.json'));
-
-let sessionCfg;
-if (fs.existsSync(SESSION_FILE_PATH)) {
-  sessionCfg = require(SESSION_FILE_PATH);
-}
-
 class WhatsApp {
   constructor() {
     this._client = null;
@@ -45,6 +38,14 @@ class WhatsApp {
 
   async initialize() {
     this._client = new Client({
+      authStrategy: new LocalAuth({
+        dataPath: path.join(__dirname, '.wwebjs_auth/')
+      }),
+      restartOnAuthFail: true,
+      /* webVersionCache: {
+        type: 'remote',
+        remotePath: 'https://github.com/wppconnect-team/wa-version/blob/main/html/2.3000.1014702337-alpha.html',
+      }, */
       puppeteer: {
         headless: true,
         args: [
@@ -85,9 +86,8 @@ class WhatsApp {
           '--no-experiments',
           '--enable-features=NetworkService',
         ],
-        executablePath: '/usr/bin/chromium' // '/opt/homebrew/bin/chromium'
-      },
-      session: sessionCfg
+        executablePath: /* '/usr/bin/chromium' */ '/opt/homebrew/bin/chromium'
+      }
     });
     debug.info('Initialize whatsapp', 'OK');
     this._client.initialize();
@@ -128,15 +128,9 @@ class WhatsApp {
       qrcode.generate(qr, { small: true });
     });
 
-    this._client.on('authenticated', (session) => {
-      debug.info('AUTHENTICATED', session);
-      sessionCfg = session;
-      fs.writeFile(SESSION_FILE_PATH, JSON.stringify(session), (err) => {
-        if (err) {
-          debug.error('Session File', err);
-        }
-        this.OK = true;
-      });
+    this._client.on('authenticated', () => {
+      debug.info('AUTHENTICATED');
+      this.OK = true;
     });
 
     this._client.on('disconnected', () => {
